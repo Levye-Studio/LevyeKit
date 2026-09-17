@@ -1,7 +1,7 @@
 _deps/raylib-build/raylib/CMakeFiles/raylib.dir/rtext.c.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/SDKSettings.json \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/rtext.c \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/raylib.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/rtext.c \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/raylib.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/stdarg.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg_header_macro.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg___gnuc_va_list.h \
@@ -10,9 +10,9 @@ _deps/raylib-build/raylib/CMakeFiles/raylib.dir/rtext.c.o: \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg___va_copy.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg_va_copy.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/stdbool.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/config.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/utils.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/rlgl.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/config.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/utils.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/rlgl.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdlib.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdlib.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/Availability.h \
@@ -109,10 +109,10 @@ _deps/raylib-build/raylib/CMakeFiles/raylib.dir/rtext.c.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_ctype.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/runetype.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_wint_t.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/stb_rect_pack.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/stb_rect_pack.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/assert.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_assert.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_static_assert.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/math.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/float.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/stb_truetype.h
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/stb_truetype.h

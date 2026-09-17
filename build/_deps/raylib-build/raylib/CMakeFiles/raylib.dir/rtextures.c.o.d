@@ -1,7 +1,7 @@
 _deps/raylib-build/raylib/CMakeFiles/raylib.dir/rtextures.c.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/SDKSettings.json \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/rtextures.c \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/raylib.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/rtextures.c \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/raylib.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/stdarg.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg_header_macro.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg___gnuc_va_list.h \
@@ -10,9 +10,9 @@ _deps/raylib-build/raylib/CMakeFiles/raylib.dir/rtextures.c.o: \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg___va_copy.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg_va_copy.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/stdbool.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/config.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/utils.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/rlgl.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/config.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/utils.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/rlgl.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdlib.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdlib.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/Availability.h \
@@ -107,7 +107,7 @@ _deps/raylib-build/raylib/CMakeFiles/raylib.dir/rtextures.c.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_ctermid.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_off_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_stdio.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/stb_image.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/stb_image.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/stddef.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stddef.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stddef_header_macro.h \
@@ -126,11 +126,11 @@ _deps/raylib-build/raylib/CMakeFiles/raylib.dir/rtextures.c.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/assert.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_assert.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_static_assert.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/rl_gputex.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/qoi.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/stb_image_write.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/stb_perlin.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/stb_image_resize2.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/rl_gputex.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/qoi.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/stb_image_write.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/stb_perlin.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/stb_image_resize2.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/arm_neon.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/arm_bf16.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/arm_vector_types.h

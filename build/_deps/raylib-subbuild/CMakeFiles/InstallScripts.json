@@ -1,7 +1,7 @@
 {
 	"InstallScripts" : 
 	[
-		"/Users/nesmy/Projects/LevyeKit/build/_deps/raylib-subbuild/cmake_install.cmake"
+		"/Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-subbuild/cmake_install.cmake"
 	],
 	"Parallel" : false
 }

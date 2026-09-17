@@ -1,6 +1,6 @@
 # CMake generated Testfile for 
-# Source directory: /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src
-# Build directory: /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-build/raylib
+# Source directory: /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src
+# Build directory: /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-build/raylib
 # 
 # This file includes the relevant testing commands required for 
 # testing this directory and lists subdirectories to be tested as well.

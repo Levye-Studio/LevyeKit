@@ -1,7 +1,7 @@
 _deps/raylib-build/raylib/CMakeFiles/raylib.dir/rmodels.c.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/SDKSettings.json \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/rmodels.c \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/raylib.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/rmodels.c \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/raylib.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/stdarg.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg_header_macro.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg___gnuc_va_list.h \
@@ -10,10 +10,10 @@ _deps/raylib-build/raylib/CMakeFiles/raylib.dir/rmodels.c.o: \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg___va_copy.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg_va_copy.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/stdbool.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/config.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/utils.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/rlgl.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/raymath.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/config.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/utils.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/rlgl.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/raymath.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/math.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/cdefs.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_symbol_aliasing.h \
@@ -108,13 +108,13 @@ _deps/raylib-build/raylib/CMakeFiles/raylib.dir/rmodels.c.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_strings.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_strings.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/tinyobj_loader_c.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/tinyobj_loader_c.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/assert.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_assert.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_static_assert.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/errno.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/cgltf.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/cgltf.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/stddef.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stddef.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stddef_header_macro.h \
@@ -134,9 +134,9 @@ _deps/raylib-build/raylib/CMakeFiles/raylib.dir/rmodels.c.o: \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__float_header_macro.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__float_float.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__float_infinity_nan.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/vox_loader.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/m3d.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/par_shapes.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/vox_loader.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/m3d.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/par_shapes.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/unistd.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/unistd.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_posix_vdisable.h \

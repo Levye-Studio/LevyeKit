@@ -1,4 +1,5 @@
 file(REMOVE_RECURSE
+  ".550"
   "CMakeFiles/raylib.dir/raudio.c.o"
   "CMakeFiles/raylib.dir/raudio.c.o.d"
   "CMakeFiles/raylib.dir/rcore.c.o"
@@ -13,7 +14,9 @@ file(REMOVE_RECURSE
   "CMakeFiles/raylib.dir/rtextures.c.o.d"
   "CMakeFiles/raylib.dir/utils.c.o"
   "CMakeFiles/raylib.dir/utils.c.o.d"
-  "libraylib.a"
+  "libraylib.5.5.0.dylib"
+  "libraylib.550.dylib"
+  "libraylib.dylib"
   "libraylib.pdb"
 )
 

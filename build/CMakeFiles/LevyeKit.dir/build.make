@@ -56,7 +56,7 @@ EQUALS = =
 CMAKE_SOURCE_DIR = /Users/nesmy/Projects/LevyeKit
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/nesmy/Projects/LevyeKit/build
+CMAKE_BINARY_DIR = /Users/nesmy/Projects/LevyeKit/Build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/LevyeKit.dir/depend.make
@@ -75,7 +75,7 @@ CMakeFiles/LevyeKit.dir/codegen:
 CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o: CMakeFiles/LevyeKit.dir/flags.make
 CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o: /Users/nesmy/Projects/LevyeKit/Levye/Core/Application.cpp
 CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o: CMakeFiles/LevyeKit.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/nesmy/Projects/LevyeKit/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/nesmy/Projects/LevyeKit/Build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o -MF CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o.d -o CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o -c /Users/nesmy/Projects/LevyeKit/Levye/Core/Application.cpp
 
 CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.i: cmake_force
@@ -86,17 +86,49 @@ CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/nesmy/Projects/LevyeKit/Levye/Core/Application.cpp -o CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.s
 
+CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.o: CMakeFiles/LevyeKit.dir/flags.make
+CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.o: /Users/nesmy/Projects/LevyeKit/Levye/HotReload/DynamicLibrary.cpp
+CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.o: CMakeFiles/LevyeKit.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/nesmy/Projects/LevyeKit/Build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.o -MF CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.o.d -o CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.o -c /Users/nesmy/Projects/LevyeKit/Levye/HotReload/DynamicLibrary.cpp
+
+CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/nesmy/Projects/LevyeKit/Levye/HotReload/DynamicLibrary.cpp > CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.i
+
+CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/nesmy/Projects/LevyeKit/Levye/HotReload/DynamicLibrary.cpp -o CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.s
+
+CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o: CMakeFiles/LevyeKit.dir/flags.make
+CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o: /Users/nesmy/Projects/LevyeKit/Levye/HotReload/GameModule.cpp
+CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o: CMakeFiles/LevyeKit.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/nesmy/Projects/LevyeKit/Build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o -MF CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o.d -o CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o -c /Users/nesmy/Projects/LevyeKit/Levye/HotReload/GameModule.cpp
+
+CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/nesmy/Projects/LevyeKit/Levye/HotReload/GameModule.cpp > CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.i
+
+CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/nesmy/Projects/LevyeKit/Levye/HotReload/GameModule.cpp -o CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.s
+
 # Object files for target LevyeKit
 LevyeKit_OBJECTS = \
-"CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o"
+"CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o" \
+"CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.o" \
+"CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o"
 
 # External object files for target LevyeKit
 LevyeKit_EXTERNAL_OBJECTS =
 
 libLevyeKit.a: CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o
+libLevyeKit.a: CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.o
+libLevyeKit.a: CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o
 libLevyeKit.a: CMakeFiles/LevyeKit.dir/build.make
 libLevyeKit.a: CMakeFiles/LevyeKit.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/nesmy/Projects/LevyeKit/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX static library libLevyeKit.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/nesmy/Projects/LevyeKit/Build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX static library libLevyeKit.a"
 	$(CMAKE_COMMAND) -P CMakeFiles/LevyeKit.dir/cmake_clean_target.cmake
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/LevyeKit.dir/link.txt --verbose=$(VERBOSE)
 
@@ -109,6 +141,6 @@ CMakeFiles/LevyeKit.dir/clean:
 .PHONY : CMakeFiles/LevyeKit.dir/clean
 
 CMakeFiles/LevyeKit.dir/depend:
-	cd /Users/nesmy/Projects/LevyeKit/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/nesmy/Projects/LevyeKit /Users/nesmy/Projects/LevyeKit /Users/nesmy/Projects/LevyeKit/build /Users/nesmy/Projects/LevyeKit/build /Users/nesmy/Projects/LevyeKit/build/CMakeFiles/LevyeKit.dir/DependInfo.cmake "--color=$(COLOR)" LevyeKit
+	cd /Users/nesmy/Projects/LevyeKit/Build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/nesmy/Projects/LevyeKit /Users/nesmy/Projects/LevyeKit /Users/nesmy/Projects/LevyeKit/Build /Users/nesmy/Projects/LevyeKit/Build /Users/nesmy/Projects/LevyeKit/Build/CMakeFiles/LevyeKit.dir/DependInfo.cmake "--color=$(COLOR)" LevyeKit
 .PHONY : CMakeFiles/LevyeKit.dir/depend
 

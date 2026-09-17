@@ -1,7 +1,7 @@
 _deps/raylib-build/raylib/CMakeFiles/raylib.dir/raudio.c.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/SDKSettings.json \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/raudio.c \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/raylib.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/raudio.c \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/raylib.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/stdarg.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg_header_macro.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg___gnuc_va_list.h \
@@ -10,9 +10,9 @@ _deps/raylib-build/raylib/CMakeFiles/raylib.dir/raudio.c.o: \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg___va_copy.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg_va_copy.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/stdbool.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/config.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/utils.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/miniaudio.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/config.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/utils.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/miniaudio.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/stddef.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stddef.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stddef_header_macro.h \
@@ -352,10 +352,10 @@ _deps/raylib-build/raylib/CMakeFiles/raylib.dir/raudio.c.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/AudioToolbox.framework/Headers/AUMIDIController.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/AudioToolbox.framework/Headers/CoreAudioClock.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/AudioToolbox.framework/Headers/AudioSession.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/dr_wav.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/stb_vorbis.c \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/dr_mp3.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/qoa.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/qoaplay.c \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/jar_xm.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/jar_mod.h
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/dr_wav.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/stb_vorbis.c \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/dr_mp3.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/qoa.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/qoaplay.c \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/jar_xm.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/jar_mod.h

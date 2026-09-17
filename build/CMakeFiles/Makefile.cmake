@@ -7,7 +7,6 @@ set(CMAKE_DEPENDS_GENERATOR "Unix Makefiles")
 # The top level Makefile was generated from the following files:
 set(CMAKE_MAKEFILE_DEPENDS
   "CMakeCache.txt"
-  "/Users/nesmy/Projects/LevyeKit/CMakeLists.txt"
   "CMakeFiles/4.3.2/CMakeCCompiler.cmake"
   "CMakeFiles/4.3.2/CMakeCXXCompiler.cmake"
   "CMakeFiles/4.3.2/CMakeSystem.cmake"
@@ -21,7 +20,6 @@ set(CMAKE_MAKEFILE_DEPENDS
   "_deps/raylib-src/cmake/InstallConfigurations.cmake"
   "_deps/raylib-src/cmake/JoinPaths.cmake"
   "_deps/raylib-src/cmake/LibraryConfigurations.cmake"
-  "_deps/raylib-src/cmake/LibraryPathToLinkerFlags.cmake"
   "_deps/raylib-src/cmake/PackConfigurations.cmake"
   "_deps/raylib-src/cmake/ParseConfigHeader.cmake"
   "_deps/raylib-src/cmake/PopulateConfigVariablesLocally.cmake"
@@ -33,6 +31,7 @@ set(CMAKE_MAKEFILE_DEPENDS
   "_deps/raylib-src/src/external/glfw/CMake/glfw3Config.cmake.in"
   "_deps/raylib-src/src/external/glfw/CMakeLists.txt"
   "_deps/raylib-src/src/external/glfw/src/CMakeLists.txt"
+  "/Users/nesmy/Projects/LevyeKit/CMakeLists.txt"
   "/opt/homebrew/share/cmake/Modules/BasicConfigVersion-SameMajorVersion.cmake.in"
   "/opt/homebrew/share/cmake/Modules/CMakeCCompiler.cmake.in"
   "/opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c"
@@ -203,6 +202,8 @@ set(CMAKE_MAKEFILE_PRODUCTS
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/LevyeKit.dir/DependInfo.cmake"
+  "CMakeFiles/Game.dir/DependInfo.cmake"
+  "CMakeFiles/Sandbox.dir/DependInfo.cmake"
   "_deps/raylib-build/CMakeFiles/uninstall.dir/DependInfo.cmake"
   "_deps/raylib-build/raylib/CMakeFiles/raylib.dir/DependInfo.cmake"
   "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/DependInfo.cmake"

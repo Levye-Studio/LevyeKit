@@ -56,7 +56,7 @@ EQUALS = =
 CMAKE_SOURCE_DIR = /Users/nesmy/Projects/LevyeKit
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/nesmy/Projects/LevyeKit/build
+CMAKE_BINARY_DIR = /Users/nesmy/Projects/LevyeKit/Build
 
 # Utility rule file for uninstall.
 
@@ -67,7 +67,7 @@ include _deps/raylib-build/CMakeFiles/uninstall.dir/compiler_depend.make
 include _deps/raylib-build/CMakeFiles/uninstall.dir/progress.make
 
 _deps/raylib-build/CMakeFiles/uninstall:
-	cd /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-build && /opt/homebrew/bin/cmake -P /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-build/cmake_uninstall.cmake
+	cd /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-build && /opt/homebrew/bin/cmake -P /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-build/cmake_uninstall.cmake
 
 _deps/raylib-build/CMakeFiles/uninstall.dir/codegen:
 .PHONY : _deps/raylib-build/CMakeFiles/uninstall.dir/codegen
@@ -81,10 +81,10 @@ _deps/raylib-build/CMakeFiles/uninstall.dir/build: uninstall
 .PHONY : _deps/raylib-build/CMakeFiles/uninstall.dir/build
 
 _deps/raylib-build/CMakeFiles/uninstall.dir/clean:
-	cd /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-build && $(CMAKE_COMMAND) -P CMakeFiles/uninstall.dir/cmake_clean.cmake
+	cd /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-build && $(CMAKE_COMMAND) -P CMakeFiles/uninstall.dir/cmake_clean.cmake
 .PHONY : _deps/raylib-build/CMakeFiles/uninstall.dir/clean
 
 _deps/raylib-build/CMakeFiles/uninstall.dir/depend:
-	cd /Users/nesmy/Projects/LevyeKit/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/nesmy/Projects/LevyeKit /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src /Users/nesmy/Projects/LevyeKit/build /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-build /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-build/CMakeFiles/uninstall.dir/DependInfo.cmake "--color=$(COLOR)" uninstall
+	cd /Users/nesmy/Projects/LevyeKit/Build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/nesmy/Projects/LevyeKit /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src /Users/nesmy/Projects/LevyeKit/Build /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-build /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-build/CMakeFiles/uninstall.dir/DependInfo.cmake "--color=$(COLOR)" uninstall
 .PHONY : _deps/raylib-build/CMakeFiles/uninstall.dir/depend
 

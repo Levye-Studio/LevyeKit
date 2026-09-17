@@ -1,8 +1,8 @@
 _deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/cocoa_monitor.m.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/SDKSettings.json \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/glfw/src/cocoa_monitor.m \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/glfw/src/internal.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/glfw/src/../include/GLFW/glfw3.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/glfw/src/cocoa_monitor.m \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/glfw/src/internal.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/glfw/src/../include/GLFW/glfw3.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/stddef.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stddef.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stddef_header_macro.h \
@@ -33,9 +33,9 @@ _deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/cocoa_monitor.m.
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_uintptr_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_intmax_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uintmax_t.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/glfw/src/platform.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/glfw/src/null_platform.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/glfw/src/cocoa_platform.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/glfw/src/platform.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/glfw/src/null_platform.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/glfw/src/cocoa_platform.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/Carbon.framework/Headers/Carbon.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreServices.framework/Headers/CoreServices.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreFoundation.framework/Headers/CoreFoundation.h \
@@ -1440,16 +1440,16 @@ _deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/cocoa_monitor.m.
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreData.framework/Headers/NSLightweightMigrationStage.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreData.framework/Headers/NSManagedObjectModelReference.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreData.framework/Headers/NSCoreDataCoreSpotlightDelegate.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/glfw/src/null_joystick.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/glfw/src/cocoa_joystick.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/glfw/src/null_joystick.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/glfw/src/cocoa_joystick.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/IOKit.framework/Headers/IOCFPlugIn.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/glfw/src/posix_thread.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/glfw/src/posix_thread.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/pthread.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/pthread/sched.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/pthread/pthread_impl.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/pthread/qos.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/glfw/src/cocoa_time.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/glfw/src/../include/GLFW/glfw3native.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/glfw/src/cocoa_time.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/glfw/src/../include/GLFW/glfw3native.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/IOKit.framework/Headers/graphics/IOGraphicsLib.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/IOKit.framework/Headers/graphics/IOFramebufferShared.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/IOKit.framework/Headers/graphics/IOGraphicsInterface.h \

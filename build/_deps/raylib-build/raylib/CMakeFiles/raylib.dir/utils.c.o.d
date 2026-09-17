@@ -1,7 +1,7 @@
 _deps/raylib-build/raylib/CMakeFiles/raylib.dir/utils.c.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/SDKSettings.json \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/utils.c \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/raylib.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/utils.c \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/raylib.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/stdarg.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg_header_macro.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg___gnuc_va_list.h \
@@ -10,8 +10,8 @@ _deps/raylib-build/raylib/CMakeFiles/raylib.dir/utils.c.o: \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg___va_copy.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg_va_copy.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/stdbool.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/config.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/utils.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/config.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/utils.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdlib.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdlib.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/Availability.h \

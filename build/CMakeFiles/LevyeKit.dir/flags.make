@@ -4,9 +4,9 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP
 
-CXX_INCLUDES = -I/Users/nesmy/Projects/LevyeKit -I/Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src -I/Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/glfw/include
+CXX_INCLUDES = -I/Users/nesmy/Projects/LevyeKit -I/Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src -I/Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/glfw/include
 
-CXX_FLAGSarm64 = -std=c++20 -arch arm64
+CXX_FLAGSarm64 = -g -std=c++20 -arch arm64
 
-CXX_FLAGS = -std=c++20 -arch arm64
+CXX_FLAGS = -g -std=c++20 -arch arm64
 

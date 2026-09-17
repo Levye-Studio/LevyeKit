@@ -1,7 +1,7 @@
 _deps/raylib-build/raylib/CMakeFiles/raylib.dir/rcore.c.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/SDKSettings.json \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/rcore.c \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/raylib.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/rcore.c \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/raylib.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/stdarg.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg_header_macro.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg___gnuc_va_list.h \
@@ -10,8 +10,8 @@ _deps/raylib-build/raylib/CMakeFiles/raylib.dir/rcore.c.o: \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg___va_copy.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stdarg_va_copy.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/stdbool.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/config.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/utils.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/config.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/utils.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdlib.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdlib.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/Availability.h \
@@ -111,12 +111,12 @@ _deps/raylib-build/raylib/CMakeFiles/raylib.dir/rcore.c.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_timespec.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/math.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/float.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/rlgl.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/glad.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/raymath.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/rgestures.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/rcamera.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/msf_gif.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/rlgl.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/glad.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/raymath.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/rgestures.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/rcamera.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/msf_gif.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/stddef.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stddef.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stddef_header_macro.h \
@@ -126,18 +126,18 @@ _deps/raylib-build/raylib/CMakeFiles/raylib.dir/rcore.c.o: \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stddef_wchar_t.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stddef_null.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/__stddef_offsetof.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/sinfl.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/sinfl.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/assert.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_assert.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_static_assert.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/sdefl.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/sdefl.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/21/include/limits.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/limits.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/machine/limits.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/limits.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/_limits.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/syslimits.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/rprand.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/rprand.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/mach-o/dyld.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/mach-o/loader.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/mach/machine.h \
@@ -192,6 +192,6 @@ _deps/raylib-build/raylib/CMakeFiles/raylib.dir/rcore.c.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_select.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_uuid_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/gethostuuid.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/platforms/rcore_desktop_glfw.c \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/glfw/include/GLFW/glfw3.h \
-  /Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/glfw/include/GLFW/glfw3native.h
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/platforms/rcore_desktop_glfw.c \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/glfw/include/GLFW/glfw3.h \
+  /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/glfw/include/GLFW/glfw3native.h

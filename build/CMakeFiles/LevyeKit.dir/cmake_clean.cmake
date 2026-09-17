@@ -1,6 +1,10 @@
 file(REMOVE_RECURSE
   "CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o"
   "CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o.d"
+  "CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.o"
+  "CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.o.d"
+  "CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o"
+  "CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o.d"
   "libLevyeKit.a"
   "libLevyeKit.pdb"
 )

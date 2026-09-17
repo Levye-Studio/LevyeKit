@@ -4,9 +4,9 @@
 # compile C with /usr/bin/cc
 C_DEFINES = -D_GLFW_COCOA
 
-C_INCLUDES = -I/Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/glfw/include -I/Users/nesmy/Projects/LevyeKit/build/_deps/raylib-src/src/external/glfw/src -I/Users/nesmy/Projects/LevyeKit/build/_deps/raylib-build/raylib/external/glfw/src
+C_INCLUDES = -I/Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/glfw/include -I/Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/glfw/src -I/Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-build/raylib/external/glfw/src
 
-C_FLAGSarm64 = -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -std=c99 -arch arm64 -fPIC -Wall
+C_FLAGSarm64 = -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -g -std=c99 -arch arm64 -fPIC -fvisibility=hidden -Wall
 
-C_FLAGS = -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -std=c99 -arch arm64 -fPIC -Wall
+C_FLAGS = -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -g -std=c99 -arch arm64 -fPIC -fvisibility=hidden -Wall
 

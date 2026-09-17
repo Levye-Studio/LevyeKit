@@ -60,7 +60,7 @@ EQUALS = =
 CMAKE_SOURCE_DIR = /Users/nesmy/Projects/LevyeKit
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/nesmy/Projects/LevyeKit/build
+CMAKE_BINARY_DIR = /Users/nesmy/Projects/LevyeKit/Build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -152,9 +152,9 @@ install/strip/fast: preinstall/fast
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/nesmy/Projects/LevyeKit/build/CMakeFiles /Users/nesmy/Projects/LevyeKit/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/nesmy/Projects/LevyeKit/Build/CMakeFiles /Users/nesmy/Projects/LevyeKit/Build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/nesmy/Projects/LevyeKit/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/nesmy/Projects/LevyeKit/Build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -193,6 +193,32 @@ LevyeKit: cmake_check_build_system
 LevyeKit/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/build
 .PHONY : LevyeKit/fast
+
+#=============================================================================
+# Target rules for targets named Game
+
+# Build rule for target.
+Game: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 Game
+.PHONY : Game
+
+# fast build rule for target.
+Game/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Game.dir/build.make CMakeFiles/Game.dir/build
+.PHONY : Game/fast
+
+#=============================================================================
+# Target rules for targets named Sandbox
+
+# Build rule for target.
+Sandbox: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 Sandbox
+.PHONY : Sandbox
+
+# fast build rule for target.
+Sandbox/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Sandbox.dir/build.make CMakeFiles/Sandbox.dir/build
+.PHONY : Sandbox/fast
 
 #=============================================================================
 # Target rules for targets named uninstall
@@ -246,6 +272,54 @@ update_mappings/fast:
 	$(MAKE) $(MAKESILENT) -f _deps/raylib-build/raylib/external/glfw/src/CMakeFiles/update_mappings.dir/build.make _deps/raylib-build/raylib/external/glfw/src/CMakeFiles/update_mappings.dir/build
 .PHONY : update_mappings/fast
 
+Examples/Sandbox/Game/Game.o: Examples/Sandbox/Game/Game.cpp.o
+.PHONY : Examples/Sandbox/Game/Game.o
+
+# target to build an object file
+Examples/Sandbox/Game/Game.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Game.dir/build.make CMakeFiles/Game.dir/Examples/Sandbox/Game/Game.cpp.o
+.PHONY : Examples/Sandbox/Game/Game.cpp.o
+
+Examples/Sandbox/Game/Game.i: Examples/Sandbox/Game/Game.cpp.i
+.PHONY : Examples/Sandbox/Game/Game.i
+
+# target to preprocess a source file
+Examples/Sandbox/Game/Game.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Game.dir/build.make CMakeFiles/Game.dir/Examples/Sandbox/Game/Game.cpp.i
+.PHONY : Examples/Sandbox/Game/Game.cpp.i
+
+Examples/Sandbox/Game/Game.s: Examples/Sandbox/Game/Game.cpp.s
+.PHONY : Examples/Sandbox/Game/Game.s
+
+# target to generate assembly for a file
+Examples/Sandbox/Game/Game.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Game.dir/build.make CMakeFiles/Game.dir/Examples/Sandbox/Game/Game.cpp.s
+.PHONY : Examples/Sandbox/Game/Game.cpp.s
+
+Examples/Sandbox/Main.o: Examples/Sandbox/Main.cpp.o
+.PHONY : Examples/Sandbox/Main.o
+
+# target to build an object file
+Examples/Sandbox/Main.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Sandbox.dir/build.make CMakeFiles/Sandbox.dir/Examples/Sandbox/Main.cpp.o
+.PHONY : Examples/Sandbox/Main.cpp.o
+
+Examples/Sandbox/Main.i: Examples/Sandbox/Main.cpp.i
+.PHONY : Examples/Sandbox/Main.i
+
+# target to preprocess a source file
+Examples/Sandbox/Main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Sandbox.dir/build.make CMakeFiles/Sandbox.dir/Examples/Sandbox/Main.cpp.i
+.PHONY : Examples/Sandbox/Main.cpp.i
+
+Examples/Sandbox/Main.s: Examples/Sandbox/Main.cpp.s
+.PHONY : Examples/Sandbox/Main.s
+
+# target to generate assembly for a file
+Examples/Sandbox/Main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Sandbox.dir/build.make CMakeFiles/Sandbox.dir/Examples/Sandbox/Main.cpp.s
+.PHONY : Examples/Sandbox/Main.cpp.s
+
 Levye/Core/Application.o: Levye/Core/Application.cpp.o
 .PHONY : Levye/Core/Application.o
 
@@ -270,6 +344,54 @@ Levye/Core/Application.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.s
 .PHONY : Levye/Core/Application.cpp.s
 
+Levye/HotReload/DynamicLibrary.o: Levye/HotReload/DynamicLibrary.cpp.o
+.PHONY : Levye/HotReload/DynamicLibrary.o
+
+# target to build an object file
+Levye/HotReload/DynamicLibrary.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.o
+.PHONY : Levye/HotReload/DynamicLibrary.cpp.o
+
+Levye/HotReload/DynamicLibrary.i: Levye/HotReload/DynamicLibrary.cpp.i
+.PHONY : Levye/HotReload/DynamicLibrary.i
+
+# target to preprocess a source file
+Levye/HotReload/DynamicLibrary.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.i
+.PHONY : Levye/HotReload/DynamicLibrary.cpp.i
+
+Levye/HotReload/DynamicLibrary.s: Levye/HotReload/DynamicLibrary.cpp.s
+.PHONY : Levye/HotReload/DynamicLibrary.s
+
+# target to generate assembly for a file
+Levye/HotReload/DynamicLibrary.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.s
+.PHONY : Levye/HotReload/DynamicLibrary.cpp.s
+
+Levye/HotReload/GameModule.o: Levye/HotReload/GameModule.cpp.o
+.PHONY : Levye/HotReload/GameModule.o
+
+# target to build an object file
+Levye/HotReload/GameModule.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o
+.PHONY : Levye/HotReload/GameModule.cpp.o
+
+Levye/HotReload/GameModule.i: Levye/HotReload/GameModule.cpp.i
+.PHONY : Levye/HotReload/GameModule.i
+
+# target to preprocess a source file
+Levye/HotReload/GameModule.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.i
+.PHONY : Levye/HotReload/GameModule.cpp.i
+
+Levye/HotReload/GameModule.s: Levye/HotReload/GameModule.cpp.s
+.PHONY : Levye/HotReload/GameModule.s
+
+# target to generate assembly for a file
+Levye/HotReload/GameModule.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.s
+.PHONY : Levye/HotReload/GameModule.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -286,12 +408,26 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... uninstall"
 	@echo "... update_mappings"
+	@echo "... Game"
 	@echo "... LevyeKit"
+	@echo "... Sandbox"
 	@echo "... glfw"
 	@echo "... raylib"
+	@echo "... Examples/Sandbox/Game/Game.o"
+	@echo "... Examples/Sandbox/Game/Game.i"
+	@echo "... Examples/Sandbox/Game/Game.s"
+	@echo "... Examples/Sandbox/Main.o"
+	@echo "... Examples/Sandbox/Main.i"
+	@echo "... Examples/Sandbox/Main.s"
 	@echo "... Levye/Core/Application.o"
 	@echo "... Levye/Core/Application.i"
 	@echo "... Levye/Core/Application.s"
+	@echo "... Levye/HotReload/DynamicLibrary.o"
+	@echo "... Levye/HotReload/DynamicLibrary.i"
+	@echo "... Levye/HotReload/DynamicLibrary.s"
+	@echo "... Levye/HotReload/GameModule.o"
+	@echo "... Levye/HotReload/GameModule.i"
+	@echo "... Levye/HotReload/GameModule.s"
 .PHONY : help
 
 
