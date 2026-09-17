@@ -1,0 +1,2 @@
+/usr/bin/ar qc libLevyeKit.a CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o
+/usr/bin/ranlib libLevyeKit.a
