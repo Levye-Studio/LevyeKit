@@ -113,5 +113,65 @@ struct HostServices {
    * again when needed so future asset hot reloads can replace the resource.
    */
   const Texture2D *(*GetTexture)(void *context, AssetHandle handle) = nullptr;
+
+  // -----------------------------------------------------------------
+  // Audio
+  // -----------------------------------------------------------------
+
+  /**
+   * @brief Loads a short sound effect through the host audio system.
+   */
+  AssetHandle (*LoadSound)(void *context, const char *path) = nullptr;
+
+  /**
+   * @brief Plays a previously loaded sound effect.
+   */
+  void (*PlaySound)(void *context, AssetHandle handle) = nullptr;
+
+  /**
+   * @brief Stops a currently playing sound effect.
+   */
+  void (*StopSound)(void *context, AssetHandle handle) = nullptr;
+
+  /**
+   * @brief Changes the volume of a sound effect.
+   */
+  void (*SetSoundVolume)(void *context, AssetHandle handle,
+                         float volume) = nullptr;
+
+  // -----------------------------------------------------------------
+  // Music
+  // -----------------------------------------------------------------
+
+  /**
+   * @brief Loads a streaming music track through the host audio system.
+   */
+  AssetHandle (*LoadMusic)(void *context, const char *path) = nullptr;
+
+  /**
+   * @brief Starts or resumes music playback.
+   */
+  void (*PlayMusic)(void *context, AssetHandle handle) = nullptr;
+
+  /**
+   * @brief Pauses music playback.
+   */
+  void (*PauseMusic)(void *context, AssetHandle handle) = nullptr;
+
+  /**
+   * @brief Resumes paused music playback.
+   */
+  void (*ResumeMusic)(void *context, AssetHandle handle) = nullptr;
+
+  /**
+   * @brief Stops music playback.
+   */
+  void (*StopMusic)(void *context, AssetHandle handle) = nullptr;
+
+  /**
+   * @brief Changes the volume of a music track.
+   */
+  void (*SetMusicVolume)(void *context, AssetHandle handle,
+                         float volume) = nullptr;
 };
 } // namespace Levye

@@ -122,6 +122,117 @@ const Texture2D *HostGetTexture(void *context, AssetHandle handle) {
 
   return host->textures->Get(handle);
 }
+
+AssetHandle HostLoadSound(void *context, const char *path) {
+  if (!context || !path)
+    return {};
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->audio)
+    return {};
+
+  return host->audio->LoadSound(path);
+}
+
+void HostPlaySound(void *context, AssetHandle handle) {
+  if (!context)
+    return;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->audio)
+    return;
+
+  host->audio->PlaySound(handle);
+}
+
+void HostStopSound(void *context, AssetHandle handle) {
+  if (!context)
+    return;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->audio)
+    return;
+
+  host->audio->StopSound(handle);
+}
+
+void HostSetSoundVolume(void *context, AssetHandle handle, float volume) {
+  if (!context)
+    return;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->audio)
+    return;
+
+  host->audio->SetSoundVolume(handle, volume);
+}
+
+AssetHandle HostLoadMusic(void *context, const char *path) {
+  if (!context || !path)
+    return {};
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->audio)
+    return {};
+
+  return host->audio->LoadMusic(path);
+}
+
+void HostPlayMusic(void *context, AssetHandle handle) {
+  if (!context)
+    return;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (host->audio)
+    host->audio->PlayMusic(handle);
+}
+
+void HostPauseMusic(void *context, AssetHandle handle) {
+  if (!context)
+    return;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (host->audio)
+    host->audio->PauseMusic(handle);
+}
+
+void HostResumeMusic(void *context, AssetHandle handle) {
+  if (!context)
+    return;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (host->audio)
+    host->audio->ResumeMusic(handle);
+}
+
+void HostStopMusic(void *context, AssetHandle handle) {
+  if (!context)
+    return;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (host->audio)
+    host->audio->StopMusic(handle);
+}
+
+void HostSetMusicVolume(void *context, AssetHandle handle, float volume) {
+  if (!context)
+    return;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (host->audio) {
+    host->audio->SetMusicVolume(handle, volume);
+  }
+}
 } // namespace
 GameModule::~GameModule() {
   Unload();
@@ -135,7 +246,8 @@ bool GameModule::Load(const std::string &path) {
 
   m_HostContext = {.input = &m_InputMap,
                    .screens = &m_ScreenManager,
-                   .textures = &m_TextureManager};
+                   .textures = &m_TextureManager,
+                   .audio = &m_AudioManager};
 
   m_HostServices = {.context = &m_HostContext,
 
@@ -153,7 +265,19 @@ bool GameModule::Load(const std::string &path) {
                     .IsScreen = HostIsScreen,
 
                     .LoadTexture = HostLoadTexture,
-                    .GetTexture = HostGetTexture};
+                    .GetTexture = HostGetTexture,
+
+                    .LoadSound = HostLoadSound,
+                    .PlaySound = HostPlaySound,
+                    .StopSound = HostStopSound,
+                    .SetSoundVolume = HostSetSoundVolume,
+
+                    .LoadMusic = HostLoadMusic,
+                    .PlayMusic = HostPlayMusic,
+                    .PauseMusic = HostPauseMusic,
+                    .ResumeMusic = HostResumeMusic,
+                    .StopMusic = HostStopMusic,
+                    .SetMusicVolume = HostSetMusicVolume};
 
   const std::filesystem::path sourcePath(m_Path);
 
@@ -479,15 +603,12 @@ bool GameModule::IsLoaded() const { return m_Library.IsLoaded() && m_HasAPI; }
 const std::string &GameModule::GetPath() const { return m_Path; }
 
 void GameModule::UpdateResources() {
-  static int frames = 0;
-
-  ++frames;
-
-  if (frames % 300 == 0) {
-    std::cout << "[LevyeKit] Asset watcher running.\n";
-  }
-
   m_TextureManager.CheckForChanges();
+  /*
+   * Streaming music requires regular buffer updates. Keeping this in the
+   * host means playback continues across game-code hot reloads.
+   */
+  m_AudioManager.Update();
 }
 
 std::filesystem::path GameModule::CreateRuntimePath() {
@@ -578,5 +699,8 @@ InputMap &GameModule::GetInputMap() { return m_InputMap; }
 
 ScreenManager &GameModule::GetScreenManager() { return m_ScreenManager; }
 
-void GameModule::ReleaseResources() { m_TextureManager.Clear(); }
+void GameModule::ReleaseResources() {
+  m_AudioManager.Clear();
+  m_TextureManager.Clear();
+}
 } // namespace Levye

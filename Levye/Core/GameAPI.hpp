@@ -14,6 +14,8 @@ struct GameState {
   Vector2 playerPosition{640.0f, 360.0f};
 
   AssetHandle playerTexture{};
+  AssetHandle clickSound{};
+  AssetHandle music{};
 };
 
 /**

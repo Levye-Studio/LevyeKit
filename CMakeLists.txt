@@ -42,10 +42,9 @@ add_library(
     Levye/HotReload/GameModule.cpp
 
     Levye/Input/InputMap.cpp
-
     Levye/Screen/ScreenManager.cpp
-
     Levye/Assets/TextureManager.cpp
+    Levye/Audio/AudioManager.cpp
 )
 
 target_include_directories(

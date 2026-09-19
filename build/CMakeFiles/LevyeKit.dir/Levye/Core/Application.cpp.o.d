@@ -1016,6 +1016,7 @@ CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o: \
   /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/path_iterator.h \
   /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/recursive_directory_iterator.h \
   /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/u8path.h \
+  /Users/nesmy/Projects/LevyeKit/Levye/Audio/AudioManager.hpp \
   /Users/nesmy/Projects/LevyeKit/Levye/Core/GameAPI.hpp \
   /Users/nesmy/Projects/LevyeKit/Levye/Core/HostServices.hpp \
   /Users/nesmy/Projects/LevyeKit/Levye/Core/HostContext.hpp \

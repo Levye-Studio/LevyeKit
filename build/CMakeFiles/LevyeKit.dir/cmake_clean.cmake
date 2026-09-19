@@ -1,6 +1,8 @@
 file(REMOVE_RECURSE
   "CMakeFiles/LevyeKit.dir/Levye/Assets/TextureManager.cpp.o"
   "CMakeFiles/LevyeKit.dir/Levye/Assets/TextureManager.cpp.o.d"
+  "CMakeFiles/LevyeKit.dir/Levye/Audio/AudioManager.cpp.o"
+  "CMakeFiles/LevyeKit.dir/Levye/Audio/AudioManager.cpp.o.d"
   "CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o"
   "CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o.d"
   "CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.o"

@@ -69,6 +69,13 @@ int main() {
 
   input.BindKey("Back", KEY_ESCAPE);
 
+  input.BindKey("TestSound", KEY_SPACE);
+  input.BindGamepadButton("TestSound", 0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN);
+
+  input.BindKey("PauseMusic", KEY_P);
+
+  input.BindKey("ResumeMusic", KEY_R);
+
   if (!gameModule.Load(gameLibraryPath)) {
     std::cerr << "[Sandbox] Failed to load game module.\n";
 

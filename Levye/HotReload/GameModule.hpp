@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Levye/Assets/TextureManager.hpp>
+#include <Levye/Audio/AudioManager.hpp>
 #include <Levye/Core/GameAPI.hpp>
 #include <Levye/Core/HostContext.hpp>
 #include <Levye/Core/HostServices.hpp>
@@ -163,6 +164,7 @@ private:
   InputMap m_InputMap;
   TextureManager m_TextureManager;
   ScreenManager m_ScreenManager;
+  AudioManager m_AudioManager;
 
   std::string m_Path;
 

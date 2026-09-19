@@ -344,6 +344,30 @@ Levye/Assets/TextureManager.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Assets/TextureManager.cpp.s
 .PHONY : Levye/Assets/TextureManager.cpp.s
 
+Levye/Audio/AudioManager.o: Levye/Audio/AudioManager.cpp.o
+.PHONY : Levye/Audio/AudioManager.o
+
+# target to build an object file
+Levye/Audio/AudioManager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Audio/AudioManager.cpp.o
+.PHONY : Levye/Audio/AudioManager.cpp.o
+
+Levye/Audio/AudioManager.i: Levye/Audio/AudioManager.cpp.i
+.PHONY : Levye/Audio/AudioManager.i
+
+# target to preprocess a source file
+Levye/Audio/AudioManager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Audio/AudioManager.cpp.i
+.PHONY : Levye/Audio/AudioManager.cpp.i
+
+Levye/Audio/AudioManager.s: Levye/Audio/AudioManager.cpp.s
+.PHONY : Levye/Audio/AudioManager.s
+
+# target to generate assembly for a file
+Levye/Audio/AudioManager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Audio/AudioManager.cpp.s
+.PHONY : Levye/Audio/AudioManager.cpp.s
+
 Levye/Core/Application.o: Levye/Core/Application.cpp.o
 .PHONY : Levye/Core/Application.o
 
@@ -494,6 +518,9 @@ help:
 	@echo "... Levye/Assets/TextureManager.o"
 	@echo "... Levye/Assets/TextureManager.i"
 	@echo "... Levye/Assets/TextureManager.s"
+	@echo "... Levye/Audio/AudioManager.o"
+	@echo "... Levye/Audio/AudioManager.i"
+	@echo "... Levye/Audio/AudioManager.s"
 	@echo "... Levye/Core/Application.o"
 	@echo "... Levye/Core/Application.i"
 	@echo "... Levye/Core/Application.s"

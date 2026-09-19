@@ -14,6 +14,8 @@ void Application::Run() {
 
   SetTargetFPS(m_Config.targetFPS);
 
+  InitAudioDevice();
+
   /*
    * Game startup happens only after raylib has created the graphics context.
    * Game OnLoad callbacks may safely create GPU resources from this point.
@@ -46,10 +48,13 @@ void Application::Run() {
     EndDrawing();
   }
 
+  m_GameModule.Unload();
   /*
    * GPU resources must be released before raylib destroys the graphics context.
    */
   m_GameModule.ReleaseResources();
+
+  CloseAudioDevice();
 
   CloseWindow();
 }

@@ -9,6 +9,16 @@ void OnLoad(Levye::GameState *state, const Levye::HostServices *services) {
   state->playerTexture = services->LoadTexture(
       services->context, "Examples/Sandbox/Assets/player.png");
 
+  state->clickSound = services->LoadSound(services->context,
+                                          "Examples/Sandbox/Assets/click.wav");
+
+  state->music = services->LoadMusic(services->context,
+                                     "Examples/Sandbox/Assets/music.ogg");
+
+  services->SetMusicVolume(services->context, state->music, 0.5f);
+
+  services->PlayMusic(services->context, state->music);
+
   if (services->LogInfo)
     services->LogInfo("Sandbox started");
 }
@@ -46,7 +56,7 @@ void OnUpdate(Levye::GameState *state, const Levye::HostServices *services,
       return;
     }
 
-    constexpr float speed = 800.0f;
+    constexpr float speed = 300.0f;
 
     Vector2 movement{services->GetAxis(services->context, "MoveX"),
 
@@ -59,6 +69,18 @@ void OnUpdate(Levye::GameState *state, const Levye::HostServices *services,
     state->playerPosition.x += movement.x * speed * deltaTime;
 
     state->playerPosition.y += movement.y * speed * deltaTime;
+
+    if (services->IsActionPressed(services->context, "TestSound")) {
+      services->PlaySound(services->context, state->clickSound);
+    }
+
+    if (services->IsActionPressed(services->context, "PauseMusic")) {
+      services->PauseMusic(services->context, state->music);
+    }
+
+    if (services->IsActionPressed(services->context, "ResumeMusic")) {
+      services->ResumeMusic(services->context, state->music);
+    }
   }
 }
 
@@ -84,7 +106,7 @@ void OnDraw(Levye::GameState *state, const Levye::HostServices *services) {
 
     if (playerTexture) {
       DrawTexture(*playerTexture, static_cast<int>(state->playerPosition.x),
-                  static_cast<int>(state->playerPosition.y), WHITE);
+                  static_cast<int>(state->playerPosition.y), RED);
     } else {
 
       DrawCircleV(state->playerPosition, 30.0f, GOLD);
