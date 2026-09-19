@@ -392,6 +392,30 @@ Levye/HotReload/GameModule.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.s
 .PHONY : Levye/HotReload/GameModule.cpp.s
 
+Levye/Input/InputMap.o: Levye/Input/InputMap.cpp.o
+.PHONY : Levye/Input/InputMap.o
+
+# target to build an object file
+Levye/Input/InputMap.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Input/InputMap.cpp.o
+.PHONY : Levye/Input/InputMap.cpp.o
+
+Levye/Input/InputMap.i: Levye/Input/InputMap.cpp.i
+.PHONY : Levye/Input/InputMap.i
+
+# target to preprocess a source file
+Levye/Input/InputMap.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Input/InputMap.cpp.i
+.PHONY : Levye/Input/InputMap.cpp.i
+
+Levye/Input/InputMap.s: Levye/Input/InputMap.cpp.s
+.PHONY : Levye/Input/InputMap.s
+
+# target to generate assembly for a file
+Levye/Input/InputMap.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Input/InputMap.cpp.s
+.PHONY : Levye/Input/InputMap.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -428,6 +452,9 @@ help:
 	@echo "... Levye/HotReload/GameModule.o"
 	@echo "... Levye/HotReload/GameModule.i"
 	@echo "... Levye/HotReload/GameModule.s"
+	@echo "... Levye/Input/InputMap.o"
+	@echo "... Levye/Input/InputMap.i"
+	@echo "... Levye/Input/InputMap.s"
 .PHONY : help
 
 

@@ -1,6 +1,8 @@
 #include <Levye/Core/Application.hpp>
 #include <Levye/HotReload/GameModule.hpp>
 
+#include <raylib.h>
+
 #include <iostream>
 #include <string>
 
@@ -24,6 +26,24 @@ int main() {
 #endif
 
   Levye::GameModule gameModule;
+
+  auto &input = gameModule.GetInputMap();
+
+  input.BindKey("MoveUp", KEY_W);
+
+  input.BindKey("MoveUp", KEY_UP);
+
+  input.BindKey("MoveDown", KEY_S);
+
+  input.BindKey("MoveDown", KEY_DOWN);
+
+  input.BindKey("MoveLeft", KEY_A);
+
+  input.BindKey("MoveLeft", KEY_LEFT);
+
+  input.BindKey("MoveRight", KEY_D);
+
+  input.BindKey("MoveRight", KEY_RIGHT);
 
   if (!gameModule.Load(gameLibraryPath)) {
     std::cerr << "[Sandbox] Failed to load game module.\n";

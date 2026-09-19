@@ -3,6 +3,7 @@
 #include <Levye/Core/GameAPI.hpp>
 #include <Levye/Core/HostServices.hpp>
 #include <Levye/HotReload/DynamicLibrary.hpp>
+#include <Levye/Input/InputMap.hpp>
 
 #include <chrono>
 #include <cstdint>
@@ -77,6 +78,14 @@ public:
    */
   const std::string &GetPath() const;
 
+  /**
+   * @brief Returns the host-owned input map.
+   *
+   * This allows the application or project configuration to register logical
+   * game actions while keeping the map alive across game-code reloads.
+   */
+  InputMap &GetInputMap();
+
 private:
   /**
    * @brief Creates a unique path for the next runtime module copy.
@@ -113,6 +122,8 @@ private:
   GameAPI m_API{};
   GameState m_State{};
   HostServices m_HostServices{};
+
+  InputMap m_InputMap;
 
   std::string m_Path;
 

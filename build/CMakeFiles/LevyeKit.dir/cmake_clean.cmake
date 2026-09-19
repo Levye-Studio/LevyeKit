@@ -5,6 +5,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.o.d"
   "CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o"
   "CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o.d"
+  "CMakeFiles/LevyeKit.dir/Levye/Input/InputMap.cpp.o"
+  "CMakeFiles/LevyeKit.dir/Levye/Input/InputMap.cpp.o.d"
   "libLevyeKit.a"
   "libLevyeKit.pdb"
 )

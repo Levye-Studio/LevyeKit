@@ -3,15 +3,13 @@
 namespace Levye {
 /**
  * @brief Services provided by the Levye host to reloadable game code.
- *
- * HostServices creates a stable boundary that allows dynamically loaded
- * game modules to use host-owned systems without linking another copy of
- * LevyeKit into the game library.
- *
- * Additional services such as assets, audio and input actions can be
- * exposed through this structure as LevyeKit grows.
  */
 struct HostServices {
+  void *context = nullptr;
+  // -----------------------------------------------------------------
+  // Logging
+  // -----------------------------------------------------------------
+
   /**
    * @brief Writes an informational message through the host.
    *
@@ -32,5 +30,24 @@ struct HostServices {
    * @param message Null-terminated message to write.
    */
   void (*LogError)(const char *message) = nullptr;
+
+  // -----------------------------------------------------------------
+  // Input Actions
+  // -----------------------------------------------------------------
+
+  /**
+   * @brief Returns whether a named input action is currently held.
+   */
+  bool (*IsActionDown)(void *context, const char *action) = nullptr;
+
+  /**
+   * @brief Returns whether a named input action was pressed this frame.
+   */
+  bool (*IsActionPressed)(void *context, const char *action) = nullptr;
+
+  /**
+   * @brief Returns whether a named input action was released this frame.
+   */
+  bool (*IsActionReleased)(void *context, const char *action) = nullptr;
 };
 } // namespace Levye

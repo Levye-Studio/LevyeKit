@@ -1,5 +1,4 @@
 #include <Levye/Core/GameAPI.hpp>
-#include <Levye/Input/Input.hpp>
 
 #include <raylib.h>
 
@@ -30,16 +29,16 @@ void OnUpdate(Levye::GameState *state, const Levye::HostServices *services,
 
   constexpr float speed = 300.0f;
 
-  if (Levye::Input::IsKeyDown(KEY_W))
+  if (services->IsActionDown(services->context, "MoveUp"))
     state->playerPosition.y -= speed * deltaTime;
 
-  if (Levye::Input::IsKeyDown(KEY_S))
+  if (services->IsActionDown(services->context, "MoveDown"))
     state->playerPosition.y += speed * deltaTime;
 
-  if (Levye::Input::IsKeyDown(KEY_A))
+  if (services->IsActionDown(services->context, "MoveLeft"))
     state->playerPosition.x -= speed * deltaTime;
 
-  if (Levye::Input::IsKeyDown(KEY_D))
+  if (services->IsActionDown(services->context, "MoveRight"))
     state->playerPosition.x += speed * deltaTime;
 }
 

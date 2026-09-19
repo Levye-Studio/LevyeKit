@@ -40,6 +40,8 @@ add_library(
 
     Levye/HotReload/DynamicLibrary.cpp
     Levye/HotReload/GameModule.cpp
+
+    Levye/Input/InputMap.cpp
 )
 
 target_include_directories(

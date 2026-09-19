@@ -24,6 +24,33 @@ void HostLogError(const char *message) {
 
   std::cerr << "[Game Error] " << message << '\n';
 }
+
+bool HostIsActionDown(void *context, const char *action) {
+  if (!context || !action)
+    return false;
+
+  auto *inputMap = static_cast<InputMap *>(context);
+
+  return inputMap->IsDown(action);
+}
+
+bool HostIsActionPressed(void *context, const char *action) {
+  if (!context || !action)
+    return false;
+
+  auto *inputMap = static_cast<InputMap *>(context);
+
+  return inputMap->IsPressed(action);
+}
+
+bool HostIsActionReleased(void *context, const char *action) {
+  if (!context || !action)
+    return false;
+
+  auto *inputMap = static_cast<InputMap *>(context);
+
+  return inputMap->IsReleased(action);
+}
 } // namespace
 GameModule::~GameModule() {
   Unload();
@@ -35,9 +62,15 @@ bool GameModule::Load(const std::string &path) {
 
   m_Path = path;
 
-  m_HostServices = {.LogInfo = HostLogInfo,
+  m_HostServices = {.context = &m_InputMap,
+
+                    .LogInfo = HostLogInfo,
                     .LogWarning = HostLogWarning,
-                    .LogError = HostLogError};
+                    .LogError = HostLogError,
+
+                    .IsActionDown = HostIsActionDown,
+                    .IsActionPressed = HostIsActionPressed,
+                    .IsActionReleased = HostIsActionReleased};
 
   const std::filesystem::path sourcePath(m_Path);
 
@@ -422,4 +455,6 @@ void GameModule::CleanupRuntimeFiles() {
     error.clear();
   }
 }
+
+InputMap &GameModule::GetInputMap() { return m_InputMap; }
 } // namespace Levye
