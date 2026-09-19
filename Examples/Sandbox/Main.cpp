@@ -26,6 +26,7 @@ int main() {
 #endif
 
   Levye::GameModule gameModule;
+  gameModule.GetScreenManager().SetScreen("Menu");
 
   auto &input = gameModule.GetInputMap();
   /*
@@ -63,6 +64,10 @@ int main() {
   input.BindKey("MoveRight", KEY_D);
 
   input.BindKey("MoveRight", KEY_RIGHT);
+
+  input.BindKey("Confirm", KEY_ENTER);
+
+  input.BindKey("Back", KEY_ESCAPE);
 
   if (!gameModule.Load(gameLibraryPath)) {
     std::cerr << "[Sandbox] Failed to load game module.\n";

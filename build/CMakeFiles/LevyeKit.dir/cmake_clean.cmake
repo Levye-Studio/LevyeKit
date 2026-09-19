@@ -7,6 +7,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o.d"
   "CMakeFiles/LevyeKit.dir/Levye/Input/InputMap.cpp.o"
   "CMakeFiles/LevyeKit.dir/Levye/Input/InputMap.cpp.o.d"
+  "CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.o"
+  "CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.o.d"
   "libLevyeKit.a"
   "libLevyeKit.pdb"
 )

@@ -1,9 +1,11 @@
 #pragma once
 
 #include <Levye/Core/GameAPI.hpp>
+#include <Levye/Core/HostContext.hpp>
 #include <Levye/Core/HostServices.hpp>
 #include <Levye/HotReload/DynamicLibrary.hpp>
 #include <Levye/Input/InputMap.hpp>
+#include <Levye/Screen/ScreenManager.hpp>
 
 #include <chrono>
 #include <cstdint>
@@ -86,6 +88,14 @@ public:
    */
   InputMap &GetInputMap();
 
+  /**
+   * @brief Returns the host-owned screen manager.
+   *
+   * The active screen survives game-code hot reloads because the manager is
+   * stored outside the reloadable game module.
+   */
+  ScreenManager &GetScreenManager();
+
 private:
   /**
    * @brief Creates a unique path for the next runtime module copy.
@@ -122,8 +132,10 @@ private:
   GameAPI m_API{};
   GameState m_State{};
   HostServices m_HostServices{};
+  HostContext m_HostContext{};
 
   InputMap m_InputMap;
+  ScreenManager m_ScreenManager;
 
   std::string m_Path;
 

@@ -416,6 +416,30 @@ Levye/Input/InputMap.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Input/InputMap.cpp.s
 .PHONY : Levye/Input/InputMap.cpp.s
 
+Levye/Screen/ScreenManager.o: Levye/Screen/ScreenManager.cpp.o
+.PHONY : Levye/Screen/ScreenManager.o
+
+# target to build an object file
+Levye/Screen/ScreenManager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.o
+.PHONY : Levye/Screen/ScreenManager.cpp.o
+
+Levye/Screen/ScreenManager.i: Levye/Screen/ScreenManager.cpp.i
+.PHONY : Levye/Screen/ScreenManager.i
+
+# target to preprocess a source file
+Levye/Screen/ScreenManager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.i
+.PHONY : Levye/Screen/ScreenManager.cpp.i
+
+Levye/Screen/ScreenManager.s: Levye/Screen/ScreenManager.cpp.s
+.PHONY : Levye/Screen/ScreenManager.s
+
+# target to generate assembly for a file
+Levye/Screen/ScreenManager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.s
+.PHONY : Levye/Screen/ScreenManager.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -455,6 +479,9 @@ help:
 	@echo "... Levye/Input/InputMap.o"
 	@echo "... Levye/Input/InputMap.i"
 	@echo "... Levye/Input/InputMap.s"
+	@echo "... Levye/Screen/ScreenManager.o"
+	@echo "... Levye/Screen/ScreenManager.i"
+	@echo "... Levye/Screen/ScreenManager.s"
 .PHONY : help
 
 

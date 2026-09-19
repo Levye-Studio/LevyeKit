@@ -42,6 +42,8 @@ add_library(
     Levye/HotReload/GameModule.cpp
 
     Levye/Input/InputMap.cpp
+
+    Levye/Screen/ScreenManager.cpp
 )
 
 target_include_directories(

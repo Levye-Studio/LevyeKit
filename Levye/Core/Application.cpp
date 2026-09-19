@@ -11,6 +11,7 @@ void Application::Run() {
   InitWindow(m_Config.width, m_Config.height, m_Config.title.c_str());
 
   SetTargetFPS(m_Config.targetFPS);
+  SetExitKey(NULL);
 
   while (!WindowShouldClose()) {
 

@@ -60,5 +60,25 @@ struct HostServices {
    * @return Value between -1 and +1.
    */
   float (*GetAxis)(void *context, const char *axis) = nullptr;
+
+  // -----------------------------------------------------------------
+  // Screens
+  // -----------------------------------------------------------------
+
+  /**
+   * @brief Changes the currently active logical screen.
+   *
+   * @param context Host-owned service context.
+   * @param screen Name of the screen to activate.
+   */
+  void (*SetScreen)(void *context, const char *screen) = nullptr;
+
+  /**
+   * @brief Returns whether a logical screen is currently active.
+   *
+   * @param context Host-owned service context.
+   * @param screen Screen name to test.
+   */
+  bool (*IsScreen)(void *context, const char *screen) = nullptr;
 };
 } // namespace Levye

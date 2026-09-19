@@ -128,12 +128,27 @@ CMakeFiles/LevyeKit.dir/Levye/Input/InputMap.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LevyeKit.dir/Levye/Input/InputMap.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/nesmy/Projects/LevyeKit/Levye/Input/InputMap.cpp -o CMakeFiles/LevyeKit.dir/Levye/Input/InputMap.cpp.s
 
+CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.o: CMakeFiles/LevyeKit.dir/flags.make
+CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.o: /Users/nesmy/Projects/LevyeKit/Levye/Screen/ScreenManager.cpp
+CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.o: CMakeFiles/LevyeKit.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/nesmy/Projects/LevyeKit/Build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.o -MF CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.o.d -o CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.o -c /Users/nesmy/Projects/LevyeKit/Levye/Screen/ScreenManager.cpp
+
+CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/nesmy/Projects/LevyeKit/Levye/Screen/ScreenManager.cpp > CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.i
+
+CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/nesmy/Projects/LevyeKit/Levye/Screen/ScreenManager.cpp -o CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.s
+
 # Object files for target LevyeKit
 LevyeKit_OBJECTS = \
 "CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o" \
 "CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.o" \
 "CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o" \
-"CMakeFiles/LevyeKit.dir/Levye/Input/InputMap.cpp.o"
+"CMakeFiles/LevyeKit.dir/Levye/Input/InputMap.cpp.o" \
+"CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.o"
 
 # External object files for target LevyeKit
 LevyeKit_EXTERNAL_OBJECTS =
@@ -142,9 +157,10 @@ libLevyeKit.a: CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o
 libLevyeKit.a: CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.o
 libLevyeKit.a: CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o
 libLevyeKit.a: CMakeFiles/LevyeKit.dir/Levye/Input/InputMap.cpp.o
+libLevyeKit.a: CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.o
 libLevyeKit.a: CMakeFiles/LevyeKit.dir/build.make
 libLevyeKit.a: CMakeFiles/LevyeKit.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/nesmy/Projects/LevyeKit/Build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking CXX static library libLevyeKit.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/nesmy/Projects/LevyeKit/Build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX static library libLevyeKit.a"
 	$(CMAKE_COMMAND) -P CMakeFiles/LevyeKit.dir/cmake_clean_target.cmake
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/LevyeKit.dir/link.txt --verbose=$(VERBOSE)
 

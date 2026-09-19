@@ -25,37 +25,66 @@ void OnUpdate(Levye::GameState *state, const Levye::HostServices *services,
               float deltaTime) {
   //   (void)state;
   //   (void)deltaTime;
-  (void)services;
+  // (void)services;
 
-  constexpr float speed = 800.0f;
+  if (services->IsScreen(services->context, "Menu")) {
+    if (services->IsActionPressed(services->context, "Confirm")) {
+      services->SetScreen(services->context, "Game");
+    }
 
-  Vector2 movement{services->GetAxis(services->context, "MoveX"),
-
-                   services->GetAxis(services->context, "MoveY")};
-
-  if (Vector2Length(movement) > 1.0f) {
-    movement = Vector2Normalize(movement);
+    return;
   }
 
-  state->playerPosition.x += movement.x * speed * deltaTime;
+  if (services->IsScreen(services->context, "Game")) {
 
-  state->playerPosition.y += movement.y * speed * deltaTime;
+    if (services->IsActionPressed(services->context, "Back")) {
+      services->SetScreen(services->context, "Menu");
+
+      return;
+    }
+
+    constexpr float speed = 800.0f;
+
+    Vector2 movement{services->GetAxis(services->context, "MoveX"),
+
+                     services->GetAxis(services->context, "MoveY")};
+
+    if (Vector2Length(movement) > 1.0f) {
+      movement = Vector2Normalize(movement);
+    }
+
+    state->playerPosition.x += movement.x * speed * deltaTime;
+
+    state->playerPosition.y += movement.y * speed * deltaTime;
+  }
 }
 
 void OnDraw(Levye::GameState *state, const Levye::HostServices *services) {
   if (!state->initialized)
     return;
 
-  (void)services;
+  if (services->IsScreen(services->context, "Menu")) {
+    ClearBackground(BLACK);
 
-  ClearBackground(DARKBLUE);
+    DrawText("LEVYEKIT", 40, 40, 40, RAYWHITE);
 
-  DrawCircleV(state->playerPosition, 30.0f, GOLD);
+    DrawText("Press ENTER to play", 40, 100, 24, LIGHTGRAY);
 
-  DrawText("WASD to move", 40, 40, 24, RAYWHITE);
+    return;
+  }
 
-  DrawText(TextFormat("Reloads: %i", state->reloadCount), 40, 75, 20,
-           LIGHTGRAY);
+  if (services->IsScreen(services->context, "Game")) {
+    ClearBackground(DARKBLUE);
+
+    DrawCircleV(state->playerPosition, 30.0f, GOLD);
+
+    DrawText("Move: WASD / Arrows / Controller", 40, 40, 20, RAYWHITE);
+
+    DrawText("ESC: Menu", 40, 70, 20, LIGHTGRAY);
+
+    DrawText(TextFormat("Reloads: %i", state->reloadCount), 40, 100, 20,
+             LIGHTGRAY);
+  }
 }
 
 void OnUnload(Levye::GameState *state, const Levye::HostServices *services) {

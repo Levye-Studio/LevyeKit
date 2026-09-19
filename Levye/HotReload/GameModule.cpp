@@ -1,4 +1,6 @@
 #include "GameModule.hpp"
+#include <Levye/Input/InputMap.hpp>
+#include <Levye/Screen/ScreenManager.hpp>
 
 #include <iostream>
 
@@ -29,36 +31,72 @@ bool HostIsActionDown(void *context, const char *action) {
   if (!context || !action)
     return false;
 
-  auto *inputMap = static_cast<InputMap *>(context);
+  auto *host = static_cast<HostContext *>(context);
 
-  return inputMap->IsDown(action);
+  if (!host->input)
+    return false;
+
+  return host->input->IsDown(action);
 }
 
 bool HostIsActionPressed(void *context, const char *action) {
   if (!context || !action)
     return false;
 
-  auto *inputMap = static_cast<InputMap *>(context);
+  auto *host = static_cast<HostContext *>(context);
 
-  return inputMap->IsPressed(action);
+  if (!host->input)
+    return false;
+
+  return host->input->IsPressed(action);
 }
 
 bool HostIsActionReleased(void *context, const char *action) {
   if (!context || !action)
     return false;
 
-  auto *inputMap = static_cast<InputMap *>(context);
+  auto *host = static_cast<HostContext *>(context);
 
-  return inputMap->IsReleased(action);
+  if (!host->input)
+    return false;
+
+  return host->input->IsReleased(action);
 }
 
 float HostGetAxis(void *context, const char *axis) {
   if (!context || !axis)
     return 0.0f;
 
-  auto *inputMap = static_cast<InputMap *>(context);
+  auto *host = static_cast<HostContext *>(context);
 
-  return inputMap->GetAxis(axis);
+  if (!host->input)
+    return 0.0f;
+
+  return host->input->GetAxis(axis);
+}
+
+void HostSetScreen(void *context, const char *screen) {
+  if (!context || !screen)
+    return;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->screens)
+    return;
+
+  host->screens->SetScreen(screen);
+}
+
+bool HostIsScreen(void *context, const char *screen) {
+  if (!context || !screen)
+    return false;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->screens)
+    return false;
+
+  return host->screens->IsScreen(screen);
 }
 } // namespace
 GameModule::~GameModule() {
@@ -71,7 +109,9 @@ bool GameModule::Load(const std::string &path) {
 
   m_Path = path;
 
-  m_HostServices = {.context = &m_InputMap,
+  m_HostContext = {.input = &m_InputMap, .screens = &m_ScreenManager};
+
+  m_HostServices = {.context = &m_HostContext,
 
                     .LogInfo = HostLogInfo,
                     .LogWarning = HostLogWarning,
@@ -81,7 +121,9 @@ bool GameModule::Load(const std::string &path) {
                     .IsActionPressed = HostIsActionPressed,
                     .IsActionReleased = HostIsActionReleased,
 
-                    .GetAxis = HostGetAxis};
+                    .GetAxis = HostGetAxis,
+                    .SetScreen = HostSetScreen,
+                    .IsScreen = HostIsScreen};
 
   const std::filesystem::path sourcePath(m_Path);
 
@@ -468,4 +510,6 @@ void GameModule::CleanupRuntimeFiles() {
 }
 
 InputMap &GameModule::GetInputMap() { return m_InputMap; }
+
+ScreenManager &GameModule::GetScreenManager() { return m_ScreenManager; }
 } // namespace Levye
