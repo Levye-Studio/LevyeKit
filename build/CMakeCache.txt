@@ -280,7 +280,7 @@ CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 CMAKE_STRIP:FILEPATH=/usr/bin/strip
 
 //Path to a program.
-CMAKE_TAPI:FILEPATH=/Library/Developer/CommandLineTools/usr/bin/tapi
+CMAKE_TAPI:FILEPATH=/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/tapi
 
 //If this value is on, makefiles will be generated without the
 // .SILENT directive, and all commands will be echoed to the console
@@ -380,7 +380,7 @@ LevyeKit_IS_TOP_LEVEL:STATIC=ON
 LevyeKit_SOURCE_DIR:STATIC=/Users/nesmy/Projects/LevyeKit
 
 //Path to a library.
-OPENGL_LIBRARY:FILEPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework
+OPENGL_LIBRARY:FILEPATH=/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework
 
 //Force a specific OpenGL Version?
 OPENGL_VERSION:STRING=OFF
@@ -401,7 +401,7 @@ raylib_BINARY_DIR:STATIC=/Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-build
 raylib_IS_TOP_LEVEL:STATIC=OFF
 
 //Dependencies for the target
-raylib_LIB_DEPENDS:STATIC=general;/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework;general;/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework;glfw;
+raylib_LIB_DEPENDS:STATIC=general;/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework;general;/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework;glfw;
 
 //Value Computed by CMake
 raylib_SOURCE_DIR:STATIC=/Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src

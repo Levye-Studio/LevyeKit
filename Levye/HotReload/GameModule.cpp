@@ -3,26 +3,92 @@
 #include <iostream>
 
 namespace Levye {
-GameModule::~GameModule() { Unload(); }
+GameModule::~GameModule() {
+  Unload();
+  CleanupRuntimeFiles();
+}
 
 bool GameModule::Load(const std::string &path) {
-  // Function pointers from an older module must never survive while a
-  // different dynamic library is being loaded.
   Unload();
 
   m_Path = path;
 
-  if (!std::filesystem::exists(m_Path)) {
+  const std::filesystem::path sourcePath(m_Path);
+
+  if (!std::filesystem::exists(sourcePath)) {
     std::cerr << "[LevyeKit] Game module does not exist: " << m_Path << '\n';
 
     return false;
   }
 
-  if (!LoadLibrary())
+  /*
+   * Keep temporary libraries away from the actual build output.
+   *
+   * Example:
+   *
+   * Targets/Debug/lib/Game.dylib
+   * Targets/Debug/hotreload/Game_1.dylib
+   */
+  m_RuntimeDirectory = sourcePath.parent_path().parent_path() / "hotreload";
+
+  std::error_code error;
+
+  std::filesystem::create_directories(m_RuntimeDirectory, error);
+
+  if (error) {
+    std::cerr << "[LevyeKit] Failed to create hot-reload directory: "
+              << error.message() << '\n';
+
+    return false;
+  }
+
+  CleanupRuntimeFiles();
+
+  const auto runtimePath = CreateRuntimePath();
+
+  if (!CopyModule(runtimePath))
     return false;
 
-  m_LastWriteTime = std::filesystem::last_write_time(m_Path);
+  DynamicLibrary candidateLibrary;
+  GameAPI candidateAPI{};
 
+  if (!LoadCandidate(runtimePath, candidateLibrary, candidateAPI)) {
+    std::filesystem::remove(runtimePath, error);
+
+    return false;
+  }
+
+  /*
+   * DynamicLibrary is intentionally non-copyable, so for the first
+   * version we cannot transfer candidateLibrary into m_Library yet.
+   *
+   * Validate the candidate, unload it, then load the exact same runtime
+   * file into the active library.
+   */
+  candidateLibrary.Unload();
+
+  if (!m_Library.Load(runtimePath.string()))
+    return false;
+
+  void *symbol = m_Library.GetSymbol("GetGameAPI");
+
+  if (!symbol) {
+    m_Library.Unload();
+    return false;
+  }
+
+  auto getGameAPI = reinterpret_cast<GetGameAPIFn>(symbol);
+
+  m_API = getGameAPI();
+
+  m_RuntimePath = runtimePath;
+
+  m_LastWriteTime = std::filesystem::last_write_time(sourcePath);
+
+  m_PendingWriteTime = {};
+  m_ReloadPending = false;
+
+  m_HasAPI = true;
   m_Started = true;
 
   if (m_API.OnLoad)
@@ -33,87 +99,174 @@ bool GameModule::Load(const std::string &path) {
   return true;
 }
 
-bool GameModule::LoadLibrary() {
-
-  if (!m_Library.Load(m_Path))
-    return false;
-
-  void *symbol = m_Library.GetSymbol("GetGameAPI");
-
-  if (!symbol) {
-    std::cerr << "[LevyeKit] Game module does not export "
-              << "GetGameAPI.\n";
-
-    m_Library.Unload();
-
-    return false;
-  }
-
-  auto getGameAPI = reinterpret_cast<GetGameAPIFn>(symbol);
-
-  GameAPI api = getGameAPI();
-
-  // Update and Draw form the minimum usable runtime API for a game
-  // module. Load and Unload remain optional lifecycle callbacks.
-  if (!api.OnUpdate || !api.OnDraw) {
-    std::cerr << "[LevyeKit] Game module returned an invalid "
-              << "GameAPI.\n";
-
-    m_Library.Unload();
-
-    return false;
-  }
-  m_API = api;
-  m_HasAPI = true;
-
-  return true;
-}
-
 bool GameModule::CheckForReload() {
   if (!m_Started || m_Path.empty())
     return false;
 
-  if (!std::filesystem::exists(m_Path))
+  const std::filesystem::path sourcePath(m_Path);
+
+  if (!std::filesystem::exists(sourcePath))
     return false;
 
-  const auto currentWriteTime = std::filesystem::last_write_time(m_Path);
+  std::error_code error;
 
-  if (currentWriteTime == m_LastWriteTime)
+  const auto currentWriteTime =
+      std::filesystem::last_write_time(sourcePath, error);
+
+  if (error)
     return false;
 
-  std::cout << "[LevyeKit] Game module change detected.\n";
+  const auto now = std::chrono::steady_clock::now();
 
   /*
-   * Record the timestamp now so a failed reload does not cause LevyeKit
-   * to attempt loading the same broken build every frame.
+   * A new timestamp means the compiler or linker has modified the game
+   * module. Do not reload immediately because the file may still be in the
+   * process of being written.
    */
-  m_LastWriteTime = currentWriteTime;
+  if (currentWriteTime != m_LastWriteTime) {
+    /*
+     * If this is the first observed change, or the file changed again
+     * while we were waiting, restart the stability timer.
+     */
+    if (!m_ReloadPending || currentWriteTime != m_PendingWriteTime) {
+      m_PendingWriteTime = currentWriteTime;
 
-  if (m_API.OnUnload)
-    m_API.OnUnload(&m_State);
+      m_ChangeDetectedAt = now;
 
-  // Function pointers must be discarded before unloading the machine
-  // code that owns them.
-  m_API = {};
-  m_HasAPI = false;
+      m_ReloadPending = true;
 
-  m_Library.Unload();
+      return false;
+    }
 
-  if (!LoadLibrary()) {
-    std::cerr << "[LevyeKit] Failed to reload game module.\n";
+    /*
+     * The timestamp has remained unchanged, but we still need to wait for
+     * the debounce period before treating the build as complete.
+     */
+    if (now - m_ChangeDetectedAt < ReloadDebounce)
+      return false;
 
-    return false;
+    std::cout << "[LevyeKit] Stable game module change detected.\n";
+
+    /*
+     * Record this build before attempting the reload. A broken binary
+     * should not be retried every frame.
+     */
+    m_LastWriteTime = currentWriteTime;
+
+    m_ReloadPending = false;
+
+    const auto candidatePath = CreateRuntimePath();
+
+    if (!CopyModule(candidatePath)) {
+      std::cerr << "[LevyeKit] Could not copy reload candidate. "
+                << "Keeping current module.\n";
+
+      return false;
+    }
+
+    DynamicLibrary candidateLibrary;
+    GameAPI candidateAPI{};
+
+    /*
+     * Validate the candidate while the current game module is still
+     * completely intact.
+     */
+    if (!LoadCandidate(candidatePath, candidateLibrary, candidateAPI)) {
+      std::cerr << "[LevyeKit] Reload candidate is invalid. "
+                << "Keeping current module.\n";
+
+      std::filesystem::remove(candidatePath, error);
+
+      return false;
+    }
+
+    /*
+     * Validation succeeded. From this point onward we can safely begin
+     * replacing the currently active module.
+     */
+    if (m_API.OnUnload)
+      m_API.OnUnload(&m_State);
+
+    m_API = {};
+    m_HasAPI = false;
+
+    m_Library.Unload();
+
+    const auto previousRuntimePath = m_RuntimePath;
+
+    /*
+     * Release the validation handle. The same runtime copy will now be
+     * opened as the active game module.
+     */
+    candidateLibrary.Unload();
+
+    if (!m_Library.Load(candidatePath.string())) {
+      std::cerr << "[LevyeKit] Failed to activate reload candidate.\n";
+
+      /*
+       * Activation failed after validation. Attempt to restore the
+       * previous known-good runtime module.
+       */
+      if (!previousRuntimePath.empty() &&
+          m_Library.Load(previousRuntimePath.string())) {
+        void *oldSymbol = m_Library.GetSymbol("GetGameAPI");
+
+        if (oldSymbol) {
+          auto oldGetGameAPI = reinterpret_cast<GetGameAPIFn>(oldSymbol);
+
+          m_API = oldGetGameAPI();
+          m_HasAPI = true;
+
+          std::cerr << "[LevyeKit] Previous module restored.\n";
+        }
+      }
+
+      return false;
+    }
+
+    void *symbol = m_Library.GetSymbol("GetGameAPI");
+
+    if (!symbol) {
+      std::cerr << "[LevyeKit] Activated module lost GetGameAPI.\n";
+
+      m_Library.Unload();
+
+      return false;
+    }
+
+    auto getGameAPI = reinterpret_cast<GetGameAPIFn>(symbol);
+
+    m_API = getGameAPI();
+    m_HasAPI = true;
+
+    m_RuntimePath = candidatePath;
+
+    ++m_State.reloadCount;
+
+    if (m_API.OnReload)
+      m_API.OnReload(&m_State);
+
+    /*
+     * The previous runtime library is no longer executing and can now be
+     * safely removed.
+     */
+    if (!previousRuntimePath.empty()) {
+      std::filesystem::remove(previousRuntimePath, error);
+    }
+
+    std::cout << "[LevyeKit] Hot reload successful. Reload #"
+              << m_State.reloadCount << '\n';
+
+    return true;
   }
 
-  ++m_State.reloadCount;
+  /*
+   * If the file returned to the timestamp of the active build, there is
+   * nothing left waiting to be reloaded.
+   */
+  m_ReloadPending = false;
 
-  if (m_API.OnReload)
-    m_API.OnReload(&m_State);
-
-  std::cout << "[LevyeKit] Game module reloaded successfully. Reload #"
-            << m_State.reloadCount << '\n';
-
-  return true;
+  return false;
 }
 
 void GameModule::Update(float deltaTime) {
@@ -137,12 +290,21 @@ void GameModule::Unload() {
   if (m_HasAPI && m_API.OnUnload)
     m_API.OnUnload(&m_State);
 
-  // Clear pointers before removing the machine code they point into.
   m_API = {};
   m_HasAPI = false;
   m_Started = false;
+  m_ReloadPending = false;
+  m_PendingWriteTime = {};
 
   m_Library.Unload();
+
+  std::error_code error;
+
+  if (!m_RuntimePath.empty()) {
+    std::filesystem::remove(m_RuntimePath, error);
+
+    m_RuntimePath.clear();
+  }
 
   std::cout << "[LevyeKit] Game module unloaded.\n";
 }
@@ -150,4 +312,88 @@ void GameModule::Unload() {
 bool GameModule::IsLoaded() const { return m_Library.IsLoaded() && m_HasAPI; }
 
 const std::string &GameModule::GetPath() const { return m_Path; }
+
+std::filesystem::path GameModule::CreateRuntimePath() {
+  ++m_RuntimeGeneration;
+
+  const std::filesystem::path sourcePath(m_Path);
+
+  const std::string filename = sourcePath.stem().string() + "_" +
+                               std::to_string(m_RuntimeGeneration) +
+                               sourcePath.extension().string();
+
+  return m_RuntimeDirectory / filename;
+}
+
+bool GameModule::CopyModule(const std::filesystem::path &destination) {
+  std::error_code error;
+
+  std::filesystem::copy_file(m_Path, destination,
+                             std::filesystem::copy_options::overwrite_existing,
+                             error);
+
+  if (error) {
+    std::cerr << "[LevyeKit] Failed to copy game module: " << error.message()
+              << '\n';
+
+    return false;
+  }
+
+  return true;
+}
+
+bool GameModule::LoadCandidate(const std::filesystem::path &path,
+                               DynamicLibrary &library, GameAPI &api) {
+  if (!library.Load(path.string()))
+    return false;
+
+  void *symbol = library.GetSymbol("GetGameAPI");
+
+  if (!symbol) {
+    library.Unload();
+    return false;
+  }
+
+  auto getGameAPI = reinterpret_cast<GetGameAPIFn>(symbol);
+
+  api = getGameAPI();
+
+  if (!api.OnUpdate || !api.OnDraw) {
+    std::cerr << "[LevyeKit] Candidate returned an invalid GameAPI.\n";
+
+    library.Unload();
+
+    return false;
+  }
+
+  return true;
+}
+
+void GameModule::CleanupRuntimeFiles() {
+  if (m_RuntimeDirectory.empty())
+    return;
+
+  std::error_code error;
+
+  if (!std::filesystem::exists(m_RuntimeDirectory, error)) {
+    return;
+  }
+
+  /*
+   * Runtime libraries are temporary build artifacts. Remove leftovers
+   * from previous runs or crashes before starting a new session.
+   */
+  for (const auto &entry :
+       std::filesystem::directory_iterator(m_RuntimeDirectory, error)) {
+    if (error)
+      break;
+
+    if (!entry.is_regular_file())
+      continue;
+
+    std::filesystem::remove(entry.path(), error);
+
+    error.clear();
+  }
+}
 } // namespace Levye

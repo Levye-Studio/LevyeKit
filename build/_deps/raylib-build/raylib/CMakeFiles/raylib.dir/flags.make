@@ -4,7 +4,7 @@
 # compile C with /usr/bin/cc
 C_DEFINES = -DBUILD_LIBTYPE_SHARED -DGL_SILENCE_DEPRECATION -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -Draylib_EXPORTS
 
-C_INCLUDES = -I/Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src -F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/glfw/include
+C_INCLUDES = -I/Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src -F/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /Users/nesmy/Projects/LevyeKit/Build/_deps/raylib-src/src/external/glfw/include
 
 C_FLAGSarm64 = -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -g -std=gnu99 -arch arm64 -fPIC -fvisibility=hidden
 

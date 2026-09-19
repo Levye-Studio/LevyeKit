@@ -22,9 +22,9 @@ void OnDraw(Levye::GameState *state) {
   if (!state->initialized)
     return;
 
-  ClearBackground(DARKGREEN);
+  ClearBackground(MAROON);
 
-  DrawText("LevyeKit HOT RELOAD YES", 40, 40, 32, RAYWHITE);
+  DrawText("LevyeKit HOT RELOAD", 40, 40, 32, RAYWHITE);
 
   DrawText(TextFormat("Reloads: %i", state->reloadCount), 40, 90, 24,
            LIGHTGRAY);
