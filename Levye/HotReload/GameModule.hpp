@@ -77,6 +77,13 @@ public:
   void Update(float deltaTime);
 
   /**
+   * @brief Updates host-owned game resources.
+   *
+   * This currently checks loaded textures for external file changes.
+   */
+  void UpdateResources();
+
+  /**
    * @brief Calls the active game's drawing callback.
    */
   void Draw();

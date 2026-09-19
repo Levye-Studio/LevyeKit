@@ -5,6 +5,7 @@
 #include <raylib.h>
 
 #include <cstdint>
+#include <filesystem>
 #include <string>
 #include <unordered_map>
 
@@ -53,6 +54,15 @@ public:
   const Texture2D *Get(AssetHandle handle) const;
 
   /**
+   * @brief Checks loaded texture files for changes.
+   *
+   * Changed textures are reloaded while preserving their existing AssetHandle.
+   *
+   * @return Number of textures successfully reloaded.
+   */
+  std::size_t CheckForChanges();
+
+  /**
    * @brief Unloads a texture and invalidates its handle.
    *
    * @param handle Texture handle to unload.
@@ -68,8 +78,25 @@ private:
   struct TextureAsset {
     Texture2D texture{};
     std::string path;
+
+    // Last known modification time of the source asset.
+    std::filesystem::file_time_type lastWriteTime{};
+
+    std::uintmax_t fileSize = 0;
   };
 
+private:
+  /**
+   * @brief Attempts to replace an existing GPU texture from its source file.
+   *
+   * The old texture remains valid if loading the replacement fails.
+   *
+   * @param asset Texture asset to reload.
+   * @return true when the replacement succeeded.
+   */
+  bool Reload(TextureAsset &asset);
+
+private:
   std::unordered_map<std::uint64_t, TextureAsset> m_Textures;
 
   std::unordered_map<std::string, AssetHandle> m_PathLookup;

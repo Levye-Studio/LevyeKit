@@ -478,6 +478,18 @@ bool GameModule::IsLoaded() const { return m_Library.IsLoaded() && m_HasAPI; }
 
 const std::string &GameModule::GetPath() const { return m_Path; }
 
+void GameModule::UpdateResources() {
+  static int frames = 0;
+
+  ++frames;
+
+  if (frames % 300 == 0) {
+    std::cout << "[LevyeKit] Asset watcher running.\n";
+  }
+
+  m_TextureManager.CheckForChanges();
+}
+
 std::filesystem::path GameModule::CreateRuntimePath() {
   ++m_RuntimeGeneration;
 

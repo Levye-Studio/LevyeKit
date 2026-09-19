@@ -31,6 +31,8 @@ void Application::Run() {
      */
     m_GameModule.CheckForReload();
 
+    m_GameModule.UpdateResources();
+
     const float deltaTime = GetFrameTime();
 
     m_GameModule.Update(deltaTime);
