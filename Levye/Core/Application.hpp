@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GameAPI.hpp"
+#include <Levye/HotReload/GameModule.hpp>
 
 #include <string>
 
@@ -23,10 +23,10 @@ struct ApplicationConfig {
 };
 
 /**
- * @brief Owns the main application lifecycle and raylib window.
+ * @brief Owns the application's window and main runtime loop.
  *
- * Application initializes raylib, manages the main update/render loop and
- * forwards game lifecycle events through GameAPI.
+ * Application keeps the host process alive while GameModule manages
+ * reloadable game-specific code.
  */
 class Application {
 public:
@@ -35,27 +35,17 @@ public:
    * game API.
    *
    * @param config Application/window configuration.
-   * @param gameAPI Function table implemented by the game module.
+   * @param gameModule Module that provides game behavior.
    */
-  Application(const ApplicationConfig &config, const GameAPI &gameAPI);
+  Application(const ApplicationConfig &config, GameModule &gameModule);
 
   /**
-   * @brief Destroys the application.
-   */
-  ~Application();
-
-  /**
-   * @brief Starts the application main loop.
-   *
-   * This function initializes the raylib window, invokes the game
-   * lifecycle callbacks and runs until the window is closed.
+   * @brief Runs the application until the window is closed.
    */
   void Run();
 
 private:
   ApplicationConfig m_Config;
-
-  GameAPI m_GameAPI;
-  GameState m_GameState;
+  GameModule &m_GameModule;
 };
 } // namespace Levye

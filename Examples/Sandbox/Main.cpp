@@ -31,11 +31,6 @@ int main() {
     return 1;
   }
 
-  const Levye::GameAPI *gameAPI = gameModule.GetAPI();
-
-  if (!gameAPI)
-    return 1;
-
   Levye::ApplicationConfig config;
 
   config.width = 1280;
@@ -43,7 +38,7 @@ int main() {
   config.title = "LevyeKit Sandbox";
   config.targetFPS = 60;
 
-  Levye::Application app(config, *gameAPI);
+  Levye::Application app(config, gameModule);
 
   app.Run();
 

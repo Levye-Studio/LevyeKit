@@ -13,21 +13,21 @@ namespace Levye {
  */
 struct GameState {
   bool initialized = false;
+  int reloadCount = 0;
 };
 
 /**
- * @brief Function table used by LevyeKit to communicate with a game module.
+ * @brief Function table exposed by every Levye game module.
  *
- * A game module exposes implementations of these callbacks. LevyeKit keeps
- * the application/window alive and invokes the callbacks during the game
- * lifecycle.
- *
- * Using a function table creates a stable boundary between the host
- * executable and reloadable game code.
+ * The host uses this table as the stable interface between LevyeKit and
+ * dynamically loaded game code.
  */
 struct GameAPI {
   /// Called after the game module has been loaded.
   void (*OnLoad)(GameState *state);
+
+  /// Called after game code has been successfully hot reloaded.
+  void (*OnReload)(GameState *state);
 
   /// Called once per frame before rendering.
   void (*OnUpdate)(GameState *state, float deltaTime);
@@ -40,10 +40,7 @@ struct GameAPI {
 };
 
 /**
- * @brief Signature of the function exported by every Levye game module.
- *
- * DynamicLibrary retrieves this function from the loaded shared library
- * and uses it to obtain the module's GameAPI.
+ * @brief Signature of the entry point exported by a Levye game module.
  */
 using GetGameAPIFn = GameAPI (*)();
 } // namespace Levye

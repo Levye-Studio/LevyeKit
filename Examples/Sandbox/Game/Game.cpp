@@ -5,6 +5,14 @@
 namespace {
 void OnLoad(Levye::GameState *state) { state->initialized = true; }
 
+void OnReload(Levye::GameState *state) {
+  /*
+   * Persistent state already exists here. Do not perform normal
+   * first-launch initialization during a hot reload.
+   */
+  state->initialized = true;
+}
+
 void OnUpdate(Levye::GameState *state, float deltaTime) {
   (void)state;
   (void)deltaTime;
@@ -14,12 +22,23 @@ void OnDraw(Levye::GameState *state) {
   if (!state->initialized)
     return;
 
-  ClearBackground(DARKBLUE);
+  ClearBackground(DARKGREEN);
 
-  DrawText("Hello from Game.dylib!", 40, 40, 32, RAYWHITE);
+  DrawText("LevyeKit HOT RELOAD YES", 40, 40, 32, RAYWHITE);
+
+  DrawText(TextFormat("Reloads: %i", state->reloadCount), 40, 90, 24,
+           LIGHTGRAY);
 }
 
-void OnUnload(Levye::GameState *state) { state->initialized = false; }
+void OnUnload(Levye::GameState *state) {
+  /*
+   * Do not erase persistent gameplay state here.
+   *
+   * OnUnload is also called immediately before hot reload, so clearing
+   * persistent data here would defeat state preservation.
+   */
+  (void)state;
+}
 } // namespace
 
 /**
@@ -32,6 +51,7 @@ void OnUnload(Levye::GameState *state) { state->initialized = false; }
  */
 extern "C" Levye::GameAPI GetGameAPI() {
   return {.OnLoad = OnLoad,
+          .OnReload = OnReload,
           .OnUpdate = OnUpdate,
           .OnDraw = OnDraw,
           .OnUnload = OnUnload};

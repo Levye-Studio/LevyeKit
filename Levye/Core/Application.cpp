@@ -4,37 +4,34 @@
 
 namespace Levye {
 Application::Application(const ApplicationConfig &config,
-                         const GameAPI &gameAPI)
-    : m_Config(config), m_GameAPI(gameAPI) {}
-
-Application::~Application() {}
+                         GameModule &gameModule)
+    : m_Config(config), m_GameModule(gameModule) {}
 
 void Application::Run() {
   InitWindow(m_Config.width, m_Config.height, m_Config.title.c_str());
 
   SetTargetFPS(m_Config.targetFPS);
 
-  if (m_GameAPI.OnLoad)
-    m_GameAPI.OnLoad(&m_GameState);
-
   while (!WindowShouldClose()) {
+
+    /*
+     * Check before executing game callbacks so no function from an
+     * unloaded module can be called during this frame.
+     */
+    m_GameModule.CheckForReload();
+
     const float deltaTime = GetFrameTime();
 
-    if (m_GameAPI.OnUpdate)
-      m_GameAPI.OnUpdate(&m_GameState, deltaTime);
+    m_GameModule.Update(deltaTime);
 
     BeginDrawing();
 
     ClearBackground(BLACK);
 
-    if (m_GameAPI.OnDraw)
-      m_GameAPI.OnDraw(&m_GameState);
+    m_GameModule.Draw();
 
     EndDrawing();
   }
-
-  if (m_GameAPI.OnUnload)
-    m_GameAPI.OnUnload(&m_GameState);
 
   CloseWindow();
 }
