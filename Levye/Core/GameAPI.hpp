@@ -3,7 +3,14 @@
 #include <Levye/Assets/AssetHandle.hpp>
 #include <raylib.h>
 
+#include <cstdint>
+
 namespace Levye {
+/**
+ * @brief Version of the binary interface shared by the host and game module.
+ */
+inline constexpr std::uint32_t GAME_API_VERSION = 1;
+
 /**
  * @brief Persistent state owned by the Levye host application.
  */
@@ -22,6 +29,8 @@ struct GameState {
  * @brief Function table exposed by every Levye game module.
  */
 struct GameAPI {
+  std::uint32_t version = GAME_API_VERSION;
+
   /// Called after the game module has been loaded.
   void (*OnLoad)(GameState *state, const HostServices *services) = nullptr;
 

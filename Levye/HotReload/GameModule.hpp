@@ -153,6 +153,17 @@ private:
    */
   void CleanupRuntimeFiles();
 
+  /**
+   * @brief Validates a GameAPI returned by a game module.
+   *
+   * Validation ensures that the module uses the expected ABI version and
+   * provides every callback required by the host.
+   *
+   * @param api API table to validate.
+   * @return true when the API can safely be activated.
+   */
+  bool ValidateAPI(const GameAPI &api) const;
+
 private:
   DynamicLibrary m_Library;
 

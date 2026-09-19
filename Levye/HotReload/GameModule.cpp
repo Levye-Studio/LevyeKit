@@ -339,6 +339,7 @@ bool GameModule::Load(const std::string &path) {
   void *symbol = m_Library.GetSymbol("GetGameAPI");
 
   if (!symbol) {
+    std::cerr << "[LevyeKit] Reload candidate does not export GetGameAPI.\n";
     m_Library.Unload();
     return false;
   }
@@ -346,6 +347,13 @@ bool GameModule::Load(const std::string &path) {
   auto getGameAPI = reinterpret_cast<GetGameAPIFn>(symbol);
 
   m_API = getGameAPI();
+
+  if (!ValidateAPI(candidateAPI)) {
+
+    m_Library.Unload();
+
+    return false;
+  }
 
   m_RuntimePath = runtimePath;
 
@@ -656,6 +664,13 @@ bool GameModule::LoadCandidate(const std::filesystem::path &path,
 
   api = getGameAPI();
 
+  if (!ValidateAPI(api)) {
+
+    library.Unload();
+
+    return false;
+  }
+
   if (!api.OnUpdate || !api.OnDraw) {
     std::cerr << "[LevyeKit] Candidate returned an invalid GameAPI.\n";
 
@@ -693,6 +708,25 @@ void GameModule::CleanupRuntimeFiles() {
 
     error.clear();
   }
+}
+
+bool GameModule::ValidateAPI(const GameAPI &api) const {
+  if (api.version != GAME_API_VERSION) {
+    std::cerr << "[LevyeKit] Game API version mismatch. "
+              << "Host expects " << GAME_API_VERSION << ", module provides "
+              << api.version << ".\n";
+
+    return false;
+  }
+
+  if (!api.OnLoad || !api.OnReload || !api.OnUpdate || !api.OnDraw ||
+      !api.OnUnload) {
+    std::cerr << "[LevyeKit] Game API is missing required callbacks.\n";
+
+    return false;
+  }
+
+  return true;
 }
 
 InputMap &GameModule::GetInputMap() { return m_InputMap; }

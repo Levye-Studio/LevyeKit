@@ -144,7 +144,9 @@ void OnUnload(Levye::GameState *state, const Levye::HostServices *services) {
  * this function using the symbol name "GetGameAPI".
  */
 extern "C" Levye::GameAPI GetGameAPI() {
-  return {.OnLoad = OnLoad,
+  return {.version = Levye::GAME_API_VERSION,
+
+          .OnLoad = OnLoad,
           .OnReload = OnReload,
           .OnUpdate = OnUpdate,
           .OnDraw = OnDraw,
