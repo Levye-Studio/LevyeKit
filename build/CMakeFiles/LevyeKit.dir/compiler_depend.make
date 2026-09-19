@@ -1049,6 +1049,7 @@ CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o: /Users/nesmy/Projects/Levy
   _deps/raylib-src/src/raylib.h \
   /Users/nesmy/Projects/LevyeKit/Levye/Core/Application.hpp \
   /Users/nesmy/Projects/LevyeKit/Levye/Core/GameAPI.hpp \
+  /Users/nesmy/Projects/LevyeKit/Levye/Core/HostServices.hpp \
   /Users/nesmy/Projects/LevyeKit/Levye/HotReload/DynamicLibrary.hpp \
   /Users/nesmy/Projects/LevyeKit/Levye/HotReload/GameModule.hpp
 
@@ -3097,7 +3098,9 @@ CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o: /Users/nesmy/Projects/
   /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/stdarg.h \
   /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/stddef.h \
   /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/stdint.h \
+  _deps/raylib-src/src/raylib.h \
   /Users/nesmy/Projects/LevyeKit/Levye/Core/GameAPI.hpp \
+  /Users/nesmy/Projects/LevyeKit/Levye/Core/HostServices.hpp \
   /Users/nesmy/Projects/LevyeKit/Levye/HotReload/DynamicLibrary.hpp \
   /Users/nesmy/Projects/LevyeKit/Levye/HotReload/GameModule.hpp
 
@@ -3149,6 +3152,8 @@ CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o: /Users/nesmy/Projects/
 /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale.h:
 
 /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/wctype.h:
+
+/Users/nesmy/Projects/LevyeKit/Levye/Core/HostServices.hpp:
 
 /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/time.h:
 

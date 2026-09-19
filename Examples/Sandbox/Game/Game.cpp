@@ -1,36 +1,65 @@
 #include <Levye/Core/GameAPI.hpp>
+#include <Levye/Input/Input.hpp>
 
 #include <raylib.h>
 
 namespace {
-void OnLoad(Levye::GameState *state) { state->initialized = true; }
+void OnLoad(Levye::GameState *state, const Levye::HostServices *services) {
+  state->initialized = true;
 
-void OnReload(Levye::GameState *state) {
+  if (services->LogInfo)
+    services->LogInfo("Sandbox started");
+}
+
+void OnReload(Levye::GameState *state, const Levye::HostServices *services) {
   /*
    * Persistent state already exists here. Do not perform normal
    * first-launch initialization during a hot reload.
    */
   state->initialized = true;
+
+  if (services->LogInfo)
+    services->LogInfo("Sandbox code reloaded.");
 }
 
-void OnUpdate(Levye::GameState *state, float deltaTime) {
-  (void)state;
-  (void)deltaTime;
+void OnUpdate(Levye::GameState *state, const Levye::HostServices *services,
+              float deltaTime) {
+  //   (void)state;
+  //   (void)deltaTime;
+  (void)services;
+
+  constexpr float speed = 300.0f;
+
+  if (Levye::Input::IsKeyDown(KEY_W))
+    state->playerPosition.y -= speed * deltaTime;
+
+  if (Levye::Input::IsKeyDown(KEY_S))
+    state->playerPosition.y += speed * deltaTime;
+
+  if (Levye::Input::IsKeyDown(KEY_A))
+    state->playerPosition.x -= speed * deltaTime;
+
+  if (Levye::Input::IsKeyDown(KEY_D))
+    state->playerPosition.x += speed * deltaTime;
 }
 
-void OnDraw(Levye::GameState *state) {
+void OnDraw(Levye::GameState *state, const Levye::HostServices *services) {
   if (!state->initialized)
     return;
 
-  ClearBackground(MAROON);
+  (void)services;
 
-  DrawText("LevyeKit HOT RELOAD", 40, 40, 32, RAYWHITE);
+  ClearBackground(DARKBLUE);
 
-  DrawText(TextFormat("Reloads: %i", state->reloadCount), 40, 90, 24,
+  DrawCircleV(state->playerPosition, 30.0f, GOLD);
+
+  DrawText("WASD to move", 40, 40, 24, RAYWHITE);
+
+  DrawText(TextFormat("Reloads: %i", state->reloadCount), 40, 75, 20,
            LIGHTGRAY);
 }
 
-void OnUnload(Levye::GameState *state) {
+void OnUnload(Levye::GameState *state, const Levye::HostServices *services) {
   /*
    * Do not erase persistent gameplay state here.
    *
@@ -38,6 +67,9 @@ void OnUnload(Levye::GameState *state) {
    * persistent data here would defeat state preservation.
    */
   (void)state;
+
+  if (services->LogInfo)
+    services->LogInfo("Sandbix module unloading.");
 }
 } // namespace
 

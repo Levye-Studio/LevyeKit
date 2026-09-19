@@ -1,42 +1,38 @@
 #pragma once
 
+#include "HostServices.hpp"
+#include <raylib.h>
+
 namespace Levye {
 /**
  * @brief Persistent state owned by the Levye host application.
- *
- * GameState is intentionally stored outside the reloadable game module.
- * This allows game code to be unloaded and replaced while keeping state
- * alive between hot reloads.
- *
- * This structure is minimal for now and will evolve as LevyeKit's
- * hot-reloading system develops.
  */
 struct GameState {
   bool initialized = false;
   int reloadCount = 0;
+
+  Vector2 playerPosition{640.0f, 360.0f};
 };
 
 /**
  * @brief Function table exposed by every Levye game module.
- *
- * The host uses this table as the stable interface between LevyeKit and
- * dynamically loaded game code.
  */
 struct GameAPI {
   /// Called after the game module has been loaded.
-  void (*OnLoad)(GameState *state);
+  void (*OnLoad)(GameState *state, const HostServices *services) = nullptr;
 
   /// Called after game code has been successfully hot reloaded.
-  void (*OnReload)(GameState *state);
+  void (*OnReload)(GameState *state, const HostServices *services) = nullptr;
 
   /// Called once per frame before rendering.
-  void (*OnUpdate)(GameState *state, float deltaTime);
+  void (*OnUpdate)(GameState *state, const HostServices *services,
+                   float deltaTime) = nullptr;
 
   /// Called once per frame while a raylib drawing context is active.
-  void (*OnDraw)(GameState *state);
+  void (*OnDraw)(GameState *state, const HostServices *services) = nullptr;
 
   /// Called before the game module is unloaded.
-  void (*OnUnload)(GameState *state);
+  void (*OnUnload)(GameState *state, const HostServices *services) = nullptr;
 };
 
 /**

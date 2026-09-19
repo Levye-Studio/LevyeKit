@@ -3,6 +3,28 @@
 #include <iostream>
 
 namespace Levye {
+namespace {
+void HostLogInfo(const char *message) {
+  if (!message)
+    return;
+
+  std::cout << "[Game] " << message << '\n';
+}
+
+void HostLogWarning(const char *message) {
+  if (!message)
+    return;
+
+  std::cerr << "[Game Warning] " << message << '\n';
+}
+
+void HostLogError(const char *message) {
+  if (!message)
+    return;
+
+  std::cerr << "[Game Error] " << message << '\n';
+}
+} // namespace
 GameModule::~GameModule() {
   Unload();
   CleanupRuntimeFiles();
@@ -12,6 +34,10 @@ bool GameModule::Load(const std::string &path) {
   Unload();
 
   m_Path = path;
+
+  m_HostServices = {.LogInfo = HostLogInfo,
+                    .LogWarning = HostLogWarning,
+                    .LogError = HostLogError};
 
   const std::filesystem::path sourcePath(m_Path);
 
@@ -92,7 +118,7 @@ bool GameModule::Load(const std::string &path) {
   m_Started = true;
 
   if (m_API.OnLoad)
-    m_API.OnLoad(&m_State);
+    m_API.OnLoad(&m_State, &m_HostServices);
 
   std::cout << "[LevyeKit] Loaded game module: " << m_Path << '\n';
 
@@ -185,7 +211,7 @@ bool GameModule::CheckForReload() {
      * replacing the currently active module.
      */
     if (m_API.OnUnload)
-      m_API.OnUnload(&m_State);
+      m_API.OnUnload(&m_State, &m_HostServices);
 
     m_API = {};
     m_HasAPI = false;
@@ -244,7 +270,7 @@ bool GameModule::CheckForReload() {
     ++m_State.reloadCount;
 
     if (m_API.OnReload)
-      m_API.OnReload(&m_State);
+      m_API.OnReload(&m_State, &m_HostServices);
 
     /*
      * The previous runtime library is no longer executing and can now be
@@ -273,14 +299,14 @@ void GameModule::Update(float deltaTime) {
   if (!m_HasAPI || !m_API.OnUpdate)
     return;
 
-  m_API.OnUpdate(&m_State, deltaTime);
+  m_API.OnUpdate(&m_State, &m_HostServices, deltaTime);
 }
 
 void GameModule::Draw() {
   if (!m_HasAPI || !m_API.OnDraw)
     return;
 
-  m_API.OnDraw(&m_State);
+  m_API.OnDraw(&m_State, &m_HostServices);
 }
 
 void GameModule::Unload() {
@@ -288,7 +314,7 @@ void GameModule::Unload() {
     return;
 
   if (m_HasAPI && m_API.OnUnload)
-    m_API.OnUnload(&m_State);
+    m_API.OnUnload(&m_State, &m_HostServices);
 
   m_API = {};
   m_HasAPI = false;

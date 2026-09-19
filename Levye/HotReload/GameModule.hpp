@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Levye/Core/GameAPI.hpp>
+#include <Levye/Core/HostServices.hpp>
 #include <Levye/HotReload/DynamicLibrary.hpp>
 
 #include <chrono>
@@ -111,6 +112,7 @@ private:
 
   GameAPI m_API{};
   GameState m_State{};
+  HostServices m_HostServices{};
 
   std::string m_Path;
 
