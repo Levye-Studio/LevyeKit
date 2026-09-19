@@ -1,7 +1,7 @@
 #include <Levye/Core/GameAPI.hpp>
 
 #include <raylib.h>
-
+#include <raymath.h>
 namespace {
 void OnLoad(Levye::GameState *state, const Levye::HostServices *services) {
   state->initialized = true;
@@ -27,19 +27,19 @@ void OnUpdate(Levye::GameState *state, const Levye::HostServices *services,
   //   (void)deltaTime;
   (void)services;
 
-  constexpr float speed = 300.0f;
+  constexpr float speed = 800.0f;
 
-  if (services->IsActionDown(services->context, "MoveUp"))
-    state->playerPosition.y -= speed * deltaTime;
+  Vector2 movement{services->GetAxis(services->context, "MoveX"),
 
-  if (services->IsActionDown(services->context, "MoveDown"))
-    state->playerPosition.y += speed * deltaTime;
+                   services->GetAxis(services->context, "MoveY")};
 
-  if (services->IsActionDown(services->context, "MoveLeft"))
-    state->playerPosition.x -= speed * deltaTime;
+  if (Vector2Length(movement) > 1.0f) {
+    movement = Vector2Normalize(movement);
+  }
 
-  if (services->IsActionDown(services->context, "MoveRight"))
-    state->playerPosition.x += speed * deltaTime;
+  state->playerPosition.x += movement.x * speed * deltaTime;
+
+  state->playerPosition.y += movement.y * speed * deltaTime;
 }
 
 void OnDraw(Levye::GameState *state, const Levye::HostServices *services) {

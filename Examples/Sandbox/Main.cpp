@@ -28,6 +28,25 @@ int main() {
   Levye::GameModule gameModule;
 
   auto &input = gameModule.GetInputMap();
+  /*
+   * Keyboard movement.
+   *
+   * Both WASD and arrow keys feed the same logical axes.
+   */
+  input.BindKeyAxis("MoveX", KEY_A, KEY_D);
+
+  input.BindKeyAxis("MoveX", KEY_LEFT, KEY_RIGHT);
+
+  input.BindKeyAxis("MoveY", KEY_W, KEY_S);
+
+  input.BindKeyAxis("MoveY", KEY_UP, KEY_DOWN);
+
+  /*
+   * Controller movement.
+   */
+  input.BindGamepadAxis("MoveX", 0, GAMEPAD_AXIS_LEFT_X);
+
+  input.BindGamepadAxis("MoveY", 0, GAMEPAD_AXIS_LEFT_Y);
 
   input.BindKey("MoveUp", KEY_W);
 

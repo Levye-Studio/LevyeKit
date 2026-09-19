@@ -49,5 +49,16 @@ struct HostServices {
    * @brief Returns whether a named input action was released this frame.
    */
   bool (*IsActionReleased)(void *context, const char *action) = nullptr;
+
+  // -----------------------------------------------------------------
+  // Input Axes
+  // -----------------------------------------------------------------
+
+  /**
+   * @brief Returns the current value of a named input axis.
+   *
+   * @return Value between -1 and +1.
+   */
+  float (*GetAxis)(void *context, const char *axis) = nullptr;
 };
 } // namespace Levye

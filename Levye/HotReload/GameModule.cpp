@@ -51,6 +51,15 @@ bool HostIsActionReleased(void *context, const char *action) {
 
   return inputMap->IsReleased(action);
 }
+
+float HostGetAxis(void *context, const char *axis) {
+  if (!context || !axis)
+    return 0.0f;
+
+  auto *inputMap = static_cast<InputMap *>(context);
+
+  return inputMap->GetAxis(axis);
+}
 } // namespace
 GameModule::~GameModule() {
   Unload();
@@ -70,7 +79,9 @@ bool GameModule::Load(const std::string &path) {
 
                     .IsActionDown = HostIsActionDown,
                     .IsActionPressed = HostIsActionPressed,
-                    .IsActionReleased = HostIsActionReleased};
+                    .IsActionReleased = HostIsActionReleased,
+
+                    .GetAxis = HostGetAxis};
 
   const std::filesystem::path sourcePath(m_Path);
 
