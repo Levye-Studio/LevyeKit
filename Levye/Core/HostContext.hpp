@@ -3,6 +3,7 @@
 namespace Levye {
 class InputMap;
 class ScreenManager;
+class TextureManager;
 
 /**
  * @brief Internal collection of host-owned systems exposed to game services.
@@ -13,5 +14,6 @@ class ScreenManager;
 struct HostContext {
   InputMap *input = nullptr;
   ScreenManager *screens = nullptr;
+  TextureManager *textures = nullptr;
 };
 } // namespace Levye

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Levye/Assets/TextureManager.hpp>
 #include <Levye/Core/GameAPI.hpp>
 #include <Levye/Core/HostContext.hpp>
 #include <Levye/Core/HostServices.hpp>
@@ -42,6 +43,16 @@ public:
    * @return true if a valid runtime copy was loaded.
    */
   bool Load(const std::string &path);
+
+  /**
+   * @brief Starts the loaded game module.
+   *
+   * Start must be called after the host has initialized the systems required by
+   * game code, including raylib's graphics context.
+   *
+   * @return true when the game was started successfully.
+   */
+  bool Start();
 
   /**
    * @brief Checks the build output for changes and attempts a hot reload.
@@ -96,6 +107,14 @@ public:
    */
   ScreenManager &GetScreenManager();
 
+  /**
+   * @brief Releases host-owned game resources.
+   *
+   * This must be called while the raylib graphics and audio contexts are still
+   * active.
+   */
+  void ReleaseResources();
+
 private:
   /**
    * @brief Creates a unique path for the next runtime module copy.
@@ -135,6 +154,7 @@ private:
   HostContext m_HostContext{};
 
   InputMap m_InputMap;
+  TextureManager m_TextureManager;
   ScreenManager m_ScreenManager;
 
   std::string m_Path;

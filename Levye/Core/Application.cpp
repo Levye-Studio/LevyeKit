@@ -10,8 +10,18 @@ Application::Application(const ApplicationConfig &config,
 void Application::Run() {
   InitWindow(m_Config.width, m_Config.height, m_Config.title.c_str());
 
+  SetExitKey(KEY_NULL);
+
   SetTargetFPS(m_Config.targetFPS);
-  SetExitKey(NULL);
+
+  /*
+   * Game startup happens only after raylib has created the graphics context.
+   * Game OnLoad callbacks may safely create GPU resources from this point.
+   */
+  if (!m_GameModule.Start()) {
+    CloseWindow();
+    return;
+  }
 
   while (!WindowShouldClose()) {
 
@@ -33,6 +43,11 @@ void Application::Run() {
 
     EndDrawing();
   }
+
+  /*
+   * GPU resources must be released before raylib destroys the graphics context.
+   */
+  m_GameModule.ReleaseResources();
 
   CloseWindow();
 }

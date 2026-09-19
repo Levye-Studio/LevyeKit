@@ -98,6 +98,30 @@ bool HostIsScreen(void *context, const char *screen) {
 
   return host->screens->IsScreen(screen);
 }
+
+AssetHandle HostLoadTexture(void *context, const char *path) {
+  if (!context || !path)
+    return {};
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->textures)
+    return {};
+
+  return host->textures->Load(path);
+}
+
+const Texture2D *HostGetTexture(void *context, AssetHandle handle) {
+  if (!context)
+    return nullptr;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->textures)
+    return nullptr;
+
+  return host->textures->Get(handle);
+}
 } // namespace
 GameModule::~GameModule() {
   Unload();
@@ -109,7 +133,9 @@ bool GameModule::Load(const std::string &path) {
 
   m_Path = path;
 
-  m_HostContext = {.input = &m_InputMap, .screens = &m_ScreenManager};
+  m_HostContext = {.input = &m_InputMap,
+                   .screens = &m_ScreenManager,
+                   .textures = &m_TextureManager};
 
   m_HostServices = {.context = &m_HostContext,
 
@@ -122,8 +148,12 @@ bool GameModule::Load(const std::string &path) {
                     .IsActionReleased = HostIsActionReleased,
 
                     .GetAxis = HostGetAxis,
+
                     .SetScreen = HostSetScreen,
-                    .IsScreen = HostIsScreen};
+                    .IsScreen = HostIsScreen,
+
+                    .LoadTexture = HostLoadTexture,
+                    .GetTexture = HostGetTexture};
 
   const std::filesystem::path sourcePath(m_Path);
 
@@ -201,12 +231,34 @@ bool GameModule::Load(const std::string &path) {
   m_ReloadPending = false;
 
   m_HasAPI = true;
-  m_Started = true;
+  m_Started = false;
 
-  if (m_API.OnLoad)
-    m_API.OnLoad(&m_State, &m_HostServices);
+  // if (m_API.OnLoad)
+  //   m_API.OnLoad(&m_State, &m_HostServices);
 
   std::cout << "[LevyeKit] Loaded game module: " << m_Path << '\n';
+
+  return true;
+}
+
+bool GameModule::Start() {
+  if (!m_HasAPI) {
+    std::cerr << "[LevyeKit] Cannot start game module: "
+              << "no valid GameAPI is loaded.\n";
+
+    return false;
+  }
+
+  if (m_Started)
+    return true;
+
+  m_Started = true;
+
+  if (m_API.OnLoad) {
+    m_API.OnLoad(&m_State, &m_HostServices);
+  }
+
+  std::cout << "[LevyeKit] Game module started.\n";
 
   return true;
 }
@@ -399,8 +451,9 @@ void GameModule::Unload() {
   if (!m_Library.IsLoaded())
     return;
 
-  if (m_HasAPI && m_API.OnUnload)
+  if (m_Started && m_HasAPI && m_API.OnUnload) {
     m_API.OnUnload(&m_State, &m_HostServices);
+  }
 
   m_API = {};
   m_HasAPI = false;
@@ -512,4 +565,6 @@ void GameModule::CleanupRuntimeFiles() {
 InputMap &GameModule::GetInputMap() { return m_InputMap; }
 
 ScreenManager &GameModule::GetScreenManager() { return m_ScreenManager; }
+
+void GameModule::ReleaseResources() { m_TextureManager.Clear(); }
 } // namespace Levye

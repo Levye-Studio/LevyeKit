@@ -1,6 +1,6 @@
 #pragma once
-
 #include "HostServices.hpp"
+#include <Levye/Assets/AssetHandle.hpp>
 #include <raylib.h>
 
 namespace Levye {
@@ -12,6 +12,8 @@ struct GameState {
   int reloadCount = 0;
 
   Vector2 playerPosition{640.0f, 360.0f};
+
+  AssetHandle playerTexture{};
 };
 
 /**

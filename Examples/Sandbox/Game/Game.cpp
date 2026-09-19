@@ -6,6 +6,9 @@ namespace {
 void OnLoad(Levye::GameState *state, const Levye::HostServices *services) {
   state->initialized = true;
 
+  state->playerTexture = services->LoadTexture(
+      services->context, "Examples/Sandbox/Assets/player.png");
+
   if (services->LogInfo)
     services->LogInfo("Sandbox started");
 }
@@ -63,6 +66,9 @@ void OnDraw(Levye::GameState *state, const Levye::HostServices *services) {
   if (!state->initialized)
     return;
 
+  const Texture2D *playerTexture =
+      services->GetTexture(services->context, state->playerTexture);
+
   if (services->IsScreen(services->context, "Menu")) {
     ClearBackground(BLACK);
 
@@ -76,7 +82,13 @@ void OnDraw(Levye::GameState *state, const Levye::HostServices *services) {
   if (services->IsScreen(services->context, "Game")) {
     ClearBackground(DARKBLUE);
 
-    DrawCircleV(state->playerPosition, 30.0f, GOLD);
+    if (playerTexture) {
+      DrawTexture(*playerTexture, static_cast<int>(state->playerPosition.x),
+                  static_cast<int>(state->playerPosition.y), WHITE);
+    } else {
+
+      DrawCircleV(state->playerPosition, 30.0f, GOLD);
+    }
 
     DrawText("Move: WASD / Arrows / Controller", 40, 40, 20, RAYWHITE);
 

@@ -320,6 +320,30 @@ Examples/Sandbox/Main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Sandbox.dir/build.make CMakeFiles/Sandbox.dir/Examples/Sandbox/Main.cpp.s
 .PHONY : Examples/Sandbox/Main.cpp.s
 
+Levye/Assets/TextureManager.o: Levye/Assets/TextureManager.cpp.o
+.PHONY : Levye/Assets/TextureManager.o
+
+# target to build an object file
+Levye/Assets/TextureManager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Assets/TextureManager.cpp.o
+.PHONY : Levye/Assets/TextureManager.cpp.o
+
+Levye/Assets/TextureManager.i: Levye/Assets/TextureManager.cpp.i
+.PHONY : Levye/Assets/TextureManager.i
+
+# target to preprocess a source file
+Levye/Assets/TextureManager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Assets/TextureManager.cpp.i
+.PHONY : Levye/Assets/TextureManager.cpp.i
+
+Levye/Assets/TextureManager.s: Levye/Assets/TextureManager.cpp.s
+.PHONY : Levye/Assets/TextureManager.s
+
+# target to generate assembly for a file
+Levye/Assets/TextureManager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Assets/TextureManager.cpp.s
+.PHONY : Levye/Assets/TextureManager.cpp.s
+
 Levye/Core/Application.o: Levye/Core/Application.cpp.o
 .PHONY : Levye/Core/Application.o
 
@@ -467,6 +491,9 @@ help:
 	@echo "... Examples/Sandbox/Main.o"
 	@echo "... Examples/Sandbox/Main.i"
 	@echo "... Examples/Sandbox/Main.s"
+	@echo "... Levye/Assets/TextureManager.o"
+	@echo "... Levye/Assets/TextureManager.i"
+	@echo "... Levye/Assets/TextureManager.s"
 	@echo "... Levye/Core/Application.o"
 	@echo "... Levye/Core/Application.i"
 	@echo "... Levye/Core/Application.s"

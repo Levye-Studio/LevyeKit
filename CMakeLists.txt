@@ -44,6 +44,8 @@ add_library(
     Levye/Input/InputMap.cpp
 
     Levye/Screen/ScreenManager.cpp
+
+    Levye/Assets/TextureManager.cpp
 )
 
 target_include_directories(
