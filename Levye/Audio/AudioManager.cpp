@@ -20,7 +20,7 @@ AssetHandle AudioManager::LoadSound(const std::string &path) {
     return {};
   }
 
-  const AssetHandle handle{.id = m_NextHandle++};
+  const AssetHandle handle{.id = m_NextHandle++, .type = AssetType::Sound};
 
   m_Sounds.emplace(handle.id, SoundAsset{.sound = sound, .path = path});
 
@@ -32,6 +32,9 @@ AssetHandle AudioManager::LoadSound(const std::string &path) {
 }
 
 void AudioManager::PlaySound(AssetHandle handle) {
+  if (!handle.IsType(AssetType::Sound)) {
+    return;
+  }
   const auto iterator = m_Sounds.find(handle.id);
 
   if (iterator == m_Sounds.end())
@@ -41,6 +44,9 @@ void AudioManager::PlaySound(AssetHandle handle) {
 }
 
 void AudioManager::StopSound(AssetHandle handle) {
+  if (!handle.IsType(AssetType::Sound)) {
+    return;
+  }
   const auto iterator = m_Sounds.find(handle.id);
 
   if (iterator == m_Sounds.end())
@@ -61,6 +67,9 @@ void AudioManager::SetSoundVolume(AssetHandle handle, float volume) {
 }
 
 void AudioManager::UnloadSound(AssetHandle handle) {
+  if (!handle.IsType(AssetType::Sound)) {
+    return;
+  }
   const auto iterator = m_Sounds.find(handle.id);
 
   if (iterator == m_Sounds.end())
@@ -87,7 +96,7 @@ AssetHandle AudioManager::LoadMusic(const std::string &path) {
     return {};
   }
 
-  const AssetHandle handle{.id = m_NextHandle++};
+  const AssetHandle handle{.id = m_NextHandle++, .type = AssetType::Music};
 
   m_Music.emplace(handle.id, MusicAsset{.music = music, .path = path});
 
@@ -99,6 +108,9 @@ AssetHandle AudioManager::LoadMusic(const std::string &path) {
 }
 
 void AudioManager::PlayMusic(AssetHandle handle) {
+  if (!handle.IsType(AssetType::Music)) {
+    return;
+  }
   const auto iterator = m_Music.find(handle.id);
 
   if (iterator == m_Music.end())
@@ -108,6 +120,9 @@ void AudioManager::PlayMusic(AssetHandle handle) {
 }
 
 void AudioManager::PauseMusic(AssetHandle handle) {
+  if (!handle.IsType(AssetType::Music)) {
+    return;
+  }
   const auto iterator = m_Music.find(handle.id);
 
   if (iterator == m_Music.end())
@@ -117,6 +132,9 @@ void AudioManager::PauseMusic(AssetHandle handle) {
 }
 
 void AudioManager::ResumeMusic(AssetHandle handle) {
+  if (!handle.IsType(AssetType::Music)) {
+    return;
+  }
   const auto iterator = m_Music.find(handle.id);
 
   if (iterator == m_Music.end())
@@ -126,6 +144,9 @@ void AudioManager::ResumeMusic(AssetHandle handle) {
 }
 
 void AudioManager::StopMusic(AssetHandle handle) {
+  if (!handle.IsType(AssetType::Music)) {
+    return;
+  }
   const auto iterator = m_Music.find(handle.id);
 
   if (iterator == m_Music.end())
@@ -135,6 +156,9 @@ void AudioManager::StopMusic(AssetHandle handle) {
 }
 
 void AudioManager::SetMusicVolume(AssetHandle handle, float volume) {
+  if (!handle.IsType(AssetType::Music)) {
+    return;
+  }
   const auto iterator = m_Music.find(handle.id);
 
   if (iterator == m_Music.end())
@@ -156,6 +180,9 @@ void AudioManager::Update() {
 }
 
 void AudioManager::UnloadMusic(AssetHandle handle) {
+  if (!handle.IsType(AssetType::Music)) {
+    return;
+  }
   const auto iterator = m_Music.find(handle.id);
 
   if (iterator == m_Music.end())

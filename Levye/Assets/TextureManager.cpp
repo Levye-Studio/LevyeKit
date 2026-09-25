@@ -24,7 +24,7 @@ AssetHandle TextureManager::Load(const std::string &path) {
   std::error_code timeError;
   std::error_code sizeError;
 
-  const AssetHandle handle{.id = m_NextHandle++};
+  const AssetHandle handle{.id = m_NextHandle++, .type = AssetType::Texture};
 
   m_Textures.emplace(handle.id, TextureAsset{.texture = texture,
                                              .path = path,
@@ -39,8 +39,9 @@ AssetHandle TextureManager::Load(const std::string &path) {
 }
 
 const Texture2D *TextureManager::Get(AssetHandle handle) const {
-  if (!handle.IsValid())
+  if (!handle.IsType(AssetType::Texture)) {
     return nullptr;
+  }
 
   const auto iterator = m_Textures.find(handle.id);
 
@@ -51,6 +52,9 @@ const Texture2D *TextureManager::Get(AssetHandle handle) const {
 }
 
 void TextureManager::Unload(AssetHandle handle) {
+  if (!handle.IsType(AssetType::Texture)) {
+    return;
+  }
   const auto iterator = m_Textures.find(handle.id);
 
   if (iterator == m_Textures.end())

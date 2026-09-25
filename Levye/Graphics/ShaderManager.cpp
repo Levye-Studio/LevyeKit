@@ -35,7 +35,7 @@ AssetHandle ShaderManager::Load(const std::string &vertexPath,
     return {};
   }
 
-  const AssetHandle handle{.id = m_NextHandle++};
+  const AssetHandle handle{.id = m_NextHandle++, AssetType::Shader};
 
   m_Shaders.emplace(
       handle.id,
@@ -58,6 +58,10 @@ AssetHandle ShaderManager::Load(const std::string &vertexPath,
 }
 
 const Shader *ShaderManager::Get(AssetHandle handle) const {
+  if (!handle.IsType(AssetType::Shader)) {
+    return nullptr;
+  }
+
   const auto iterator = m_Shaders.find(handle.id);
 
   if (iterator == m_Shaders.end())
@@ -116,6 +120,9 @@ std::size_t ShaderManager::CheckForChanges() {
 }
 
 void ShaderManager::Unload(AssetHandle handle) {
+  if (!handle.IsType(AssetType::Shader)) {
+    return;
+  }
   const auto iterator = m_Shaders.find(handle.id);
 
   if (iterator == m_Shaders.end())
