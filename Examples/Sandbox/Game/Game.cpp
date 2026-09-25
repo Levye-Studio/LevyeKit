@@ -19,6 +19,9 @@ void OnLoad(Levye::GameState *state, const Levye::HostServices *services) {
 
   services->PlayMusic(services->context, state->music);
 
+  state->playerShader = services->LoadShader(services->context, nullptr,
+                                             "Examples/Sandbox/Assets/test.fs");
+
   if (services->LogInfo)
     services->LogInfo("Sandbox started");
 }
@@ -56,7 +59,7 @@ void OnUpdate(Levye::GameState *state, const Levye::HostServices *services,
       return;
     }
 
-    constexpr float speed = 300.0f;
+    constexpr float speed = 100.0f;
 
     Vector2 movement{services->GetAxis(services->context, "MoveX"),
 
@@ -81,6 +84,24 @@ void OnUpdate(Levye::GameState *state, const Levye::HostServices *services,
     if (services->IsActionPressed(services->context, "ResumeMusic")) {
       services->ResumeMusic(services->context, state->music);
     }
+
+    if (services->IsActionPressed(services->context, "NormalTime")) {
+      services->SetTimeScale(services->context, 1.0f);
+    }
+
+    if (services->IsActionPressed(services->context, "SlowTime")) {
+      services->SetTimeScale(services->context, 0.25f);
+    }
+
+    if (services->IsActionPressed(services->context, "FastTime")) {
+      services->SetTimeScale(services->context, 2.0f);
+    }
+
+    if (services->IsActionPressed(services->context, "Pause")) {
+      const bool paused = services->IsPaused(services->context);
+
+      services->SetPaused(services->context, !paused);
+    }
   }
 }
 
@@ -90,6 +111,9 @@ void OnDraw(Levye::GameState *state, const Levye::HostServices *services) {
 
   const Texture2D *playerTexture =
       services->GetTexture(services->context, state->playerTexture);
+
+  const Shader *playerShader =
+      services->GetShader(services->context, state->playerShader);
 
   if (services->IsScreen(services->context, "Menu")) {
     ClearBackground(BLACK);
@@ -104,7 +128,14 @@ void OnDraw(Levye::GameState *state, const Levye::HostServices *services) {
   if (services->IsScreen(services->context, "Game")) {
     ClearBackground(DARKBLUE);
 
-    if (playerTexture) {
+    if (playerTexture && playerShader) {
+      BeginShaderMode(*playerShader);
+
+      DrawTexture(*playerTexture, static_cast<int>(state->playerPosition.x),
+                  static_cast<int>(state->playerPosition.y), WHITE);
+
+      EndShaderMode();
+    } else if (playerTexture) {
       DrawTexture(*playerTexture, static_cast<int>(state->playerPosition.x),
                   static_cast<int>(state->playerPosition.y), RED);
     } else {

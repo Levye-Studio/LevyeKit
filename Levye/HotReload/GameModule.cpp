@@ -233,6 +233,125 @@ void HostSetMusicVolume(void *context, AssetHandle handle, float volume) {
     host->audio->SetMusicVolume(handle, volume);
   }
 }
+
+AssetHandle HostLoadShader(void *context, const char *vertexPath,
+                           const char *fragmentPath) {
+  if (!context)
+    return {};
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->shaders)
+    return {};
+
+  return host->shaders->Load(vertexPath ? vertexPath : "",
+
+                             fragmentPath ? fragmentPath : "");
+}
+
+const Shader *HostGetShader(void *context, AssetHandle handle) {
+  if (!context)
+    return nullptr;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->shaders)
+    return nullptr;
+
+  return host->shaders->Get(handle);
+}
+
+float HostGetDeltaTime(void *context) {
+  if (!context)
+    return 0.0f;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->time)
+    return 0.0f;
+
+  return host->time->GetDeltaTime();
+}
+
+float HostGetUnscaledDeltaTime(void *context) {
+  if (!context)
+    return 0.0f;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->time)
+    return 0.0f;
+
+  return host->time->GetUnscaledDeltaTime();
+}
+
+double HostGetTime(void *context) {
+  if (!context)
+    return 0.0;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->time)
+    return 0.0;
+
+  return host->time->GetTime();
+}
+
+double HostGetUnscaledTime(void *context) {
+  if (!context)
+    return 0.0;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->time)
+    return 0.0;
+
+  return host->time->GetUnscaledTime();
+}
+
+void HostSetTimeScale(void *context, float scale) {
+  if (!context)
+    return;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (host->time)
+    host->time->SetTimeScale(scale);
+}
+
+float HostGetTimeScale(void *context) {
+  if (!context)
+    return 1.0f;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->time)
+    return 1.0f;
+
+  return host->time->GetTimeScale();
+}
+
+void HostSetPaused(void *context, bool paused) {
+  if (!context)
+    return;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (host->time)
+    host->time->SetPaused(paused);
+}
+
+bool HostIsPaused(void *context) {
+  if (!context)
+    return false;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->time)
+    return false;
+
+  return host->time->IsPaused();
+}
 } // namespace
 GameModule::~GameModule() {
   Unload();
@@ -247,7 +366,9 @@ bool GameModule::Load(const std::string &path) {
   m_HostContext = {.input = &m_InputMap,
                    .screens = &m_ScreenManager,
                    .textures = &m_TextureManager,
-                   .audio = &m_AudioManager};
+                   .audio = &m_AudioManager,
+                   .shaders = &m_ShaderManager,
+                   .time = &m_Time};
 
   m_HostServices = {.context = &m_HostContext,
 
@@ -277,7 +398,20 @@ bool GameModule::Load(const std::string &path) {
                     .PauseMusic = HostPauseMusic,
                     .ResumeMusic = HostResumeMusic,
                     .StopMusic = HostStopMusic,
-                    .SetMusicVolume = HostSetMusicVolume};
+                    .SetMusicVolume = HostSetMusicVolume,
+                    .LoadShader = HostLoadShader,
+                    .GetShader = HostGetShader,
+                    .GetDeltaTime = HostGetDeltaTime,
+                    .GetUnscaledDeltaTime = HostGetUnscaledDeltaTime,
+
+                    .GetTime = HostGetTime,
+                    .GetUnscaledTime = HostGetUnscaledTime,
+
+                    .SetTimeScale = HostSetTimeScale,
+                    .GetTimeScale = HostGetTimeScale,
+
+                    .SetPaused = HostSetPaused,
+                    .IsPaused = HostIsPaused};
 
   const std::filesystem::path sourcePath(m_Path);
 
@@ -285,6 +419,10 @@ bool GameModule::Load(const std::string &path) {
     std::cerr << "[LevyeKit] Game module does not exist: " << m_Path << '\n';
 
     return false;
+  }
+
+  if (!m_ModuleWatcher.Watch(m_Path)) {
+    std::cerr << "[LevyeKit] Failed to watch game module: " << m_Path << '\n';
   }
 
   /*
@@ -348,19 +486,14 @@ bool GameModule::Load(const std::string &path) {
 
   m_API = getGameAPI();
 
-  if (!ValidateAPI(candidateAPI)) {
-
+  if (!ValidateAPI(m_API)) {
+    m_API = {};
     m_Library.Unload();
 
     return false;
   }
 
   m_RuntimePath = runtimePath;
-
-  m_LastWriteTime = std::filesystem::last_write_time(sourcePath);
-
-  m_PendingWriteTime = {};
-  m_ReloadPending = false;
 
   m_HasAPI = true;
   m_Started = false;
@@ -399,170 +532,138 @@ bool GameModule::CheckForReload() {
   if (!m_Started || m_Path.empty())
     return false;
 
-  const std::filesystem::path sourcePath(m_Path);
-
-  if (!std::filesystem::exists(sourcePath))
+  /*
+   * FileWatcher owns all filesystem polling and debounce logic.
+   * A true result means the compiler output changed and remained stable
+   * long enough for us to safely attempt a reload.
+   */
+  if (!m_ModuleWatcher.Poll())
     return false;
 
-  std::error_code error;
+  std::cout << "[LevyeKit] Stable game module change detected.\n";
 
-  const auto currentWriteTime =
-      std::filesystem::last_write_time(sourcePath, error);
+  const auto candidatePath = CreateRuntimePath();
 
-  if (error)
+  if (!CopyModule(candidatePath)) {
+    std::cerr << "[LevyeKit] Could not copy reload candidate. "
+              << "Keeping current module.\n";
+
     return false;
+  }
 
-  const auto now = std::chrono::steady_clock::now();
+  DynamicLibrary candidateLibrary;
+  GameAPI candidateAPI{};
 
   /*
-   * A new timestamp means the compiler or linker has modified the game
-   * module. Do not reload immediately because the file may still be in the
-   * process of being written.
+   * Validate the replacement while the currently running module is still
+   * completely intact.
    */
-  if (currentWriteTime != m_LastWriteTime) {
-    /*
-     * If this is the first observed change, or the file changed again
-     * while we were waiting, restart the stability timer.
-     */
-    if (!m_ReloadPending || currentWriteTime != m_PendingWriteTime) {
-      m_PendingWriteTime = currentWriteTime;
+  if (!LoadCandidate(candidatePath, candidateLibrary, candidateAPI)) {
+    std::cerr << "[LevyeKit] Reload candidate is invalid. "
+              << "Keeping current module.\n";
 
-      m_ChangeDetectedAt = now;
+    std::error_code error;
+    std::filesystem::remove(candidatePath, error);
 
-      m_ReloadPending = true;
+    return false;
+  }
 
-      return false;
-    }
+  /*
+   * The replacement is valid. The old module can now be told that its code
+   * is about to be unloaded.
+   */
+  if (m_API.OnUnload) {
+    m_API.OnUnload(&m_State, &m_HostServices);
+  }
 
-    /*
-     * The timestamp has remained unchanged, but we still need to wait for
-     * the debounce period before treating the build as complete.
-     */
-    if (now - m_ChangeDetectedAt < ReloadDebounce)
-      return false;
+  m_API = {};
+  m_HasAPI = false;
 
-    std::cout << "[LevyeKit] Stable game module change detected.\n";
+  m_Library.Unload();
 
-    /*
-     * Record this build before attempting the reload. A broken binary
-     * should not be retried every frame.
-     */
-    m_LastWriteTime = currentWriteTime;
+  const auto previousRuntimePath = m_RuntimePath;
 
-    m_ReloadPending = false;
+  /*
+   * Release the temporary validation handle before opening this runtime copy
+   * as the active game module.
+   */
+  candidateLibrary.Unload();
 
-    const auto candidatePath = CreateRuntimePath();
-
-    if (!CopyModule(candidatePath)) {
-      std::cerr << "[LevyeKit] Could not copy reload candidate. "
-                << "Keeping current module.\n";
-
-      return false;
-    }
-
-    DynamicLibrary candidateLibrary;
-    GameAPI candidateAPI{};
+  if (!m_Library.Load(candidatePath.string())) {
+    std::cerr << "[LevyeKit] Failed to activate reload candidate.\n";
 
     /*
-     * Validate the candidate while the current game module is still
-     * completely intact.
+     * Activation failed after validation. Attempt to restore the previous
+     * known-good runtime module.
      */
-    if (!LoadCandidate(candidatePath, candidateLibrary, candidateAPI)) {
-      std::cerr << "[LevyeKit] Reload candidate is invalid. "
-                << "Keeping current module.\n";
+    if (!previousRuntimePath.empty() &&
+        m_Library.Load(previousRuntimePath.string())) {
+      void *oldSymbol = m_Library.GetSymbol("GetGameAPI");
 
-      std::filesystem::remove(candidatePath, error);
+      if (oldSymbol) {
+        auto oldGetGameAPI = reinterpret_cast<GetGameAPIFn>(oldSymbol);
 
-      return false;
-    }
+        m_API = oldGetGameAPI();
 
-    /*
-     * Validation succeeded. From this point onward we can safely begin
-     * replacing the currently active module.
-     */
-    if (m_API.OnUnload)
-      m_API.OnUnload(&m_State, &m_HostServices);
-
-    m_API = {};
-    m_HasAPI = false;
-
-    m_Library.Unload();
-
-    const auto previousRuntimePath = m_RuntimePath;
-
-    /*
-     * Release the validation handle. The same runtime copy will now be
-     * opened as the active game module.
-     */
-    candidateLibrary.Unload();
-
-    if (!m_Library.Load(candidatePath.string())) {
-      std::cerr << "[LevyeKit] Failed to activate reload candidate.\n";
-
-      /*
-       * Activation failed after validation. Attempt to restore the
-       * previous known-good runtime module.
-       */
-      if (!previousRuntimePath.empty() &&
-          m_Library.Load(previousRuntimePath.string())) {
-        void *oldSymbol = m_Library.GetSymbol("GetGameAPI");
-
-        if (oldSymbol) {
-          auto oldGetGameAPI = reinterpret_cast<GetGameAPIFn>(oldSymbol);
-
-          m_API = oldGetGameAPI();
+        if (ValidateAPI(m_API)) {
           m_HasAPI = true;
 
           std::cerr << "[LevyeKit] Previous module restored.\n";
         }
       }
-
-      return false;
     }
 
-    void *symbol = m_Library.GetSymbol("GetGameAPI");
+    return false;
+  }
 
-    if (!symbol) {
-      std::cerr << "[LevyeKit] Activated module lost GetGameAPI.\n";
+  void *symbol = m_Library.GetSymbol("GetGameAPI");
 
-      m_Library.Unload();
+  if (!symbol) {
+    std::cerr << "[LevyeKit] Activated module lost GetGameAPI.\n";
 
-      return false;
-    }
+    m_Library.Unload();
 
-    auto getGameAPI = reinterpret_cast<GetGameAPIFn>(symbol);
+    return false;
+  }
 
-    m_API = getGameAPI();
-    m_HasAPI = true;
+  auto getGameAPI = reinterpret_cast<GetGameAPIFn>(symbol);
 
-    m_RuntimePath = candidatePath;
+  m_API = getGameAPI();
 
-    ++m_State.reloadCount;
+  /*
+   * We already validated this runtime file before activation, but validating
+   * the active API again keeps this boundary defensive and explicit.
+   */
+  if (!ValidateAPI(m_API)) {
+    m_API = {};
+    m_Library.Unload();
 
-    if (m_API.OnReload)
-      m_API.OnReload(&m_State, &m_HostServices);
+    return false;
+  }
 
-    /*
-     * The previous runtime library is no longer executing and can now be
-     * safely removed.
-     */
-    if (!previousRuntimePath.empty()) {
-      std::filesystem::remove(previousRuntimePath, error);
-    }
+  m_HasAPI = true;
+  m_RuntimePath = candidatePath;
 
-    std::cout << "[LevyeKit] Hot reload successful. Reload #"
-              << m_State.reloadCount << '\n';
+  ++m_State.reloadCount;
 
-    return true;
+  if (m_API.OnReload) {
+    m_API.OnReload(&m_State, &m_HostServices);
   }
 
   /*
-   * If the file returned to the timestamp of the active build, there is
-   * nothing left waiting to be reloaded.
+   * The previous runtime copy is no longer executing and can safely be
+   * removed.
    */
-  m_ReloadPending = false;
+  if (!previousRuntimePath.empty()) {
+    std::error_code error;
 
-  return false;
+    std::filesystem::remove(previousRuntimePath, error);
+  }
+
+  std::cout << "[LevyeKit] Hot reload successful. Reload #"
+            << m_State.reloadCount << '\n';
+
+  return true;
 }
 
 void GameModule::Update(float deltaTime) {
@@ -571,6 +672,8 @@ void GameModule::Update(float deltaTime) {
 
   m_API.OnUpdate(&m_State, &m_HostServices, deltaTime);
 }
+
+void GameModule::UpdateTime(float deltaTime) { m_Time.Update(deltaTime); }
 
 void GameModule::Draw() {
   if (!m_HasAPI || !m_API.OnDraw)
@@ -590,8 +693,6 @@ void GameModule::Unload() {
   m_API = {};
   m_HasAPI = false;
   m_Started = false;
-  m_ReloadPending = false;
-  m_PendingWriteTime = {};
 
   m_Library.Unload();
 
@@ -610,8 +711,9 @@ bool GameModule::IsLoaded() const { return m_Library.IsLoaded() && m_HasAPI; }
 
 const std::string &GameModule::GetPath() const { return m_Path; }
 
-void GameModule::UpdateResources() {
+void GameModule::UpdateHostSystems() {
   m_TextureManager.CheckForChanges();
+  m_ShaderManager.CheckForChanges();
   /*
    * Streaming music requires regular buffer updates. Keeping this in the
    * host means playback continues across game-code hot reloads.
@@ -671,14 +773,6 @@ bool GameModule::LoadCandidate(const std::filesystem::path &path,
     return false;
   }
 
-  if (!api.OnUpdate || !api.OnDraw) {
-    std::cerr << "[LevyeKit] Candidate returned an invalid GameAPI.\n";
-
-    library.Unload();
-
-    return false;
-  }
-
   return true;
 }
 
@@ -729,12 +823,15 @@ bool GameModule::ValidateAPI(const GameAPI &api) const {
   return true;
 }
 
+Time &GameModule::GetTime() { return m_Time; }
+
 InputMap &GameModule::GetInputMap() { return m_InputMap; }
 
 ScreenManager &GameModule::GetScreenManager() { return m_ScreenManager; }
 
 void GameModule::ReleaseResources() {
   m_AudioManager.Clear();
+  m_ShaderManager.Clear();
   m_TextureManager.Clear();
 }
 } // namespace Levye

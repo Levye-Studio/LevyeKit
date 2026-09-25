@@ -173,5 +173,68 @@ struct HostServices {
    */
   void (*SetMusicVolume)(void *context, AssetHandle handle,
                          float volume) = nullptr;
+
+  // -----------------------------------------------------------------
+  // Shaders
+  // -----------------------------------------------------------------
+
+  /**
+   * @brief Loads a shader through the host graphics system.
+   *
+   * Either source path may be nullptr to use raylib's default shader stage.
+   */
+  AssetHandle (*LoadShader)(void *context, const char *vertexPath,
+                            const char *fragmentPath) = nullptr;
+
+  /**
+   * @brief Retrieves a host-owned shader.
+   *
+   * The returned pointer is temporary and must not be stored by game code.
+   */
+  const Shader *(*GetShader)(void *context, AssetHandle handle) = nullptr;
+
+  // -----------------------------------------------------------------------------
+  // Time
+  // -----------------------------------------------------------------------------
+
+  /**
+   * @brief Returns the scaled frame duration in seconds.
+   */
+  float (*GetDeltaTime)(void *context) = nullptr;
+
+  /**
+   * @brief Returns the unscaled frame duration in seconds.
+   */
+  float (*GetUnscaledDeltaTime)(void *context) = nullptr;
+
+  /**
+   * @brief Returns total scaled runtime in seconds.
+   */
+  double (*GetTime)(void *context) = nullptr;
+
+  /**
+   * @brief Returns total unscaled runtime in seconds.
+   */
+  double (*GetUnscaledTime)(void *context) = nullptr;
+
+  /**
+   * @brief Changes the scale applied to game time.
+   */
+  void (*SetTimeScale)(void *context, float scale) = nullptr;
+
+  /**
+   * @brief Returns the current game time scale.
+   */
+  float (*GetTimeScale)(void *context) = nullptr;
+
+  /**
+   * @brief Pauses or resumes scaled game time.
+   */
+  void (*SetPaused)(void *context, bool paused) = nullptr;
+
+  /**
+   * @brief Returns whether scaled game time is paused.
+   */
+  bool (*IsPaused)(void *context) = nullptr;
 };
 } // namespace Levye

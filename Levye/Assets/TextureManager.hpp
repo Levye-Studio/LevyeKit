@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Levye/Assets/AssetHandle.hpp>
+#include <Levye/IO/FileWatcher.hpp>
 
 #include <raylib.h>
 
@@ -79,10 +80,7 @@ private:
     Texture2D texture{};
     std::string path;
 
-    // Last known modification time of the source asset.
-    std::filesystem::file_time_type lastWriteTime{};
-
-    std::uintmax_t fileSize = 0;
+    FileWatcher watcher;
   };
 
 private:

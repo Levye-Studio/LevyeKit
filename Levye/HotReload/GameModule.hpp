@@ -5,11 +5,13 @@
 #include <Levye/Core/GameAPI.hpp>
 #include <Levye/Core/HostContext.hpp>
 #include <Levye/Core/HostServices.hpp>
+#include <Levye/Graphics/ShaderManager.hpp>
 #include <Levye/HotReload/DynamicLibrary.hpp>
+#include <Levye/IO/FileWatcher.hpp>
 #include <Levye/Input/InputMap.hpp>
 #include <Levye/Screen/ScreenManager.hpp>
+#include <Levye/Time/Time.hpp>
 
-#include <chrono>
 #include <cstdint>
 #include <filesystem>
 #include <string>
@@ -78,11 +80,19 @@ public:
   void Update(float deltaTime);
 
   /**
-   * @brief Updates host-owned game resources.
+   * @brief Advances the host-owned time system.
    *
-   * This currently checks loaded textures for external file changes.
+   * @param deltaTime Real frame duration in seconds.
    */
-  void UpdateResources();
+  void UpdateTime(float deltaTime);
+
+  /**
+   * @brief Updates persistent host-owned systems.
+   *
+   * Processes asset hot reloads and updates systems that require per-frame host
+   * maintenance, such as streaming audio.
+   */
+  void UpdateHostSystems();
 
   /**
    * @brief Calls the active game's drawing callback.
@@ -98,6 +108,11 @@ public:
    * @brief Returns the original build-output path being watched.
    */
   const std::string &GetPath() const;
+
+  /**
+   * @brief Returns the host-owned time system.
+   */
+  Time &GetTime();
 
   /**
    * @brief Returns the host-owned input map.
@@ -176,29 +191,25 @@ private:
   TextureManager m_TextureManager;
   ScreenManager m_ScreenManager;
   AudioManager m_AudioManager;
+  ShaderManager m_ShaderManager;
+  Time m_Time;
+
+  /**
+   * @brief Watches the compiler-produced game module for stable changes.
+   *
+   * The watcher handles timestamps, file sizes, and debounce timing so
+   * GameModule only needs to handle module validation and replacement.
+   */
+  FileWatcher m_ModuleWatcher;
 
   std::string m_Path;
 
   std::filesystem::path m_RuntimePath;
   std::filesystem::path m_RuntimeDirectory;
 
-  std::filesystem::file_time_type m_LastWriteTime{};
-
   std::uint64_t m_RuntimeGeneration = 0;
 
   bool m_HasAPI = false;
   bool m_Started = false;
-
-  std::filesystem::file_time_type m_PendingWriteTime{};
-
-  std::chrono::steady_clock::time_point m_ChangeDetectedAt{};
-
-  bool m_ReloadPending = false;
-
-  /**
-   * Time the build output must remain unchanged before LevyeKit attempts
-   * to copy and load it.
-   */
-  static constexpr std::chrono::milliseconds ReloadDebounce{200};
 };
 } // namespace Levye

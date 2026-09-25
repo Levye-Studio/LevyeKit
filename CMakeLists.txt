@@ -45,6 +45,11 @@ add_library(
     Levye/Screen/ScreenManager.cpp
     Levye/Assets/TextureManager.cpp
     Levye/Audio/AudioManager.cpp
+    Levye/Graphics/ShaderManager.cpp
+
+    Levye/IO/FileWatcher.cpp
+
+    Levye/Time/Time.cpp
 )
 
 target_include_directories(

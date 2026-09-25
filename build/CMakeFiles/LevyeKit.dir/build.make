@@ -170,6 +170,48 @@ CMakeFiles/LevyeKit.dir/Levye/Audio/AudioManager.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LevyeKit.dir/Levye/Audio/AudioManager.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/nesmy/Projects/LevyeKit/Levye/Audio/AudioManager.cpp -o CMakeFiles/LevyeKit.dir/Levye/Audio/AudioManager.cpp.s
 
+CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.o: CMakeFiles/LevyeKit.dir/flags.make
+CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.o: /Users/nesmy/Projects/LevyeKit/Levye/Graphics/ShaderManager.cpp
+CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.o: CMakeFiles/LevyeKit.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/nesmy/Projects/LevyeKit/Build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.o -MF CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.o.d -o CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.o -c /Users/nesmy/Projects/LevyeKit/Levye/Graphics/ShaderManager.cpp
+
+CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/nesmy/Projects/LevyeKit/Levye/Graphics/ShaderManager.cpp > CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.i
+
+CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/nesmy/Projects/LevyeKit/Levye/Graphics/ShaderManager.cpp -o CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.s
+
+CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.o: CMakeFiles/LevyeKit.dir/flags.make
+CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.o: /Users/nesmy/Projects/LevyeKit/Levye/IO/FileWatcher.cpp
+CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.o: CMakeFiles/LevyeKit.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/nesmy/Projects/LevyeKit/Build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.o -MF CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.o.d -o CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.o -c /Users/nesmy/Projects/LevyeKit/Levye/IO/FileWatcher.cpp
+
+CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/nesmy/Projects/LevyeKit/Levye/IO/FileWatcher.cpp > CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.i
+
+CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/nesmy/Projects/LevyeKit/Levye/IO/FileWatcher.cpp -o CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.s
+
+CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.o: CMakeFiles/LevyeKit.dir/flags.make
+CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.o: /Users/nesmy/Projects/LevyeKit/Levye/Time/Time.cpp
+CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.o: CMakeFiles/LevyeKit.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/nesmy/Projects/LevyeKit/Build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.o -MF CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.o.d -o CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.o -c /Users/nesmy/Projects/LevyeKit/Levye/Time/Time.cpp
+
+CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/nesmy/Projects/LevyeKit/Levye/Time/Time.cpp > CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.i
+
+CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/nesmy/Projects/LevyeKit/Levye/Time/Time.cpp -o CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.s
+
 # Object files for target LevyeKit
 LevyeKit_OBJECTS = \
 "CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o" \
@@ -178,7 +220,10 @@ LevyeKit_OBJECTS = \
 "CMakeFiles/LevyeKit.dir/Levye/Input/InputMap.cpp.o" \
 "CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.o" \
 "CMakeFiles/LevyeKit.dir/Levye/Assets/TextureManager.cpp.o" \
-"CMakeFiles/LevyeKit.dir/Levye/Audio/AudioManager.cpp.o"
+"CMakeFiles/LevyeKit.dir/Levye/Audio/AudioManager.cpp.o" \
+"CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.o" \
+"CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.o" \
+"CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.o"
 
 # External object files for target LevyeKit
 LevyeKit_EXTERNAL_OBJECTS =
@@ -190,9 +235,12 @@ libLevyeKit.a: CMakeFiles/LevyeKit.dir/Levye/Input/InputMap.cpp.o
 libLevyeKit.a: CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.o
 libLevyeKit.a: CMakeFiles/LevyeKit.dir/Levye/Assets/TextureManager.cpp.o
 libLevyeKit.a: CMakeFiles/LevyeKit.dir/Levye/Audio/AudioManager.cpp.o
+libLevyeKit.a: CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.o
+libLevyeKit.a: CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.o
+libLevyeKit.a: CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.o
 libLevyeKit.a: CMakeFiles/LevyeKit.dir/build.make
 libLevyeKit.a: CMakeFiles/LevyeKit.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/nesmy/Projects/LevyeKit/Build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Linking CXX static library libLevyeKit.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/nesmy/Projects/LevyeKit/Build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Linking CXX static library libLevyeKit.a"
 	$(CMAKE_COMMAND) -P CMakeFiles/LevyeKit.dir/cmake_clean_target.cmake
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/LevyeKit.dir/link.txt --verbose=$(VERBOSE)
 

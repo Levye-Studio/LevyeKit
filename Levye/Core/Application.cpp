@@ -33,11 +33,11 @@ void Application::Run() {
      */
     m_GameModule.CheckForReload();
 
-    m_GameModule.UpdateResources();
+    m_GameModule.UpdateHostSystems();
 
-    const float deltaTime = GetFrameTime();
+    m_GameModule.UpdateTime(GetFrameTime());
 
-    m_GameModule.Update(deltaTime);
+    m_GameModule.Update(m_GameModule.GetTime().GetDeltaTime());
 
     BeginDrawing();
 

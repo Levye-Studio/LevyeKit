@@ -76,6 +76,14 @@ int main() {
 
   input.BindKey("ResumeMusic", KEY_R);
 
+  input.BindKey("NormalTime", KEY_ONE);
+
+  input.BindKey("SlowTime", KEY_TWO);
+
+  input.BindKey("FastTime", KEY_THREE);
+
+  input.BindKey("Pause", KEY_P);
+
   if (!gameModule.Load(gameLibraryPath)) {
     std::cerr << "[Sandbox] Failed to load game module.\n";
 

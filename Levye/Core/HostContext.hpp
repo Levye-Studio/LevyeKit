@@ -5,6 +5,8 @@ class InputMap;
 class ScreenManager;
 class TextureManager;
 class AudioManager;
+class ShaderManager;
+class Time;
 
 /**
  * @brief Internal collection of host-owned systems exposed to game services.
@@ -17,5 +19,8 @@ struct HostContext {
   ScreenManager *screens = nullptr;
   TextureManager *textures = nullptr;
   AudioManager *audio = nullptr;
+  ShaderManager *shaders = nullptr;
+
+  Time *time = nullptr;
 };
 } // namespace Levye

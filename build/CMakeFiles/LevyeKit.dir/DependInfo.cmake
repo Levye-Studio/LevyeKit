@@ -11,10 +11,13 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/Users/nesmy/Projects/LevyeKit/Levye/Assets/TextureManager.cpp" "CMakeFiles/LevyeKit.dir/Levye/Assets/TextureManager.cpp.o" "gcc" "CMakeFiles/LevyeKit.dir/Levye/Assets/TextureManager.cpp.o.d"
   "/Users/nesmy/Projects/LevyeKit/Levye/Audio/AudioManager.cpp" "CMakeFiles/LevyeKit.dir/Levye/Audio/AudioManager.cpp.o" "gcc" "CMakeFiles/LevyeKit.dir/Levye/Audio/AudioManager.cpp.o.d"
   "/Users/nesmy/Projects/LevyeKit/Levye/Core/Application.cpp" "CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o" "gcc" "CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.o.d"
+  "/Users/nesmy/Projects/LevyeKit/Levye/Graphics/ShaderManager.cpp" "CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.o" "gcc" "CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.o.d"
   "/Users/nesmy/Projects/LevyeKit/Levye/HotReload/DynamicLibrary.cpp" "CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.o" "gcc" "CMakeFiles/LevyeKit.dir/Levye/HotReload/DynamicLibrary.cpp.o.d"
   "/Users/nesmy/Projects/LevyeKit/Levye/HotReload/GameModule.cpp" "CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o" "gcc" "CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.o.d"
+  "/Users/nesmy/Projects/LevyeKit/Levye/IO/FileWatcher.cpp" "CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.o" "gcc" "CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.o.d"
   "/Users/nesmy/Projects/LevyeKit/Levye/Input/InputMap.cpp" "CMakeFiles/LevyeKit.dir/Levye/Input/InputMap.cpp.o" "gcc" "CMakeFiles/LevyeKit.dir/Levye/Input/InputMap.cpp.o.d"
   "/Users/nesmy/Projects/LevyeKit/Levye/Screen/ScreenManager.cpp" "CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.o" "gcc" "CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.o.d"
+  "/Users/nesmy/Projects/LevyeKit/Levye/Time/Time.cpp" "CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.o" "gcc" "CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

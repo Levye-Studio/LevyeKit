@@ -392,6 +392,30 @@ Levye/Core/Application.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Core/Application.cpp.s
 .PHONY : Levye/Core/Application.cpp.s
 
+Levye/Graphics/ShaderManager.o: Levye/Graphics/ShaderManager.cpp.o
+.PHONY : Levye/Graphics/ShaderManager.o
+
+# target to build an object file
+Levye/Graphics/ShaderManager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.o
+.PHONY : Levye/Graphics/ShaderManager.cpp.o
+
+Levye/Graphics/ShaderManager.i: Levye/Graphics/ShaderManager.cpp.i
+.PHONY : Levye/Graphics/ShaderManager.i
+
+# target to preprocess a source file
+Levye/Graphics/ShaderManager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.i
+.PHONY : Levye/Graphics/ShaderManager.cpp.i
+
+Levye/Graphics/ShaderManager.s: Levye/Graphics/ShaderManager.cpp.s
+.PHONY : Levye/Graphics/ShaderManager.s
+
+# target to generate assembly for a file
+Levye/Graphics/ShaderManager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Graphics/ShaderManager.cpp.s
+.PHONY : Levye/Graphics/ShaderManager.cpp.s
+
 Levye/HotReload/DynamicLibrary.o: Levye/HotReload/DynamicLibrary.cpp.o
 .PHONY : Levye/HotReload/DynamicLibrary.o
 
@@ -439,6 +463,30 @@ Levye/HotReload/GameModule.s: Levye/HotReload/GameModule.cpp.s
 Levye/HotReload/GameModule.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/HotReload/GameModule.cpp.s
 .PHONY : Levye/HotReload/GameModule.cpp.s
+
+Levye/IO/FileWatcher.o: Levye/IO/FileWatcher.cpp.o
+.PHONY : Levye/IO/FileWatcher.o
+
+# target to build an object file
+Levye/IO/FileWatcher.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.o
+.PHONY : Levye/IO/FileWatcher.cpp.o
+
+Levye/IO/FileWatcher.i: Levye/IO/FileWatcher.cpp.i
+.PHONY : Levye/IO/FileWatcher.i
+
+# target to preprocess a source file
+Levye/IO/FileWatcher.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.i
+.PHONY : Levye/IO/FileWatcher.cpp.i
+
+Levye/IO/FileWatcher.s: Levye/IO/FileWatcher.cpp.s
+.PHONY : Levye/IO/FileWatcher.s
+
+# target to generate assembly for a file
+Levye/IO/FileWatcher.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/IO/FileWatcher.cpp.s
+.PHONY : Levye/IO/FileWatcher.cpp.s
 
 Levye/Input/InputMap.o: Levye/Input/InputMap.cpp.o
 .PHONY : Levye/Input/InputMap.o
@@ -488,6 +536,30 @@ Levye/Screen/ScreenManager.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Screen/ScreenManager.cpp.s
 .PHONY : Levye/Screen/ScreenManager.cpp.s
 
+Levye/Time/Time.o: Levye/Time/Time.cpp.o
+.PHONY : Levye/Time/Time.o
+
+# target to build an object file
+Levye/Time/Time.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.o
+.PHONY : Levye/Time/Time.cpp.o
+
+Levye/Time/Time.i: Levye/Time/Time.cpp.i
+.PHONY : Levye/Time/Time.i
+
+# target to preprocess a source file
+Levye/Time/Time.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.i
+.PHONY : Levye/Time/Time.cpp.i
+
+Levye/Time/Time.s: Levye/Time/Time.cpp.s
+.PHONY : Levye/Time/Time.s
+
+# target to generate assembly for a file
+Levye/Time/Time.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LevyeKit.dir/build.make CMakeFiles/LevyeKit.dir/Levye/Time/Time.cpp.s
+.PHONY : Levye/Time/Time.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -524,18 +596,27 @@ help:
 	@echo "... Levye/Core/Application.o"
 	@echo "... Levye/Core/Application.i"
 	@echo "... Levye/Core/Application.s"
+	@echo "... Levye/Graphics/ShaderManager.o"
+	@echo "... Levye/Graphics/ShaderManager.i"
+	@echo "... Levye/Graphics/ShaderManager.s"
 	@echo "... Levye/HotReload/DynamicLibrary.o"
 	@echo "... Levye/HotReload/DynamicLibrary.i"
 	@echo "... Levye/HotReload/DynamicLibrary.s"
 	@echo "... Levye/HotReload/GameModule.o"
 	@echo "... Levye/HotReload/GameModule.i"
 	@echo "... Levye/HotReload/GameModule.s"
+	@echo "... Levye/IO/FileWatcher.o"
+	@echo "... Levye/IO/FileWatcher.i"
+	@echo "... Levye/IO/FileWatcher.s"
 	@echo "... Levye/Input/InputMap.o"
 	@echo "... Levye/Input/InputMap.i"
 	@echo "... Levye/Input/InputMap.s"
 	@echo "... Levye/Screen/ScreenManager.o"
 	@echo "... Levye/Screen/ScreenManager.i"
 	@echo "... Levye/Screen/ScreenManager.s"
+	@echo "... Levye/Time/Time.o"
+	@echo "... Levye/Time/Time.i"
+	@echo "... Levye/Time/Time.s"
 .PHONY : help
 
 
