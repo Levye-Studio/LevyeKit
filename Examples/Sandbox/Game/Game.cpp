@@ -105,6 +105,14 @@ void OnUpdate(Levye::GameState *state, const Levye::HostServices *services,
   }
 }
 
+void OnFixedUpdate(Levye::GameState *state, const Levye::HostServices *services,
+                   float fixedDeltaTime) {
+  (void)services;
+  (void)fixedDeltaTime;
+
+  ++state->fixedUpdateCount;
+}
+
 void OnDraw(Levye::GameState *state, const Levye::HostServices *services) {
   if (!state->initialized)
     return;
@@ -127,6 +135,10 @@ void OnDraw(Levye::GameState *state, const Levye::HostServices *services) {
 
   if (services->IsScreen(services->context, "Game")) {
     ClearBackground(DARKBLUE);
+
+    DrawText(TextFormat("Fixed updates: %llu", static_cast<unsigned long long>(
+                                                   state->fixedUpdateCount)),
+             20, 200, 20, WHITE);
 
     if (playerTexture && playerShader) {
       BeginShaderMode(*playerShader);
@@ -180,6 +192,7 @@ extern "C" Levye::GameAPI GetGameAPI() {
           .OnLoad = OnLoad,
           .OnReload = OnReload,
           .OnUpdate = OnUpdate,
+          .OnFixedUpdate = OnFixedUpdate,
           .OnDraw = OnDraw,
           .OnUnload = OnUnload};
 }

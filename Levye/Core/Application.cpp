@@ -35,9 +35,29 @@ void Application::Run() {
 
     m_GameModule.UpdateHostSystems();
 
-    m_GameModule.UpdateTime(GetFrameTime());
+    Time &time = m_GameModule.GetTime();
 
-    m_GameModule.Update(m_GameModule.GetTime().GetDeltaTime());
+    /*
+     * Capture the real frame duration once. Every timing system for this frame
+     * derives from this value.
+     */
+    time.Update(GetFrameTime());
+
+    /*
+     * Frame-rate-dependent gameplay and input processing run once per rendered
+     * frame.
+     */
+    m_GameModule.Update(time.GetDeltaTime());
+
+    /*
+     * Simulation may run zero, one, or several times depending on how much
+     * scaled game time accumulated since the previous rendered frame.
+     */
+    const int fixedSteps = time.ConsumeFixedSteps();
+
+    for (int i = 0; i < fixedSteps; ++i) {
+      m_GameModule.FixedUpdate(time.GetFixedDeltaTime());
+    }
 
     BeginDrawing();
 

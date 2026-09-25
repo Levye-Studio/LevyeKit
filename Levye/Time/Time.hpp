@@ -79,6 +79,49 @@ public:
    */
   bool IsPaused() const;
 
+  /**
+   * @brief Returns the duration of one fixed simulation step.
+   *
+   * The value is affected by the current time scale but remains constant
+   * between fixed updates.
+   */
+  float GetFixedDeltaTime() const;
+
+  /**
+   * @brief Returns the unscaled duration of one fixed simulation step.
+   */
+  float GetUnscaledFixedDeltaTime() const;
+
+  /**
+   * @brief Changes the frequency of fixed simulation updates.
+   *
+   * @param updatesPerSecond Number of fixed updates performed per second.
+   *
+   * Values less than or equal to zero are ignored.
+   */
+  void SetFixedUpdateRate(float updatesPerSecond);
+
+  /**
+   * @brief Returns the configured fixed-update frequency.
+   */
+  float GetFixedUpdateRate() const;
+
+  /**
+   * @brief Adds the current scaled frame duration to the fixed-step
+   * accumulator.
+   *
+   * @return Number of fixed simulation steps that should run this frame.
+   */
+  int ConsumeFixedSteps();
+
+  /**
+   * @brief Returns interpolation progress between the previous and next
+   * fixed simulation state.
+   *
+   * The returned value is normally in the range [0, 1).
+   */
+  float GetInterpolationAlpha() const;
+
 private:
   float m_DeltaTime = 0.0f;
   float m_UnscaledDeltaTime = 0.0f;
@@ -89,5 +132,12 @@ private:
   float m_TimeScale = 1.0f;
 
   bool m_Paused = false;
+
+  double m_FixedAccumulator = 0.0;
+
+  float m_FixedUpdateRate = 60.0f;
+  float m_UnscaledFixedDeltaTime = 1.0f / 60.0f;
+
+  static constexpr int MAX_FIXED_STEPS_PER_FRAME = 8;
 };
 } // namespace Levye

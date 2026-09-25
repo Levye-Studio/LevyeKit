@@ -95,6 +95,13 @@ public:
   void UpdateHostSystems();
 
   /**
+   * @brief Executes one fixed simulation update.
+   *
+   * @param fixedDeltaTime Duration of the simulation step in seconds.
+   */
+  void FixedUpdate(float fixedDeltaTime);
+
+  /**
    * @brief Calls the active game's drawing callback.
    */
   void Draw();

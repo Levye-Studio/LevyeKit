@@ -37,4 +37,69 @@ float Time::GetTimeScale() const { return m_TimeScale; }
 void Time::SetPaused(bool paused) { m_Paused = paused; }
 
 bool Time::IsPaused() const { return m_Paused; }
+
+float Time::GetFixedDeltaTime() const { return m_UnscaledFixedDeltaTime; }
+
+float Time::GetUnscaledFixedDeltaTime() const {
+  return m_UnscaledFixedDeltaTime;
+}
+
+void Time::SetFixedUpdateRate(float updatesPerSecond) {
+  if (updatesPerSecond <= 0.0f)
+    return;
+
+  m_FixedUpdateRate = updatesPerSecond;
+
+  m_UnscaledFixedDeltaTime = 1.0f / updatesPerSecond;
+
+  /*
+   * Reset accumulated time because changing the simulation frequency changes
+   * the meaning of any partially accumulated fixed step.
+   */
+  m_FixedAccumulator = 0.0;
+}
+
+float Time::GetFixedUpdateRate() const { return m_FixedUpdateRate; }
+
+int Time::ConsumeFixedSteps() {
+  if (m_Paused)
+    return 0;
+
+  /*
+   * Accumulate scaled game time so slow motion and fast-forward affect the
+   * rate at which the simulation advances.
+   */
+  m_FixedAccumulator += static_cast<double>(m_DeltaTime);
+
+  const double fixedStep = static_cast<double>(GetFixedDeltaTime());
+
+  if (fixedStep <= 0.0)
+    return 0;
+
+  int steps = 0;
+
+  while (m_FixedAccumulator >= fixedStep && steps < MAX_FIXED_STEPS_PER_FRAME) {
+    m_FixedAccumulator -= fixedStep;
+    ++steps;
+  }
+
+  /*
+   * If the application falls severely behind, discard excess accumulated
+   * simulation time rather than allowing an unlimited catch-up loop.
+   */
+  if (steps == MAX_FIXED_STEPS_PER_FRAME && m_FixedAccumulator >= fixedStep) {
+    m_FixedAccumulator = 0.0;
+  }
+
+  return steps;
+}
+
+float Time::GetInterpolationAlpha() const {
+  const double fixedStep = static_cast<double>(GetFixedDeltaTime());
+
+  if (fixedStep <= 0.0)
+    return 0.0f;
+
+  return static_cast<float>(m_FixedAccumulator / fixedStep);
+}
 } // namespace Levye

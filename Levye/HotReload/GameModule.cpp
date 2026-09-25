@@ -675,6 +675,14 @@ void GameModule::Update(float deltaTime) {
 
 void GameModule::UpdateTime(float deltaTime) { m_Time.Update(deltaTime); }
 
+void GameModule::FixedUpdate(float fixedDeltaTime) {
+  if (!m_HasAPI || !m_API.OnFixedUpdate) {
+    return;
+  }
+
+  m_API.OnFixedUpdate(&m_State, &m_HostServices, fixedDeltaTime);
+}
+
 void GameModule::Draw() {
   if (!m_HasAPI || !m_API.OnDraw)
     return;
@@ -813,8 +821,8 @@ bool GameModule::ValidateAPI(const GameAPI &api) const {
     return false;
   }
 
-  if (!api.OnLoad || !api.OnReload || !api.OnUpdate || !api.OnDraw ||
-      !api.OnUnload) {
+  if (!api.OnLoad || !api.OnReload || !api.OnUpdate || !api.OnFixedUpdate ||
+      !api.OnDraw || !api.OnUnload) {
     std::cerr << "[LevyeKit] Game API is missing required callbacks.\n";
 
     return false;

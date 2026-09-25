@@ -9,7 +9,7 @@ namespace Levye {
 /**
  * @brief Version of the binary interface shared by the host and game module.
  */
-inline constexpr std::uint32_t GAME_API_VERSION = 3;
+inline constexpr std::uint32_t GAME_API_VERSION = 4;
 
 /**
  * @brief Persistent state owned by the Levye host application.
@@ -24,6 +24,7 @@ struct GameState {
   AssetHandle clickSound{};
   AssetHandle music{};
   AssetHandle playerShader{};
+  std::uint64_t fixedUpdateCount = 0;
 };
 
 /**
@@ -41,6 +42,15 @@ struct GameAPI {
   /// Called once per frame before rendering.
   void (*OnUpdate)(GameState *state, const HostServices *services,
                    float deltaTime) = nullptr;
+
+  /**
+   * @brief Runs one fixed-rate simulation step.
+   *
+   * Fixed updates are intended for deterministic simulation such as movement,
+   * collision detection, and future physics systems.
+   */
+  void (*OnFixedUpdate)(GameState *state, const HostServices *services,
+                        float fixedDeltaTime) = nullptr;
 
   /// Called once per frame while a raylib drawing context is active.
   void (*OnDraw)(GameState *state, const HostServices *services) = nullptr;
