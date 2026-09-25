@@ -352,6 +352,18 @@ bool HostIsPaused(void *context) {
 
   return host->time->IsPaused();
 }
+
+float HostGetInterpolationAlpha(void *context) {
+  if (!context)
+    return 0.0f;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->time)
+    return 0.0f;
+
+  return host->time->GetInterpolationAlpha();
+}
 } // namespace
 GameModule::~GameModule() {
   Unload();
@@ -411,7 +423,8 @@ bool GameModule::Load(const std::string &path) {
                     .GetTimeScale = HostGetTimeScale,
 
                     .SetPaused = HostSetPaused,
-                    .IsPaused = HostIsPaused};
+                    .IsPaused = HostIsPaused,
+                    .GetInterpolationAlpha = HostGetInterpolationAlpha};
 
   const std::filesystem::path sourcePath(m_Path);
 

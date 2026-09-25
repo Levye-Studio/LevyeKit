@@ -59,19 +59,27 @@ void OnUpdate(Levye::GameState *state, const Levye::HostServices *services,
       return;
     }
 
-    constexpr float speed = 100.0f;
+    // constexpr float speed = 100.0f;
 
-    Vector2 movement{services->GetAxis(services->context, "MoveX"),
+    state->movementInput = {services->GetAxis(services->context, "MoveX"),
 
-                     services->GetAxis(services->context, "MoveY")};
+                            services->GetAxis(services->context, "MoveY")};
 
-    if (Vector2Length(movement) > 1.0f) {
-      movement = Vector2Normalize(movement);
+    if (Vector2Length(state->movementInput) > 1.0f) {
+      state->movementInput = Vector2Normalize(state->movementInput);
     }
 
-    state->playerPosition.x += movement.x * speed * deltaTime;
+    // Vector2 movement{services->GetAxis(services->context, "MoveX"),
 
-    state->playerPosition.y += movement.y * speed * deltaTime;
+    //                  services->GetAxis(services->context, "MoveY")};
+
+    // if (Vector2Length(movement) > 1.0f) {
+    //   movement = Vector2Normalize(movement);
+    // }
+
+    // state->playerPosition.x += movement.x * speed * deltaTime;
+
+    // state->playerPosition.y += movement.y * speed * deltaTime;
 
     if (services->IsActionPressed(services->context, "TestSound")) {
       services->PlaySound(services->context, state->clickSound);
@@ -108,7 +116,22 @@ void OnUpdate(Levye::GameState *state, const Levye::HostServices *services,
 void OnFixedUpdate(Levye::GameState *state, const Levye::HostServices *services,
                    float fixedDeltaTime) {
   (void)services;
-  (void)fixedDeltaTime;
+  constexpr float playerSpeed = 300.0f;
+
+  /*
+   * Preserve the previous simulation position before advancing the
+   * current position. Rendering interpolates between these two states.
+   */
+  state->playerPreviousPosition = state->playerPosition;
+
+  /*
+   * Apply the input captured during OnUpdate to the fixed-rate simulation.
+   */
+  state->playerPosition.x +=
+      state->movementInput.x * playerSpeed * fixedDeltaTime;
+
+  state->playerPosition.y +=
+      state->movementInput.y * playerSpeed * fixedDeltaTime;
 
   ++state->fixedUpdateCount;
 }
@@ -122,6 +145,14 @@ void OnDraw(Levye::GameState *state, const Levye::HostServices *services) {
 
   const Shader *playerShader =
       services->GetShader(services->context, state->playerShader);
+
+  const float alpha = services->GetInterpolationAlpha(services->context);
+  const Vector2 renderPosition{
+      state->playerPreviousPosition.x +
+          (state->playerPosition.x - state->playerPreviousPosition.x) * alpha,
+
+      state->playerPreviousPosition.y +
+          (state->playerPosition.y - state->playerPreviousPosition.y) * alpha};
 
   if (services->IsScreen(services->context, "Menu")) {
     ClearBackground(BLACK);
@@ -142,14 +173,13 @@ void OnDraw(Levye::GameState *state, const Levye::HostServices *services) {
 
     if (playerTexture && playerShader) {
       BeginShaderMode(*playerShader);
-
-      DrawTexture(*playerTexture, static_cast<int>(state->playerPosition.x),
-                  static_cast<int>(state->playerPosition.y), WHITE);
+      DrawTexture(*playerTexture, static_cast<int>(renderPosition.x),
+                  static_cast<int>(renderPosition.y), WHITE);
 
       EndShaderMode();
     } else if (playerTexture) {
-      DrawTexture(*playerTexture, static_cast<int>(state->playerPosition.x),
-                  static_cast<int>(state->playerPosition.y), RED);
+      DrawTexture(*playerTexture, static_cast<int>(renderPosition.x),
+                  static_cast<int>(renderPosition.y), WHITE);
     } else {
 
       DrawCircleV(state->playerPosition, 30.0f, GOLD);

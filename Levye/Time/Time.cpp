@@ -102,4 +102,10 @@ float Time::GetInterpolationAlpha() const {
 
   return static_cast<float>(m_FixedAccumulator / fixedStep);
 }
+
+float Time::Interpolate(float previous, float current) const {
+  const float alpha = GetInterpolationAlpha();
+
+  return previous + (current - previous) * alpha;
+}
 } // namespace Levye

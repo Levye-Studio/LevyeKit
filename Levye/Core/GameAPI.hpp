@@ -9,7 +9,7 @@ namespace Levye {
 /**
  * @brief Version of the binary interface shared by the host and game module.
  */
-inline constexpr std::uint32_t GAME_API_VERSION = 4;
+inline constexpr std::uint32_t GAME_API_VERSION = 5;
 
 /**
  * @brief Persistent state owned by the Levye host application.
@@ -18,7 +18,11 @@ struct GameState {
   bool initialized = false;
   int reloadCount = 0;
 
+  Vector2 playerPreviousPosition{640.0f, 360.0f};
+
   Vector2 playerPosition{640.0f, 360.0f};
+
+  Vector2 movementInput{0.0f, 0.0f};
 
   AssetHandle playerTexture{};
   AssetHandle clickSound{};

@@ -122,6 +122,16 @@ public:
    */
   float GetInterpolationAlpha() const;
 
+  /**
+   * @brief Interpolates between two floating-point values using the current
+   * fixed-step interpolation alpha.
+   *
+   * @param previous Value from the previous simulation step.
+   * @param current Value from the current simulation step.
+   * @return Interpolated value for rendering.
+   */
+  float Interpolate(float previous, float current) const;
+
 private:
   float m_DeltaTime = 0.0f;
   float m_UnscaledDeltaTime = 0.0f;

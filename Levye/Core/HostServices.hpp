@@ -236,5 +236,12 @@ struct HostServices {
    * @brief Returns whether scaled game time is paused.
    */
   bool (*IsPaused)(void *context) = nullptr;
+
+  /**
+   * @brief Returns interpolation progress between fixed simulation states.
+   *
+   * The value is normally in the range [0, 1).
+   */
+  float (*GetInterpolationAlpha)(void *context) = nullptr;
 };
 } // namespace Levye
