@@ -146,6 +146,21 @@ public:
    */
   void ReleaseResources();
 
+  /**
+   * @brief Sets the root directory used to resolve relative asset paths.
+   *
+   * The asset root should normally be configured before Start() so game code
+   * can load relative assets during OnLoad().
+   *
+   * @param path Project asset directory.
+   */
+  void SetAssetRoot(const std::string &path);
+
+  /**
+   * @brief Returns the configured project asset root.
+   */
+  const std::string &GetAssetRoot() const;
+
 private:
   /**
    * @brief Creates a unique path for the next runtime module copy.
@@ -204,6 +219,8 @@ private:
   FontManager m_FontManager;
 
   Time m_Time;
+
+  std::string m_AssetRoot;
 
   /**
    * @brief Watches the compiler-produced game module for stable changes.

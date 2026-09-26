@@ -1,4 +1,5 @@
 #include "GameModule.hpp"
+#include <Levye/Assets/AssetPath.hpp>
 #include <Levye/Input/InputMap.hpp>
 #include <Levye/Screen/ScreenManager.hpp>
 
@@ -6,6 +7,17 @@
 
 namespace Levye {
 namespace {
+std::string ResolveAssetPath(HostContext *host, const char *path) {
+  if (!host || !path)
+    return {};
+
+  if (!host->assetRoot) {
+    return AssetPath::Normalize(path);
+  }
+
+  return AssetPath::Resolve(*host->assetRoot, path);
+}
+
 void HostLogInfo(const char *message) {
   if (!message)
     return;
@@ -108,7 +120,12 @@ AssetHandle HostLoadTexture(void *context, const char *path) {
   if (!host->textures)
     return {};
 
-  return host->textures->Load(path);
+  const std::string resolvedPath = ResolveAssetPath(host, path);
+
+  if (resolvedPath.empty())
+    return {};
+
+  return host->textures->Load(resolvedPath);
 }
 
 const Texture2D *HostGetTexture(void *context, AssetHandle handle) {
@@ -132,7 +149,9 @@ AssetHandle HostLoadSound(void *context, const char *path) {
   if (!host->audio)
     return {};
 
-  return host->audio->LoadSound(path);
+  const std::string resolvedPath = ResolveAssetPath(host, path);
+
+  return host->audio->LoadSound(resolvedPath);
 }
 
 void HostPlaySound(void *context, AssetHandle handle) {
@@ -180,7 +199,9 @@ AssetHandle HostLoadMusic(void *context, const char *path) {
   if (!host->audio)
     return {};
 
-  return host->audio->LoadMusic(path);
+  const std::string resolvedPath = ResolveAssetPath(host, path);
+
+  return host->audio->LoadMusic(resolvedPath);
 }
 
 void HostPlayMusic(void *context, AssetHandle handle) {
@@ -244,9 +265,13 @@ AssetHandle HostLoadShader(void *context, const char *vertexPath,
   if (!host->shaders)
     return {};
 
-  return host->shaders->Load(vertexPath ? vertexPath : "",
+  const std::string resolvedVertex =
+      vertexPath ? ResolveAssetPath(host, vertexPath) : std::string{};
 
-                             fragmentPath ? fragmentPath : "");
+  const std::string resolvedFragment =
+      fragmentPath ? ResolveAssetPath(host, fragmentPath) : std::string{};
+
+  return host->shaders->Load(resolvedVertex, resolvedFragment);
 }
 
 const Shader *HostGetShader(void *context, AssetHandle handle) {
@@ -374,7 +399,12 @@ AssetHandle HostLoadFont(void *context, const char *path, int fontSize) {
   if (!host->fonts)
     return {};
 
-  return host->fonts->Load(path, fontSize);
+  const std::string resolvedPath = ResolveAssetPath(host, path);
+
+  if (resolvedPath.empty())
+    return {};
+
+  return host->fonts->Load(resolvedPath, fontSize);
 }
 
 const Font *HostGetFont(void *context, AssetHandle handle) {
@@ -388,6 +418,7 @@ const Font *HostGetFont(void *context, AssetHandle handle) {
 
   return host->fonts->Get(handle);
 }
+
 } // namespace
 GameModule::~GameModule() {
   Unload();
@@ -405,7 +436,8 @@ bool GameModule::Load(const std::string &path) {
                    .audio = &m_AudioManager,
                    .shaders = &m_ShaderManager,
                    .fonts = &m_FontManager,
-                   .time = &m_Time};
+                   .time = &m_Time,
+                   .assetRoot = &m_AssetRoot};
 
   m_HostServices = {.context = &m_HostContext,
 
@@ -877,6 +909,12 @@ Time &GameModule::GetTime() { return m_Time; }
 InputMap &GameModule::GetInputMap() { return m_InputMap; }
 
 ScreenManager &GameModule::GetScreenManager() { return m_ScreenManager; }
+
+void GameModule::SetAssetRoot(const std::string &path) {
+  m_AssetRoot = AssetPath::Normalize(path);
+}
+
+const std::string &GameModule::GetAssetRoot() const { return m_AssetRoot; }
 
 void GameModule::ReleaseResources() {
   m_AudioManager.Clear();

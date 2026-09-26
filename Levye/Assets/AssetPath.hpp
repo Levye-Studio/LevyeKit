@@ -21,5 +21,17 @@ public:
    * @return Normalized path string, or an empty string when path is empty.
    */
   static std::string Normalize(const std::string &path);
+
+  /**
+   * @brief Resolves an asset path relative to a configured asset root.
+   *
+   * Absolute paths are preserved. Relative paths are joined to the asset root
+   * before being normalized.
+   *
+   * @param root Root directory containing project assets.
+   * @param path Asset path supplied by game code.
+   * @return Resolved normalized filesystem path.
+   */
+  static std::string Resolve(const std::string &root, const std::string &path);
 };
 } // namespace Levye

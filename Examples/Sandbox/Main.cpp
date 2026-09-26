@@ -84,6 +84,8 @@ int main() {
 
   input.BindKey("Pause", KEY_P);
 
+  gameModule.SetAssetRoot("Examples/Sandbox/Assets");
+
   if (!gameModule.Load(gameLibraryPath)) {
     std::cerr << "[Sandbox] Failed to load game module.\n";
 

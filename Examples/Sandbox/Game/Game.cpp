@@ -6,34 +6,20 @@ namespace {
 void OnLoad(Levye::GameState *state, const Levye::HostServices *services) {
   state->initialized = true;
 
-  state->playerTexture = services->LoadTexture(
-      services->context, "Examples/Sandbox/Assets/player.png");
+  state->playerTexture = services->LoadTexture(services->context, "player.png");
 
-  const auto textureA = services->LoadTexture(
-      services->context, "Examples/Sandbox/Game/../Assets/player.png");
+  state->clickSound = services->LoadSound(services->context, "click.wav");
 
-  const auto textureB = services->LoadTexture(
-      services->context, "./Examples/Sandbox/Assets/player.png");
-
-  if (textureA == textureB) {
-    services->LogInfo("Asset path normalization works.");
-  }
-
-  state->clickSound = services->LoadSound(services->context,
-                                          "Examples/Sandbox/Assets/click.wav");
-
-  state->music = services->LoadMusic(services->context,
-                                     "Examples/Sandbox/Assets/music.ogg");
+  state->music = services->LoadMusic(services->context, "music.ogg");
 
   services->SetMusicVolume(services->context, state->music, 0.5f);
 
   services->PlayMusic(services->context, state->music);
 
-  state->playerShader = services->LoadShader(services->context, nullptr,
-                                             "Examples/Sandbox/Assets/test.fs");
+  state->playerShader =
+      services->LoadShader(services->context, nullptr, "test.fs");
 
-  state->font = services->LoadFont(services->context,
-                                   "Examples/Sandbox/Assets/test.ttf", 32);
+  state->font = services->LoadFont(services->context, "test.ttf", 32);
 
   if (services->LogInfo)
     services->LogInfo("Sandbox started");

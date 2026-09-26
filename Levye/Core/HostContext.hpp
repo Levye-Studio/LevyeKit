@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 namespace Levye {
 class InputMap;
 class ScreenManager;
@@ -24,5 +26,10 @@ struct HostContext {
   FontManager *fonts = nullptr;
 
   Time *time = nullptr;
+
+  /**
+   * @brief Root directory used to resolve relative game asset paths.
+   */
+  const std::string *assetRoot = nullptr;
 };
 } // namespace Levye
