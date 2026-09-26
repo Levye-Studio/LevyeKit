@@ -1,26 +1,11 @@
 #pragma once
 
+#include <Levye/Core/ApplicationConfig.hpp>
 #include <Levye/HotReload/GameModule.hpp>
 
 #include <string>
 
 namespace Levye {
-/**
- * @brief Configuration used when creating a Levye application.
- */
-struct ApplicationConfig {
-  /// Initial width of the application window.
-  int width = 1280;
-
-  /// Initial height of the application window.
-  int height = 720;
-
-  /// Title displayed by the application window.
-  std::string title = "Levye Game";
-
-  /// Target number of frames rendered per second.
-  int targetFPS = 60;
-};
 
 /**
  * @brief Owns the application's window and main runtime loop.

@@ -105,12 +105,12 @@ int main() {
     return 1;
   }
 
-  Levye::ApplicationConfig config;
-
-  config.width = 1280;
-  config.height = 720;
-  config.title = "LevyeKit Sandbox";
-  config.targetFPS = 60;
+  Levye::ApplicationConfig config{.title = "LevyeKit Sandbox",
+                                  .width = 1280,
+                                  .height = 720,
+                                  .targetFPS = 60,
+                                  .resizable = true,
+                                  .vsync = false};
 
   Levye::Application app(config, gameModule);
 

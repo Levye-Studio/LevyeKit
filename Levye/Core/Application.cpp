@@ -8,11 +8,27 @@ Application::Application(const ApplicationConfig &config,
     : m_Config(config), m_GameModule(gameModule) {}
 
 void Application::Run() {
+  unsigned int windowFlags = 0;
+
+  if (m_Config.resizable) {
+    windowFlags |= FLAG_WINDOW_RESIZABLE;
+  }
+
+  if (m_Config.vsync) {
+    windowFlags |= FLAG_VSYNC_HINT;
+  }
+
+  if (windowFlags != 0) {
+    SetConfigFlags(windowFlags);
+  }
+
   InitWindow(m_Config.width, m_Config.height, m_Config.title.c_str());
 
   SetExitKey(KEY_NULL);
 
-  SetTargetFPS(m_Config.targetFPS);
+  if (m_Config.targetFPS > 0) {
+    SetTargetFPS(m_Config.targetFPS);
+  }
 
   InitAudioDevice();
 

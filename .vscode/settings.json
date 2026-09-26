@@ -1,0 +1,12 @@
+{
+    "cmake.sourceDirectory": "${workspaceFolder}",
+    "cmake.buildDirectory": "${workspaceFolder}/Build",
+    "cmake.configureOnOpen": true,
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "files.associations": {
+        "*.hpp": "cpp"
+    },
+    "[cpp]": {
+        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+    }
+}
