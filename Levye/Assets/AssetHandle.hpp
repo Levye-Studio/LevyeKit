@@ -15,7 +15,8 @@ enum class AssetType : std::uint8_t {
   Texture,
   Shader,
   Sound,
-  Music
+  Music,
+  Font
 };
 
 /**

@@ -46,6 +46,7 @@ add_library(
     Levye/Assets/TextureManager.cpp
     Levye/Audio/AudioManager.cpp
     Levye/Graphics/ShaderManager.cpp
+    Levye/Graphics/FontManager.cpp
 
     Levye/IO/FileWatcher.cpp
 

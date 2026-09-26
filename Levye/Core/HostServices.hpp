@@ -243,5 +243,25 @@ struct HostServices {
    * The value is normally in the range [0, 1).
    */
   float (*GetInterpolationAlpha)(void *context) = nullptr;
+
+  /////
+  /**
+   * @brief Loads a host-owned font.
+   *
+   * @param context Host service context.
+   * @param path Path to the font file.
+   * @param fontSize Base font size.
+   * @return Handle to the loaded font.
+   */
+  AssetHandle (*LoadFont)(void *context, const char *path,
+                          int fontSize) = nullptr;
+
+  /**
+   * @brief Returns a loaded font.
+   *
+   * @warning The returned pointer is temporary and must not be stored by
+   * persistent game state.
+   */
+  const Font *(*GetFont)(void *context, AssetHandle handle) = nullptr;
 };
 } // namespace Levye

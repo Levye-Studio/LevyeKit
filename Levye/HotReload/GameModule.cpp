@@ -364,6 +364,30 @@ float HostGetInterpolationAlpha(void *context) {
 
   return host->time->GetInterpolationAlpha();
 }
+
+AssetHandle HostLoadFont(void *context, const char *path, int fontSize) {
+  if (!context || !path)
+    return {};
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->fonts)
+    return {};
+
+  return host->fonts->Load(path, fontSize);
+}
+
+const Font *HostGetFont(void *context, AssetHandle handle) {
+  if (!context)
+    return nullptr;
+
+  auto *host = static_cast<HostContext *>(context);
+
+  if (!host->fonts)
+    return nullptr;
+
+  return host->fonts->Get(handle);
+}
 } // namespace
 GameModule::~GameModule() {
   Unload();
@@ -380,6 +404,7 @@ bool GameModule::Load(const std::string &path) {
                    .textures = &m_TextureManager,
                    .audio = &m_AudioManager,
                    .shaders = &m_ShaderManager,
+                   .fonts = &m_FontManager,
                    .time = &m_Time};
 
   m_HostServices = {.context = &m_HostContext,
@@ -424,7 +449,9 @@ bool GameModule::Load(const std::string &path) {
 
                     .SetPaused = HostSetPaused,
                     .IsPaused = HostIsPaused,
-                    .GetInterpolationAlpha = HostGetInterpolationAlpha};
+                    .GetInterpolationAlpha = HostGetInterpolationAlpha,
+                    .LoadFont = HostLoadFont,
+                    .GetFont = HostGetFont};
 
   const std::filesystem::path sourcePath(m_Path);
 
@@ -735,6 +762,7 @@ const std::string &GameModule::GetPath() const { return m_Path; }
 void GameModule::UpdateHostSystems() {
   m_TextureManager.CheckForChanges();
   m_ShaderManager.CheckForChanges();
+  m_FontManager.CheckForChanges();
   /*
    * Streaming music requires regular buffer updates. Keeping this in the
    * host means playback continues across game-code hot reloads.
@@ -852,6 +880,8 @@ ScreenManager &GameModule::GetScreenManager() { return m_ScreenManager; }
 
 void GameModule::ReleaseResources() {
   m_AudioManager.Clear();
+
+  m_FontManager.Clear();
   m_ShaderManager.Clear();
   m_TextureManager.Clear();
 }

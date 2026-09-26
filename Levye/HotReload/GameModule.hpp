@@ -5,6 +5,7 @@
 #include <Levye/Core/GameAPI.hpp>
 #include <Levye/Core/HostContext.hpp>
 #include <Levye/Core/HostServices.hpp>
+#include <Levye/Graphics/FontManager.hpp>
 #include <Levye/Graphics/ShaderManager.hpp>
 #include <Levye/HotReload/DynamicLibrary.hpp>
 #include <Levye/IO/FileWatcher.hpp>
@@ -195,10 +196,13 @@ private:
   HostContext m_HostContext{};
 
   InputMap m_InputMap;
-  TextureManager m_TextureManager;
   ScreenManager m_ScreenManager;
+
+  TextureManager m_TextureManager;
   AudioManager m_AudioManager;
   ShaderManager m_ShaderManager;
+  FontManager m_FontManager;
+
   Time m_Time;
 
   /**

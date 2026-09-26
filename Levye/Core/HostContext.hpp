@@ -7,6 +7,7 @@ class TextureManager;
 class AudioManager;
 class ShaderManager;
 class Time;
+class FontManager;
 
 /**
  * @brief Internal collection of host-owned systems exposed to game services.
@@ -20,6 +21,7 @@ struct HostContext {
   TextureManager *textures = nullptr;
   AudioManager *audio = nullptr;
   ShaderManager *shaders = nullptr;
+  FontManager *fonts = nullptr;
 
   Time *time = nullptr;
 };

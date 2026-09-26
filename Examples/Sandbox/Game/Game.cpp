@@ -22,6 +22,9 @@ void OnLoad(Levye::GameState *state, const Levye::HostServices *services) {
   state->playerShader = services->LoadShader(services->context, nullptr,
                                              "Examples/Sandbox/Assets/test.fs");
 
+  state->font = services->LoadFont(services->context,
+                                   "Examples/Sandbox/Assets/test.ttf", 32);
+
   if (services->LogInfo)
     services->LogInfo("Sandbox started");
 }
@@ -154,12 +157,19 @@ void OnDraw(Levye::GameState *state, const Levye::HostServices *services) {
       state->playerPreviousPosition.y +
           (state->playerPosition.y - state->playerPreviousPosition.y) * alpha};
 
+  const Font *font = services->GetFont(services->context, state->font);
+
   if (services->IsScreen(services->context, "Menu")) {
     ClearBackground(BLACK);
 
     DrawText("LEVYEKIT", 40, 40, 40, RAYWHITE);
 
     DrawText("Press ENTER to play", 40, 100, 24, LIGHTGRAY);
+
+    if (font) {
+      DrawTextEx(*font, "LevyeKit FontManager", Vector2{40.0f, 140.0f}, 32.0f,
+                 1.0f, RAYWHITE);
+    }
 
     return;
   }
