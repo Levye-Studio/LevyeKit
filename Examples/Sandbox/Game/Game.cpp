@@ -9,6 +9,16 @@ void OnLoad(Levye::GameState *state, const Levye::HostServices *services) {
   state->playerTexture = services->LoadTexture(
       services->context, "Examples/Sandbox/Assets/player.png");
 
+  const auto textureA = services->LoadTexture(
+      services->context, "Examples/Sandbox/Game/../Assets/player.png");
+
+  const auto textureB = services->LoadTexture(
+      services->context, "./Examples/Sandbox/Assets/player.png");
+
+  if (textureA == textureB) {
+    services->LogInfo("Asset path normalization works.");
+  }
+
   state->clickSound = services->LoadSound(services->context,
                                           "Examples/Sandbox/Assets/click.wav");
 

@@ -1,4 +1,5 @@
 #include "AudioManager.hpp"
+#include <Levye/Assets/AssetPath.hpp>
 
 #include <algorithm>
 #include <iostream>
@@ -7,12 +8,16 @@ namespace Levye {
 AudioManager::~AudioManager() { Clear(); }
 
 AssetHandle AudioManager::LoadSound(const std::string &path) {
-  const auto existing = m_PathLookup.find(path);
+  const std::string normalizedPath = AssetPath::Normalize(path);
+
+  if (normalizedPath.empty())
+    return {};
+  const auto existing = m_PathLookup.find(normalizedPath);
 
   if (existing != m_PathLookup.end())
     return existing->second;
 
-  Sound sound = ::LoadSound(path.c_str());
+  Sound sound = ::LoadSound(normalizedPath.c_str());
 
   if (!IsSoundValid(sound)) {
     std::cerr << "[LevyeKit] Failed to load sound: " << path << '\n';
@@ -22,9 +27,10 @@ AssetHandle AudioManager::LoadSound(const std::string &path) {
 
   const AssetHandle handle{.id = m_NextHandle++, .type = AssetType::Sound};
 
-  m_Sounds.emplace(handle.id, SoundAsset{.sound = sound, .path = path});
+  m_Sounds.emplace(handle.id,
+                   SoundAsset{.sound = sound, .path = normalizedPath});
 
-  m_PathLookup.emplace(path, handle);
+  m_PathLookup.emplace(normalizedPath, handle);
 
   std::cout << "[LevyeKit] Loaded sound: " << path << '\n';
 
@@ -83,12 +89,16 @@ void AudioManager::UnloadSound(AssetHandle handle) {
 }
 
 AssetHandle AudioManager::LoadMusic(const std::string &path) {
-  const auto existing = m_MusicPathLookup.find(path);
+  const std::string normalizedPath = AssetPath::Normalize(path);
+
+  if (normalizedPath.empty())
+    return {};
+  const auto existing = m_MusicPathLookup.find(normalizedPath);
 
   if (existing != m_MusicPathLookup.end())
     return existing->second;
 
-  Music music = ::LoadMusicStream(path.c_str());
+  Music music = ::LoadMusicStream(normalizedPath.c_str());
 
   if (!IsMusicValid(music)) {
     std::cerr << "[LevyeKit] Failed to load music: " << path << '\n';
@@ -98,9 +108,10 @@ AssetHandle AudioManager::LoadMusic(const std::string &path) {
 
   const AssetHandle handle{.id = m_NextHandle++, .type = AssetType::Music};
 
-  m_Music.emplace(handle.id, MusicAsset{.music = music, .path = path});
+  m_Music.emplace(handle.id,
+                  MusicAsset{.music = music, .path = normalizedPath});
 
-  m_MusicPathLookup.emplace(path, handle);
+  m_MusicPathLookup.emplace(normalizedPath, handle);
 
   std::cout << "[LevyeKit] Loaded music: " << path << '\n';
 

@@ -1,4 +1,5 @@
 #include "FontManager.hpp"
+#include <Levye/Assets/AssetPath.hpp>
 
 #include <iostream>
 
@@ -10,7 +11,13 @@ AssetHandle FontManager::Load(const std::string &path, int fontSize) {
     return {};
   }
 
-  const std::string key = CreateKey(path, fontSize);
+  const std::string normalizedPath = AssetPath::Normalize(path);
+
+  if (normalizedPath.empty() || fontSize <= 0) {
+    return {};
+  }
+
+  const std::string key = CreateKey(normalizedPath, fontSize);
 
   /*
    * Return the existing host-owned resource instead of loading the same
@@ -22,7 +29,7 @@ AssetHandle FontManager::Load(const std::string &path, int fontSize) {
     return existing->second;
   }
 
-  Font font = ::LoadFontEx(path.c_str(), fontSize, nullptr, 0);
+  Font font = ::LoadFontEx(normalizedPath.c_str(), fontSize, nullptr, 0);
 
   if (!::IsFontValid(font)) {
     std::cerr << "[LevyeKit] Failed to load font: " << path << '\n';
@@ -33,9 +40,9 @@ AssetHandle FontManager::Load(const std::string &path, int fontSize) {
   AssetHandle handle{.id = m_NextHandle++, .type = AssetType::Font};
 
   m_Fonts.emplace(handle.id, FontAsset{.font = font,
-                                       .path = path,
+                                       .path = normalizedPath,
                                        .fontSize = fontSize,
-                                       .watcher = FileWatcher(path)});
+                                       .watcher = FileWatcher(normalizedPath)});
 
   m_PathLookup.emplace(key, handle);
 

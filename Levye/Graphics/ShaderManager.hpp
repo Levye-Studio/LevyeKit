@@ -74,6 +74,17 @@ public:
   void Clear();
 
 private:
+  /**
+   * @brief Creates the cache key for a shader configuration.
+   *
+   * @param vertexPath Normalized vertex shader path.
+   * @param fragmentPath Normalized fragment shader path.
+   * @return Stable lookup key for the shader pair.
+   */
+  static std::string CreateKey(const std::string &vertexPath,
+                               const std::string &fragmentPath);
+
+private:
   struct ShaderAsset {
     Shader shader{};
 
@@ -93,6 +104,7 @@ private:
   bool Reload(ShaderAsset &asset);
 
   std::unordered_map<std::uint64_t, ShaderAsset> m_Shaders;
+  std::unordered_map<std::string, AssetHandle> m_PathLookup;
 
   std::uint64_t m_NextHandle = 1;
 };

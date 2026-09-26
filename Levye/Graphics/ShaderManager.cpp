@@ -1,4 +1,5 @@
 #include "ShaderManager.hpp"
+#include <Levye/Assets/AssetPath.hpp>
 
 #include <iostream>
 
@@ -23,9 +24,27 @@ ShaderManager::~ShaderManager() { Clear(); }
 
 AssetHandle ShaderManager::Load(const std::string &vertexPath,
                                 const std::string &fragmentPath) {
-  const char *vertex = vertexPath.empty() ? nullptr : vertexPath.c_str();
 
-  const char *fragment = fragmentPath.empty() ? nullptr : fragmentPath.c_str();
+  const std::string normalizedVertexPath =
+      vertexPath.empty() ? std::string{} : AssetPath::Normalize(vertexPath);
+
+  const std::string normalizedFragmentPath =
+      fragmentPath.empty() ? std::string{} : AssetPath::Normalize(fragmentPath);
+
+  const std::string key =
+      CreateKey(normalizedVertexPath, normalizedFragmentPath);
+
+  const auto existing = m_PathLookup.find(key);
+
+  if (existing != m_PathLookup.end()) {
+    return existing->second;
+  }
+
+  const char *vertex =
+      normalizedVertexPath.empty() ? nullptr : normalizedVertexPath.c_str();
+
+  const char *fragment =
+      normalizedFragmentPath.empty() ? nullptr : normalizedFragmentPath.c_str();
 
   Shader shader = ::LoadShader(vertex, fragment);
 
@@ -41,15 +60,19 @@ AssetHandle ShaderManager::Load(const std::string &vertexPath,
       handle.id,
       ShaderAsset{.shader = shader,
 
-                  .vertexPath = vertexPath,
-                  .fragmentPath = fragmentPath,
+                  .vertexPath = normalizedVertexPath,
+                  .fragmentPath = normalizedFragmentPath,
 
-                  .vertexWatcher = vertexPath.empty() ? FileWatcher{}
-                                                      : FileWatcher{vertexPath},
+                  .vertexWatcher = normalizedVertexPath.empty()
+                                       ? FileWatcher{}
+                                       : FileWatcher{normalizedVertexPath},
 
-                  .fragmentWatcher = fragmentPath.empty()
-                                         ? FileWatcher{}
-                                         : FileWatcher{fragmentPath}});
+                  .fragmentWatcher =
+                      normalizedFragmentPath.empty()
+                          ? FileWatcher{}
+                          : FileWatcher{normalizedFragmentPath}});
+
+  m_PathLookup.emplace(key, handle);
 
   std::cout << "[LevyeKit] Loaded shader: " << vertexPath << " | "
             << fragmentPath << '\n';
@@ -128,9 +151,17 @@ void ShaderManager::Unload(AssetHandle handle) {
   if (iterator == m_Shaders.end())
     return;
 
+  m_PathLookup.erase(
+      CreateKey(iterator->second.vertexPath, iterator->second.fragmentPath));
+
   ::UnloadShader(iterator->second.shader);
 
   m_Shaders.erase(iterator);
+}
+
+std::string ShaderManager::CreateKey(const std::string &vertexPath,
+                                     const std::string &fragmentPath) {
+  return vertexPath + "|" + fragmentPath;
 }
 
 void ShaderManager::Clear() {
@@ -139,6 +170,7 @@ void ShaderManager::Clear() {
 
     ::UnloadShader(asset.shader);
   }
+  m_PathLookup.clear();
 
   m_Shaders.clear();
 }

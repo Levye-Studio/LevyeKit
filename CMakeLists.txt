@@ -49,7 +49,7 @@ add_library(
     Levye/Graphics/FontManager.cpp
 
     Levye/IO/FileWatcher.cpp
-
+    Levye/Assets/AssetPath.cpp
     Levye/Time/Time.cpp
 )
 
