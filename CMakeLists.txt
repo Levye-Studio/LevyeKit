@@ -50,6 +50,7 @@ add_library(
 
     Levye/IO/FileWatcher.cpp
     Levye/Assets/AssetPath.cpp
+    Levye/Platform/ExecutablePath.cpp
     Levye/Time/Time.cpp
 )
 

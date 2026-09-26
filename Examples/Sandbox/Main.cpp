@@ -1,5 +1,6 @@
 #include <Levye/Core/Application.hpp>
 #include <Levye/HotReload/GameModule.hpp>
+#include <Levye/Platform/ExecutablePath.hpp>
 
 #include <raylib.h>
 
@@ -24,6 +25,18 @@ int main() {
 #error Unsupported platform
 
 #endif
+
+  const std::filesystem::path executableDirectory =
+      Levye::ExecutablePath::GetDirectory();
+
+  const std::filesystem::path gameModulePath =
+      (executableDirectory / "../lib/Game.dylib").lexically_normal();
+
+  const std::filesystem::path frameworkRoot =
+      (executableDirectory / "../../..").lexically_normal();
+
+  const std::filesystem::path assetRoot =
+      frameworkRoot / "Examples/Sandbox/Assets";
 
   Levye::GameModule gameModule;
   gameModule.GetScreenManager().SetScreen("Menu");
@@ -84,9 +97,9 @@ int main() {
 
   input.BindKey("Pause", KEY_P);
 
-  gameModule.SetAssetRoot("Examples/Sandbox/Assets");
+  gameModule.SetAssetRoot(assetRoot.string());
 
-  if (!gameModule.Load(gameLibraryPath)) {
+  if (!gameModule.Load(gameModulePath.string())) {
     std::cerr << "[Sandbox] Failed to load game module.\n";
 
     return 1;
