@@ -74,6 +74,14 @@ public:
   void Unload();
 
   /**
+   * @brief Shuts down the active game and unloads its dynamic module.
+   *
+   * OnShutdown is invoked before the module is unloaded when the game has
+   * previously been started.
+   */
+  void Shutdown();
+
+  /**
    * @brief Calls the current module's update callback.
    *
    * @param deltaTime Time elapsed since the previous frame.

@@ -9,7 +9,7 @@ namespace Levye {
 /**
  * @brief Version of the binary interface shared by the host and game module.
  */
-inline constexpr std::uint32_t GAME_API_VERSION = 7;
+inline constexpr std::uint32_t GAME_API_VERSION = 8;
 
 /**
  * @brief Persistent state owned by the Levye host application.
@@ -42,7 +42,9 @@ struct GameAPI {
   void (*OnLoad)(GameState *state, const HostServices *services) = nullptr;
 
   /// Called after game code has been successfully hot reloaded.
-  void (*OnReload)(GameState *state, const HostServices *services) = nullptr;
+  void (*OnBeforeReload)(GameState *, const HostServices *) = nullptr;
+
+  void (*OnAfterReload)(GameState *, const HostServices *) = nullptr;
 
   /// Called once per frame before rendering.
   void (*OnUpdate)(GameState *state, const HostServices *services,
@@ -61,7 +63,7 @@ struct GameAPI {
   void (*OnDraw)(GameState *state, const HostServices *services) = nullptr;
 
   /// Called before the game module is unloaded.
-  void (*OnUnload)(GameState *state, const HostServices *services) = nullptr;
+  void (*OnShutdown)(GameState *state, const HostServices *services) = nullptr;
 };
 
 /**

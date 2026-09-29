@@ -641,11 +641,11 @@ bool GameModule::CheckForReload() {
   }
 
   /*
-   * The replacement is valid. The old module can now be told that its code
-   * is about to be unloaded.
+   * The replacement has already been validated, so it is now safe to notify
+   * the currently active game code that its module is about to be replaced.
    */
-  if (m_API.OnUnload) {
-    m_API.OnUnload(&m_State, &m_HostServices);
+  if (m_Started && m_API.OnBeforeReload) {
+    m_API.OnBeforeReload(&m_State, &m_HostServices);
   }
 
   m_API = {};
@@ -679,6 +679,10 @@ bool GameModule::CheckForReload() {
 
         if (ValidateAPI(m_API)) {
           m_HasAPI = true;
+
+          if (m_Started && m_API.OnAfterReload) {
+            m_API.OnAfterReload(&m_State, &m_HostServices);
+          }
 
           std::cerr << "[LevyeKit] Previous module restored.\n";
         }
@@ -716,11 +720,11 @@ bool GameModule::CheckForReload() {
   m_HasAPI = true;
   m_RuntimePath = candidatePath;
 
-  ++m_State.reloadCount;
-
-  if (m_API.OnReload) {
-    m_API.OnReload(&m_State, &m_HostServices);
+  if (m_Started && m_API.OnAfterReload) {
+    m_API.OnAfterReload(&m_State, &m_HostServices);
   }
+
+  ++m_State.reloadCount;
 
   /*
    * The previous runtime copy is no longer executing and can safely be
@@ -766,10 +770,6 @@ void GameModule::Unload() {
   if (!m_Library.IsLoaded())
     return;
 
-  if (m_Started && m_HasAPI && m_API.OnUnload) {
-    m_API.OnUnload(&m_State, &m_HostServices);
-  }
-
   m_API = {};
   m_HasAPI = false;
   m_Started = false;
@@ -785,6 +785,25 @@ void GameModule::Unload() {
   }
 
   std::cout << "[LevyeKit] Game module unloaded.\n";
+}
+
+void GameModule::Shutdown() {
+  if (!m_Library.IsLoaded())
+    return;
+
+  /*
+   * OnShutdown is only called for an application that actually started.
+   * Hot reload never invokes this callback.
+   */
+  if (m_Started && m_HasAPI && m_API.OnShutdown) {
+    m_API.OnShutdown(&m_State, &m_HostServices);
+  }
+
+  /*
+   * Unload performs the actual dynamic-library teardown after game code has
+   * received its final shutdown notification.
+   */
+  Unload();
 }
 
 bool GameModule::IsLoaded() const { return m_Library.IsLoaded() && m_HasAPI; }
@@ -888,15 +907,16 @@ void GameModule::CleanupRuntimeFiles() {
 bool GameModule::ValidateAPI(const GameAPI &api) const {
   if (api.version != GAME_API_VERSION) {
     std::cerr << "[LevyeKit] Game API version mismatch. "
-              << "Host expects " << GAME_API_VERSION << ", module provides "
-              << api.version << ".\n";
+              << "Host: " << GAME_API_VERSION << ", Game: " << api.version
+              << '\n';
 
     return false;
   }
 
-  if (!api.OnLoad || !api.OnReload || !api.OnUpdate || !api.OnFixedUpdate ||
-      !api.OnDraw || !api.OnUnload) {
-    std::cerr << "[LevyeKit] Game API is missing required callbacks.\n";
+  if (!api.OnLoad || !api.OnBeforeReload || !api.OnAfterReload ||
+      !api.OnUpdate || !api.OnFixedUpdate || !api.OnDraw || !api.OnShutdown) {
+    std::cerr << "[LevyeKit] Game API is missing "
+              << "required callbacks.\n";
 
     return false;
   }

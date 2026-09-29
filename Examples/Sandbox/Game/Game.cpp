@@ -25,15 +25,25 @@ void OnLoad(Levye::GameState *state, const Levye::HostServices *services) {
     services->LogInfo("Sandbox started");
 }
 
-void OnReload(Levye::GameState *state, const Levye::HostServices *services) {
-  /*
-   * Persistent state already exists here. Do not perform normal
-   * first-launch initialization during a hot reload.
-   */
-  state->initialized = true;
-
+void OnAfterReload(Levye::GameState *state,
+                   const Levye::HostServices *services) {
+  (void)state;
   if (services->LogInfo)
     services->LogInfo("Sandbox code reloaded.");
+}
+
+void OnBeforeReload(Levye::GameState *state,
+                    const Levye::HostServices *services) {
+  /*
+   * This callback runs while the old game module is still loaded.
+   *
+   * Use it for temporary module-specific cleanup if needed, but do not
+   * destroy persistent gameplay state or host-owned resources.
+   */
+  (void)state;
+
+  if (services->LogInfo)
+    services->LogInfo("Sandbox preparing for code reload.");
 }
 
 void OnUpdate(Levye::GameState *state, const Levye::HostServices *services,
@@ -200,17 +210,17 @@ void OnDraw(Levye::GameState *state, const Levye::HostServices *services) {
   }
 }
 
-void OnUnload(Levye::GameState *state, const Levye::HostServices *services) {
+void OnShutdown(Levye::GameState *state, const Levye::HostServices *services) {
+
   /*
-   * Do not erase persistent gameplay state here.
-   *
-   * OnUnload is also called immediately before hot reload, so clearing
-   * persistent data here would defeat state preservation.
+   * Unlike OnBeforeReload, this callback only runs when the application is
+   * actually shutting down. Persistent gameplay state is no longer needed
+   * after this point.
    */
   (void)state;
 
   if (services->LogInfo)
-    services->LogInfo("Sandbix module unloading.");
+    services->LogInfo("Sandbox shutting down.");
 }
 } // namespace
 
@@ -226,9 +236,10 @@ extern "C" Levye::GameAPI GetGameAPI() {
   return {.version = Levye::GAME_API_VERSION,
 
           .OnLoad = OnLoad,
-          .OnReload = OnReload,
+          .OnBeforeReload = OnBeforeReload,
+          .OnAfterReload = OnAfterReload,
           .OnUpdate = OnUpdate,
           .OnFixedUpdate = OnFixedUpdate,
           .OnDraw = OnDraw,
-          .OnUnload = OnUnload};
+          .OnShutdown = OnShutdown};
 }

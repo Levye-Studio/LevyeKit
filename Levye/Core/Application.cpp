@@ -84,7 +84,7 @@ void Application::Run() {
     EndDrawing();
   }
 
-  m_GameModule.Unload();
+  m_GameModule.Shutdown();
   /*
    * GPU resources must be released before raylib destroys the graphics context.
    */
