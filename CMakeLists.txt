@@ -178,6 +178,7 @@ add_executable(
     Tools/LevyeCLI/Main.cpp
     Tools/LevyeCLI/ProjectGenerator.cpp
     Tools/LevyeCLI/ProjectLocator.cpp
+    Tools/LevyeCLI/BuildCommand.cpp
     Levye/Platform/ExecutablePath.cpp
 )
 

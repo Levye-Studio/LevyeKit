@@ -1,3 +1,4 @@
+#include "BuildCommand.hpp"
 #include "ProjectGenerator.hpp"
 #include "ProjectLocator.hpp"
 
@@ -14,6 +15,7 @@ void PrintUsage() {
   std::cout << "LevyeKit CLI\n\n"
             << "Usage:\n"
             << "  levye new <ProjectName>\n"
+            << "  levye build\n"
             << "  levye project\n";
 }
 
@@ -92,7 +94,11 @@ int main(int argc, char **argv) {
     if (!projectDirectory)
       return 1;
 
-    // Build project...
+    if (!Levye::BuildCommand::Execute(*projectDirectory)) {
+      return 1;
+    }
+
+    return 0;
   }
 
   std::cerr << "[Levye] Unknown command: " << command << "\n\n";
