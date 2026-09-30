@@ -23,6 +23,26 @@ public:
 
   DynamicLibrary(const DynamicLibrary &) = delete;
   DynamicLibrary &operator=(const DynamicLibrary &) = delete;
+  /**
+   * @brief Transfers ownership of a loaded dynamic library.
+   *
+   * The source object is left empty and will no longer unload the transferred
+   * native library handle.
+   *
+   * @param other DynamicLibrary whose native handle should be transferred.
+   */
+  DynamicLibrary(DynamicLibrary &&other) noexcept;
+
+  /**
+   * @brief Replaces this library with another DynamicLibrary's native handle.
+   *
+   * Any library currently owned by this object is unloaded before ownership is
+   * transferred. The source object is left empty.
+   *
+   * @param other DynamicLibrary whose native handle should be transferred.
+   * @return Reference to this DynamicLibrary.
+   */
+  DynamicLibrary &operator=(DynamicLibrary &&other) noexcept;
 
   /**
    * @brief Loads a dynamic library from disk.

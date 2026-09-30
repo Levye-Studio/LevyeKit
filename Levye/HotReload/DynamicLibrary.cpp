@@ -9,6 +9,32 @@
 namespace Levye {
 DynamicLibrary::~DynamicLibrary() { Unload(); }
 
+DynamicLibrary::DynamicLibrary(DynamicLibrary &&other) noexcept
+    : m_Handle(other.m_Handle) {
+  other.m_Handle = nullptr;
+}
+
+DynamicLibrary &DynamicLibrary::operator=(DynamicLibrary &&other) noexcept {
+  if (this == &other)
+    return *this;
+
+  /*
+   * Release any library currently owned by this object before taking
+   * ownership of the incoming native handle.
+   */
+  Unload();
+
+  m_Handle = other.m_Handle;
+
+  /*
+   * Ownership has moved. Clearing the source prevents its destructor from
+   * unloading the library now owned by this object.
+   */
+  other.m_Handle = nullptr;
+
+  return *this;
+}
+
 bool DynamicLibrary::Load(const std::string &path) {
   // A DynamicLibrary owns only one native library handle at a time.
   Unload();

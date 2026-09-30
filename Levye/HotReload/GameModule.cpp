@@ -4,6 +4,7 @@
 #include <Levye/Screen/ScreenManager.hpp>
 
 #include <iostream>
+#include <utility>
 
 namespace Levye {
 namespace {
@@ -534,22 +535,7 @@ bool GameModule::Load(const std::string &path) {
     return false;
   }
 
-  /*
-   * DynamicLibrary is intentionally non-copyable, so for the first
-   * version we cannot transfer candidateLibrary into m_Library yet.
-   *
-   * Validate the candidate, unload it, then load the exact same runtime
-   * file into the active library.
-   */
-  candidateLibrary.Unload();
-
-  if (!ActivateModule(runtimePath)) {
-    std::error_code error;
-
-    std::filesystem::remove(runtimePath, error);
-
-    return false;
-  }
+  PromoteCandidate(std::move(candidateLibrary), candidateAPI, runtimePath);
 
   m_Started = false;
 
@@ -626,43 +612,22 @@ bool GameModule::CheckForReload() {
    * The candidate is valid, so the old game code can now prepare for module
    * replacement without risking interruption from an invalid build.
    */
-  if (m_API.OnBeforeReload) {
-    m_API.OnBeforeReload(&m_State, &m_HostServices);
-  }
+
+  m_API.OnBeforeReload(&m_State, &m_HostServices);
 
   m_API = {};
   m_HasAPI = false;
 
   m_Library.Unload();
 
-  /*
-   * The validation library must be closed before the same runtime file is
-   * opened as the active game module.
-   */
-  candidateLibrary.Unload();
-
-  if (!ActivateModule(candidatePath)) {
-    std::cerr << "[LevyeKit] Failed to activate reload candidate.\n";
-
-    std::error_code error;
-
-    std::filesystem::remove(candidatePath, error);
-
-    if (!RestorePreviousModule(previousRuntimePath)) {
-      std::cerr << "[LevyeKit] Fatal hot-reload failure: "
-                << "previous module could not be restored.\n";
-    }
-
-    return false;
-  }
+  PromoteCandidate(std::move(candidateLibrary), candidateAPI, candidatePath);
 
   /*
    * The new game code is now active and can resume using the persistent
    * host-owned GameState and services.
    */
-  if (m_API.OnAfterReload) {
-    m_API.OnAfterReload(&m_State, &m_HostServices);
-  }
+
+  m_API.OnAfterReload(&m_State, &m_HostServices);
 
   ++m_State.reloadCount;
 
@@ -679,6 +644,20 @@ bool GameModule::CheckForReload() {
             << m_State.reloadCount << '\n';
 
   return true;
+}
+
+void GameModule::PromoteCandidate(DynamicLibrary &&library, const GameAPI &api,
+                                  const std::filesystem::path &runtimePath) {
+  /*
+   * Transfer ownership of the already validated native library handle.
+   * This guarantees that the module becoming active is the exact module
+   * whose API was checked by LoadCandidate().
+   */
+  m_Library = std::move(library);
+
+  m_API = api;
+  m_HasAPI = true;
+  m_RuntimePath = runtimePath;
 }
 
 void GameModule::Update(float deltaTime) {
@@ -791,42 +770,6 @@ bool GameModule::RestorePreviousModule(
   }
 
   std::cerr << "[LevyeKit] Previous module restored.\n";
-
-  return true;
-}
-
-bool GameModule::ActivateModule(const std::filesystem::path &runtimePath) {
-  if (!m_Library.Load(runtimePath.string())) {
-    return false;
-  }
-
-  void *symbol = m_Library.GetSymbol("GetGameAPI");
-
-  if (!symbol) {
-    std::cerr << "[LevyeKit] Activated module does not export GetGameAPI.\n";
-
-    m_Library.Unload();
-
-    return false;
-  }
-
-  auto getGameAPI = reinterpret_cast<GetGameAPIFn>(symbol);
-
-  GameAPI api = getGameAPI();
-
-  /*
-   * Validate the API obtained from the actual active library even though
-   * this runtime file was already validated as a candidate.
-   */
-  if (!ValidateAPI(api)) {
-    m_Library.Unload();
-
-    return false;
-  }
-
-  m_API = api;
-  m_HasAPI = true;
-  m_RuntimePath = runtimePath;
 
   return true;
 }

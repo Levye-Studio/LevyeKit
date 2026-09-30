@@ -223,12 +223,18 @@ private:
   bool RestorePreviousModule(const std::filesystem::path &runtimePath);
 
   /**
-   * @brief Activates a previously validated runtime module.
+   * @brief Promotes a validated candidate module to the active game module.
    *
-   * @param runtimePath Runtime library to make active.
-   * @return True when the module was loaded and its API was resolved.
+   * Ownership of the candidate dynamic library is transferred directly to the
+   * active module. The supplied API must already have been validated by
+   * LoadCandidate().
+   *
+   * @param library Validated candidate dynamic library.
+   * @param api Validated API exported by the candidate.
+   * @param runtimePath Runtime path associated with the candidate.
    */
-  bool ActivateModule(const std::filesystem::path &runtimePath);
+  void PromoteCandidate(DynamicLibrary &&library, const GameAPI &api,
+                        const std::filesystem::path &runtimePath);
 
 private:
   DynamicLibrary m_Library;
