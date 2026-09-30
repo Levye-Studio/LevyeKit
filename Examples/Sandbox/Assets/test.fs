@@ -21,7 +21,7 @@ void main()
     finalColor =
     vec4(
         texelColor.r,
-        texelColor.g * 0.25,
+        texelColor.g * 1,
         texelColor.b * 1,
         texelColor.a
     );

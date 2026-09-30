@@ -543,35 +543,15 @@ bool GameModule::Load(const std::string &path) {
    */
   candidateLibrary.Unload();
 
-  if (!m_Library.Load(runtimePath.string()))
-    return false;
+  if (!ActivateModule(runtimePath)) {
+    std::error_code error;
 
-  void *symbol = m_Library.GetSymbol("GetGameAPI");
-
-  if (!symbol) {
-    std::cerr << "[LevyeKit] Reload candidate does not export GetGameAPI.\n";
-    m_Library.Unload();
-    return false;
-  }
-
-  auto getGameAPI = reinterpret_cast<GetGameAPIFn>(symbol);
-
-  m_API = getGameAPI();
-
-  if (!ValidateAPI(m_API)) {
-    m_API = {};
-    m_Library.Unload();
+    std::filesystem::remove(runtimePath, error);
 
     return false;
   }
 
-  m_RuntimePath = runtimePath;
-
-  m_HasAPI = true;
   m_Started = false;
-
-  // if (m_API.OnLoad)
-  //   m_API.OnLoad(&m_State, &m_HostServices);
 
   std::cout << "[LevyeKit] Loaded game module: " << m_Path << '\n';
 
@@ -589,11 +569,11 @@ bool GameModule::Start() {
   if (m_Started)
     return true;
 
-  m_Started = true;
-
   if (m_API.OnLoad) {
     m_API.OnLoad(&m_State, &m_HostServices);
   }
+
+  m_Started = true;
 
   std::cout << "[LevyeKit] Game module started.\n";
 
@@ -640,11 +620,13 @@ bool GameModule::CheckForReload() {
     return false;
   }
 
+  const std::filesystem::path previousRuntimePath = m_RuntimePath;
+
   /*
-   * The replacement has already been validated, so it is now safe to notify
-   * the currently active game code that its module is about to be replaced.
+   * The candidate is valid, so the old game code can now prepare for module
+   * replacement without risking interruption from an invalid build.
    */
-  if (m_Started && m_API.OnBeforeReload) {
+  if (m_API.OnBeforeReload) {
     m_API.OnBeforeReload(&m_State, &m_HostServices);
   }
 
@@ -653,82 +635,39 @@ bool GameModule::CheckForReload() {
 
   m_Library.Unload();
 
-  const auto previousRuntimePath = m_RuntimePath;
-
   /*
-   * Release the temporary validation handle before opening this runtime copy
-   * as the active game module.
+   * The validation library must be closed before the same runtime file is
+   * opened as the active game module.
    */
   candidateLibrary.Unload();
 
-  if (!m_Library.Load(candidatePath.string())) {
+  if (!ActivateModule(candidatePath)) {
     std::cerr << "[LevyeKit] Failed to activate reload candidate.\n";
 
-    /*
-     * Activation failed after validation. Attempt to restore the previous
-     * known-good runtime module.
-     */
-    if (!previousRuntimePath.empty() &&
-        m_Library.Load(previousRuntimePath.string())) {
-      void *oldSymbol = m_Library.GetSymbol("GetGameAPI");
+    std::error_code error;
 
-      if (oldSymbol) {
-        auto oldGetGameAPI = reinterpret_cast<GetGameAPIFn>(oldSymbol);
+    std::filesystem::remove(candidatePath, error);
 
-        m_API = oldGetGameAPI();
-
-        if (ValidateAPI(m_API)) {
-          m_HasAPI = true;
-
-          if (m_Started && m_API.OnAfterReload) {
-            m_API.OnAfterReload(&m_State, &m_HostServices);
-          }
-
-          std::cerr << "[LevyeKit] Previous module restored.\n";
-        }
-      }
+    if (!RestorePreviousModule(previousRuntimePath)) {
+      std::cerr << "[LevyeKit] Fatal hot-reload failure: "
+                << "previous module could not be restored.\n";
     }
 
     return false;
   }
 
-  void *symbol = m_Library.GetSymbol("GetGameAPI");
-
-  if (!symbol) {
-    std::cerr << "[LevyeKit] Activated module lost GetGameAPI.\n";
-
-    m_Library.Unload();
-
-    return false;
-  }
-
-  auto getGameAPI = reinterpret_cast<GetGameAPIFn>(symbol);
-
-  m_API = getGameAPI();
-
   /*
-   * We already validated this runtime file before activation, but validating
-   * the active API again keeps this boundary defensive and explicit.
+   * The new game code is now active and can resume using the persistent
+   * host-owned GameState and services.
    */
-  if (!ValidateAPI(m_API)) {
-    m_API = {};
-    m_Library.Unload();
-
-    return false;
-  }
-
-  m_HasAPI = true;
-  m_RuntimePath = candidatePath;
-
-  if (m_Started && m_API.OnAfterReload) {
+  if (m_API.OnAfterReload) {
     m_API.OnAfterReload(&m_State, &m_HostServices);
   }
 
   ++m_State.reloadCount;
 
   /*
-   * The previous runtime copy is no longer executing and can safely be
-   * removed.
+   * The previous runtime copy is no longer executable and can now be removed.
    */
   if (!previousRuntimePath.empty()) {
     std::error_code error;
@@ -804,6 +743,92 @@ void GameModule::Shutdown() {
    * received its final shutdown notification.
    */
   Unload();
+}
+
+bool GameModule::RestorePreviousModule(
+    const std::filesystem::path &runtimePath) {
+  if (runtimePath.empty())
+    return false;
+
+  if (!m_Library.Load(runtimePath.string())) {
+    std::cerr << "[LevyeKit] Failed to restore previous module.\n";
+
+    return false;
+  }
+
+  void *symbol = m_Library.GetSymbol("GetGameAPI");
+
+  if (!symbol) {
+    std::cerr << "[LevyeKit] Restored module does not export GetGameAPI.\n";
+
+    m_Library.Unload();
+
+    return false;
+  }
+
+  auto getGameAPI = reinterpret_cast<GetGameAPIFn>(symbol);
+
+  GameAPI restoredAPI = getGameAPI();
+
+  if (!ValidateAPI(restoredAPI)) {
+    std::cerr << "[LevyeKit] Restored module has an invalid GameAPI.\n";
+
+    m_Library.Unload();
+
+    return false;
+  }
+
+  m_API = restoredAPI;
+  m_HasAPI = true;
+  m_RuntimePath = runtimePath;
+
+  /*
+   * OnBeforeReload was already called before activation began. Pair it with
+   * OnAfterReload so the restored module knows that execution has resumed.
+   */
+  if (m_Started && m_API.OnAfterReload) {
+    m_API.OnAfterReload(&m_State, &m_HostServices);
+  }
+
+  std::cerr << "[LevyeKit] Previous module restored.\n";
+
+  return true;
+}
+
+bool GameModule::ActivateModule(const std::filesystem::path &runtimePath) {
+  if (!m_Library.Load(runtimePath.string())) {
+    return false;
+  }
+
+  void *symbol = m_Library.GetSymbol("GetGameAPI");
+
+  if (!symbol) {
+    std::cerr << "[LevyeKit] Activated module does not export GetGameAPI.\n";
+
+    m_Library.Unload();
+
+    return false;
+  }
+
+  auto getGameAPI = reinterpret_cast<GetGameAPIFn>(symbol);
+
+  GameAPI api = getGameAPI();
+
+  /*
+   * Validate the API obtained from the actual active library even though
+   * this runtime file was already validated as a candidate.
+   */
+  if (!ValidateAPI(api)) {
+    m_Library.Unload();
+
+    return false;
+  }
+
+  m_API = api;
+  m_HasAPI = true;
+  m_RuntimePath = runtimePath;
+
+  return true;
 }
 
 bool GameModule::IsLoaded() const { return m_Library.IsLoaded() && m_HasAPI; }

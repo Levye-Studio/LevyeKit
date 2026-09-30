@@ -210,6 +210,26 @@ private:
    */
   bool ValidateAPI(const GameAPI &api) const;
 
+  /**
+   * @brief Restores a previously active runtime module after reload activation
+   * fails.
+   *
+   * The restored module receives OnAfterReload because its earlier
+   * OnBeforeReload notification must be paired with a resume notification.
+   *
+   * @param runtimePath Runtime library path of the previous known-good module.
+   * @return True when the previous module was successfully restored.
+   */
+  bool RestorePreviousModule(const std::filesystem::path &runtimePath);
+
+  /**
+   * @brief Activates a previously validated runtime module.
+   *
+   * @param runtimePath Runtime library to make active.
+   * @return True when the module was loaded and its API was resolved.
+   */
+  bool ActivateModule(const std::filesystem::path &runtimePath);
+
 private:
   DynamicLibrary m_Library;
 
