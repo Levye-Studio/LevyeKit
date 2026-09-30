@@ -1,0 +1,11 @@
+name = "LevyeKit Sandbox Testing"
+
+[window]
+width = 1280
+height = 720
+target_fps = 144
+resizable = true
+vsync = false
+
+[paths]
+assets = "Assets"

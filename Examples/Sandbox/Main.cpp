@@ -1,6 +1,8 @@
 #include <Levye/Core/Application.hpp>
 #include <Levye/HotReload/GameModule.hpp>
 #include <Levye/Platform/ExecutablePath.hpp>
+#include <Levye/Project/ProjectConfig.hpp>
+#include <Levye/Project/ProjectLoader.hpp>
 
 #include <raylib.h>
 
@@ -34,9 +36,6 @@ int main() {
 
   const std::filesystem::path frameworkRoot =
       (executableDirectory / "../../..").lexically_normal();
-
-  const std::filesystem::path assetRoot =
-      frameworkRoot / "Examples/Sandbox/Assets";
 
   Levye::GameModule gameModule;
   gameModule.GetScreenManager().SetScreen("Menu");
@@ -97,6 +96,24 @@ int main() {
 
   input.BindKey("Pause", KEY_P);
 
+  const std::filesystem::path projectFile =
+      frameworkRoot / "Examples/Sandbox/levye.project";
+
+  const std::filesystem::path projectDirectory = projectFile.parent_path();
+
+  const auto project = Levye::ProjectLoader::Load(projectFile);
+
+  if (!project) {
+    std::cerr << "[Sandbox] Failed to load project configuration.\n";
+
+    return 1;
+  }
+
+  const std::filesystem::path assetRoot =
+      projectDirectory / project->assetDirectory;
+
+  Levye::ApplicationConfig config = project->CreateApplicationConfig();
+
   gameModule.SetAssetRoot(assetRoot.string());
 
   if (!gameModule.Load(gameModulePath.string())) {
@@ -105,12 +122,9 @@ int main() {
     return 1;
   }
 
-  Levye::ApplicationConfig config{.title = "LevyeKit Sandbox",
-                                  .width = 1280,
-                                  .height = 720,
-                                  .targetFPS = 60,
-                                  .resizable = true,
-                                  .vsync = false};
+  std::cout << "[LevyeKit] Project: " << project->name << '\n';
+
+  std::cout << "[LevyeKit] Assets: " << assetRoot << '\n';
 
   Levye::Application app(config, gameModule);
 

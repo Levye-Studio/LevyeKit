@@ -30,6 +30,14 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(raylib)
 
+FetchContent_Declare(
+    tomlplusplus
+    GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
+    GIT_TAG v3.4.0
+)
+
+FetchContent_MakeAvailable(tomlplusplus)
+
 # ---------------------------------------------------------------------------
 # LevyeKit
 # ---------------------------------------------------------------------------
@@ -52,7 +60,9 @@ add_library(
     Levye/IO/FileWatcher.cpp
     Levye/Assets/AssetPath.cpp
     Levye/Platform/ExecutablePath.cpp
-    Levye/Time/Time.cpp
+    Levye/Time/Time.cpp    
+    Levye/Project/ProjectConfig.cpp
+    Levye/Project/ProjectLoader.cpp
 )
 
 target_include_directories(
@@ -67,6 +77,7 @@ target_link_libraries(
 
     PUBLIC
         raylib
+        tomlplusplus::tomlplusplus
 )
 
 # CMAKE_DL_LIBS contains the platform-specific library required for dynamic
