@@ -179,6 +179,10 @@ add_executable(
     Tools/LevyeCLI/ProjectGenerator.cpp
     Tools/LevyeCLI/ProjectLocator.cpp
     Tools/LevyeCLI/BuildCommand.cpp
+    Tools/LevyeCLI/RunCommand.cpp
+
+    Levye/Project/ProjectConfig.cpp
+    Levye/Project/ProjectLoader.cpp
     Levye/Platform/ExecutablePath.cpp
 )
 
@@ -193,6 +197,12 @@ target_include_directories(
     levye
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(
+    levye
+    PRIVATE
+        tomlplusplus::tomlplusplus
 )
 
 endif()

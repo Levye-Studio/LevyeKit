@@ -1,6 +1,7 @@
 #include "BuildCommand.hpp"
 #include "ProjectGenerator.hpp"
 #include "ProjectLocator.hpp"
+#include "RunCommand.hpp"
 
 #include <Levye/Platform/ExecutablePath.hpp>
 
@@ -16,6 +17,7 @@ void PrintUsage() {
             << "Usage:\n"
             << "  levye new <ProjectName>\n"
             << "  levye build\n"
+            << "  levye run\n"
             << "  levye project\n";
 }
 
@@ -95,6 +97,19 @@ int main(int argc, char **argv) {
       return 1;
 
     if (!Levye::BuildCommand::Execute(*projectDirectory)) {
+      return 1;
+    }
+
+    return 0;
+  }
+
+  if (command == "run") {
+    const auto projectDirectory = FindCurrentProject();
+
+    if (!projectDirectory)
+      return 1;
+
+    if (!Levye::RunCommand::Execute(*projectDirectory)) {
       return 1;
     }
 
