@@ -814,6 +814,8 @@ void GameModule::UpdateHostSystems() {
   m_TextureManager.CheckForChanges();
   m_ShaderManager.CheckForChanges();
   m_FontManager.CheckForChanges();
+
+  m_AudioManager.CheckForChanges();
   /*
    * Streaming music requires regular buffer updates. Keeping this in the
    * host means playback continues across game-code hot reloads.

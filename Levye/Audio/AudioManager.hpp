@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Levye/Assets/AssetHandle.hpp>
+#include <Levye/IO/FileWatcher.hpp>
 
 #include <raylib.h>
 
@@ -9,6 +10,24 @@
 #include <unordered_map>
 
 namespace Levye {
+struct SoundAsset {
+  Sound sound{};
+  std::string path;
+  FileWatcher watcher;
+  float volume = 1.0f;
+};
+
+struct MusicAsset {
+  Music music{};
+  std::string path;
+  FileWatcher watcher;
+
+  float volume = 1.0f;
+
+  bool playing = false;
+  bool paused = false;
+};
+
 /**
  * @brief Owns short sound effects used by the game.
  *
@@ -39,6 +58,16 @@ public:
    * @return Handle to the sound, or an invalid handle on failure.
    */
   AssetHandle LoadSound(const std::string &path);
+
+  /**
+   * @brief Checks loaded audio assets for source-file changes.
+   *
+   * Sounds and music whose source files have changed are reloaded while their
+   * existing AssetHandle values remain valid.
+   *
+   * Active music attempts to preserve its playback state across replacement.
+   */
+  void CheckForChanges();
 
   /**
    * @brief Plays a loaded sound effect.
@@ -135,16 +164,23 @@ public:
   void Clear();
 
 private:
-  struct SoundAsset {
-    Sound sound{};
-    std::string path;
-  };
+  /**
+   * @brief Attempts to reload a sound without invalidating its asset handle.
+   *
+   * @param asset Sound asset to reload.
+   * @return True when the replacement succeeded.
+   */
+  bool ReloadSound(SoundAsset &asset);
 
-  struct MusicAsset {
-    Music music{};
-    std::string path;
-  };
+  /**
+   * @brief Attempts to reload a music stream without invalidating its handle.
+   *
+   * @param asset Music asset to reload.
+   * @return True when the replacement succeeded.
+   */
+  bool ReloadMusic(MusicAsset &asset);
 
+private:
   std::unordered_map<std::uint64_t, SoundAsset> m_Sounds;
 
   std::unordered_map<std::string, AssetHandle> m_PathLookup;
