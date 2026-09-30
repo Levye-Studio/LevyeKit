@@ -151,3 +151,26 @@ set_target_properties(
         RUNTIME_OUTPUT_DIRECTORY
             "${CMAKE_CURRENT_SOURCE_DIR}/Targets/$<CONFIG>/bin"
 )
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+add_executable(
+    levye
+    Tools/LevyeCLI/Main.cpp
+    Tools/LevyeCLI/ProjectGenerator.cpp
+)
+
+set_target_properties(
+    levye
+    PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY
+        "${CMAKE_SOURCE_DIR}/Targets/Debug/bin"
+)
+
+target_include_directories(
+    levye
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)

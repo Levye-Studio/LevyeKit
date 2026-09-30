@@ -1,0 +1,11 @@
+name = "{{PROJECT_NAME}}"
+
+[window]
+width = 1280
+height = 720
+target_fps = 60
+resizable = true
+vsync = false
+
+[paths]
+assets = "Assets"
