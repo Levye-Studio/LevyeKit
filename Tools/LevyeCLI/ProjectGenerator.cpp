@@ -4,11 +4,27 @@
 #include <iostream>
 #include <iterator>
 
+namespace {
+
+void ReplaceAll(std::string &content, const std::string &token,
+                const std::string &value) {
+  std::size_t position = 0;
+
+  while ((position = content.find(token, position)) != std::string::npos) {
+    content.replace(position, token.length(), value);
+
+    position += value.length();
+  }
+}
+
+} // namespace
+
 namespace Levye {
 
 bool ProjectGenerator::Generate(
     const std::string &name, const std::filesystem::path &outputDirectory,
-    const std::filesystem::path &templateDirectory) {
+    const std::filesystem::path &templateDirectory,
+    const std::filesystem::path &frameworkDirectory) {
   if (name.empty()) {
     std::cerr << "[Levye] Project name cannot be empty.\n";
 
@@ -58,10 +74,11 @@ bool ProjectGenerator::Generate(
             << projectDirectory << '\n';
 
   const std::filesystem::path filesToProcess[] = {
-      projectDirectory / "levye.project", projectDirectory / "CMakeLists.txt"};
+      projectDirectory / "levye.project", projectDirectory / "CMakeLists.txt",
+      projectDirectory / "Source/Game.cpp"};
 
   for (const auto &path : filesToProcess) {
-    if (!ProcessTemplateFile(path, name)) {
+    if (!ProcessTemplateFile(path, name, frameworkDirectory)) {
       std::cerr << "[Levye] Failed to process template file: " << path << '\n';
 
       std::filesystem::remove_all(projectDirectory);
@@ -73,8 +90,9 @@ bool ProjectGenerator::Generate(
   return true;
 }
 
-bool ProjectGenerator::ProcessTemplateFile(const std::filesystem::path &path,
-                                           const std::string &projectName) {
+bool ProjectGenerator::ProcessTemplateFile(
+    const std::filesystem::path &path, const std::string &projectName,
+    const std::filesystem::path &frameworkDirectory) {
   std::ifstream input(path);
 
   if (!input)
@@ -85,16 +103,13 @@ bool ProjectGenerator::ProcessTemplateFile(const std::filesystem::path &path,
 
   input.close();
 
-  constexpr const char *token = "{{PROJECT_NAME}}";
+  /*
+   * Template values are replaced only in files explicitly processed by the
+   * generator. Binary assets copied from the template are never modified.
+   */
+  ReplaceAll(content, "{{PROJECT_NAME}}", projectName);
 
-  std::size_t position = 0;
-
-  while ((position = content.find(token, position)) != std::string::npos) {
-    content.replace(position, std::char_traits<char>::length(token),
-                    projectName);
-
-    position += projectName.length();
-  }
+  ReplaceAll(content, "{{LEVYE_ROOT}}", frameworkDirectory.generic_string());
 
   std::ofstream output(path, std::ios::trunc);
 

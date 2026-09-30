@@ -12,32 +12,36 @@ namespace Levye {
 class ProjectGenerator {
 public:
   /**
-   * @brief Creates a new LevyeKit project.
+   * @brief Creates a new LevyeKit project from the default template.
    *
-   * The project is generated inside the supplied output directory using the
-   * framework's default project template.
+   * Template files are copied into a new project directory and supported
+   * template tokens are replaced with values describing the generated project.
    *
    * @param name Name of the project to create.
    * @param outputDirectory Directory in which the project folder is created.
-   * @param templateDirectory Directory containing the default project
-   *        template.
-   * @return True when the project was generated successfully.
+   * @param templateDirectory Directory containing the project template.
+   * @param frameworkDirectory Root directory of the LevyeKit checkout.
+   * @return True when the complete project was generated successfully.
    */
   static bool Generate(const std::string &name,
                        const std::filesystem::path &outputDirectory,
-                       const std::filesystem::path &templateDirectory);
+                       const std::filesystem::path &templateDirectory,
+                       const std::filesystem::path &frameworkDirectory);
 
 private:
 private:
   /**
-   * @brief Replaces project-template tokens inside a text file.
+   * @brief Replaces supported tokens inside a generated text file.
    *
-   * @param path Text file whose template tokens should be replaced.
+   * @param path File containing project-template tokens.
    * @param projectName Name of the generated project.
+   * @param frameworkDirectory Root directory of the LevyeKit checkout.
    * @return True when the file was processed successfully.
    */
-  static bool ProcessTemplateFile(const std::filesystem::path &path,
-                                  const std::string &projectName);
+  static bool
+  ProcessTemplateFile(const std::filesystem::path &path,
+                      const std::string &projectName,
+                      const std::filesystem::path &frameworkDirectory);
 };
 
 } // namespace Levye

@@ -1,7 +1,11 @@
 #include "ProjectGenerator.hpp"
+#include "ProjectLocator.hpp"
+
+#include <Levye/Platform/ExecutablePath.hpp>
 
 #include <filesystem>
 #include <iostream>
+#include <optional>
 #include <string>
 
 namespace {
@@ -9,7 +13,19 @@ namespace {
 void PrintUsage() {
   std::cout << "LevyeKit CLI\n\n"
             << "Usage:\n"
-            << "  levye new <ProjectName>\n";
+            << "  levye new <ProjectName>\n"
+            << "  levye project\n";
+}
+
+std::optional<std::filesystem::path> FindCurrentProject() {
+  const auto projectDirectory =
+      Levye::ProjectLocator::Find(std::filesystem::current_path());
+
+  if (!projectDirectory) {
+    std::cerr << "[Levye] No LevyeKit project found.\n";
+  }
+
+  return projectDirectory;
 }
 
 } // namespace
@@ -36,16 +52,47 @@ int main(int argc, char **argv) {
     const std::filesystem::path outputDirectory =
         std::filesystem::current_path();
 
-    // Temporary while the CLI still lives inside the LevyeKit repository.
+    const std::filesystem::path executableDirectory =
+        Levye::ExecutablePath::GetDirectory();
+
+    const std::filesystem::path targetDirectory =
+        executableDirectory.parent_path();
+
+    const std::filesystem::path frameworkRoot =
+        targetDirectory.parent_path().parent_path();
+
     const std::filesystem::path templateDirectory =
-        std::filesystem::current_path() / "Templates/Default";
+        frameworkRoot / "Templates/Default";
+    ;
 
     if (!Levye::ProjectGenerator::Generate(projectName, outputDirectory,
-                                           templateDirectory)) {
+                                           templateDirectory, frameworkRoot)) {
       return 1;
     }
 
     return 0;
+  }
+  if (command == "project") {
+    const auto projectDirectory = FindCurrentProject();
+
+    if (!projectDirectory) {
+      std::cerr << "[Levye] No LevyeKit project found.\n";
+
+      return 1;
+    }
+
+    std::cout << "[Levye] Project: " << *projectDirectory << '\n';
+
+    return 0;
+  }
+
+  if (command == "build") {
+    const auto projectDirectory = FindCurrentProject();
+
+    if (!projectDirectory)
+      return 1;
+
+    // Build project...
   }
 
   std::cerr << "[Levye] Unknown command: " << command << "\n\n";

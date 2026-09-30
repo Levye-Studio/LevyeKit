@@ -1,5 +1,17 @@
 cmake_minimum_required(VERSION 3.20)
 
+option(
+    LEVYE_BUILD_EXAMPLES
+    "Build LevyeKit example projects"
+    ON
+)
+
+option(
+    LEVYE_BUILD_TOOLS
+    "Build LevyeKit development tools"
+    ON
+)
+
 project(
     LevyeKit
     VERSION 0.1.0
@@ -89,6 +101,8 @@ target_link_libraries(
         ${CMAKE_DL_LIBS}
 )
 
+if(LEVYE_BUILD_EXAMPLES)
+
 # ---------------------------------------------------------------------------
 # Sandbox Game Module
 # ---------------------------------------------------------------------------
@@ -152,6 +166,9 @@ set_target_properties(
             "${CMAKE_CURRENT_SOURCE_DIR}/Targets/$<CONFIG>/bin"
 )
 
+endif()
+
+if(LEVYE_BUILD_TOOLS)
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
@@ -160,6 +177,8 @@ add_executable(
     levye
     Tools/LevyeCLI/Main.cpp
     Tools/LevyeCLI/ProjectGenerator.cpp
+    Tools/LevyeCLI/ProjectLocator.cpp
+    Levye/Platform/ExecutablePath.cpp
 )
 
 set_target_properties(
@@ -174,3 +193,5 @@ target_include_directories(
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+endif()
