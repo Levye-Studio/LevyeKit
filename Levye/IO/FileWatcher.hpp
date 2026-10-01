@@ -12,8 +12,8 @@ namespace Levye {
  * FileWatcher tracks modification time and file size. A change is reported
  * only after the file has remained unchanged for the debounce period.
  *
- * This prevents reload systems from reading a file while another process
- * is still writing or replacing it.
+ * Debouncing reduces partial reads; consumers must still handle build locks
+ * and changes that occur during a read.
  */
 class FileWatcher {
 public:
@@ -49,6 +49,9 @@ public:
    * @return true once for each stable file change.
    */
   bool Poll();
+
+  /** @brief Returns whether the file still matches the last accepted state. */
+  bool IsCurrentStateStable() const;
 
   /**
    * @brief Returns the path currently being watched.

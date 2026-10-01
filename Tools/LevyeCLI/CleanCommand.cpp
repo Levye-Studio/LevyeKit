@@ -6,11 +6,10 @@
 namespace {
 
 bool RemoveDirectory(const std::filesystem::path &path) {
-  if (!std::filesystem::exists(path))
-    return true;
-
   std::error_code error;
 
+  // remove_all also succeeds for a missing directory. Use its error_code
+  // overload so locked DLLs and inaccessible paths produce a CLI diagnostic.
   std::filesystem::remove_all(path, error);
 
   if (error) {

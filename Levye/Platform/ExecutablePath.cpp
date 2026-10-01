@@ -1,6 +1,8 @@
 #include "ExecutablePath.hpp"
 
-#if defined(__APPLE__)
+#if defined(_WIN32)
+#include <windows.h>
+#elif defined(__APPLE__)
 #include <mach-o/dyld.h>
 #elif defined(__linux__)
 #include <unistd.h>
@@ -53,6 +55,47 @@ std::filesystem::path ExecutablePath::Get() {
     return {};
 
   return path;
+}
+
+#elif defined(_WIN32)
+std::filesystem::path ExecutablePath::Get() {
+  /*
+   * GetModuleFileNameW retrieves the absolute path of the
+   * executable associated with the current process.
+   *
+   * Passing nullptr requests the current executable rather
+   * than another loaded module.
+   */
+  std::wstring buffer(260, L'\0');
+
+  while (true) {
+    const DWORD length = GetModuleFileNameW(nullptr, buffer.data(),
+                                            static_cast<DWORD>(buffer.size()));
+
+    if (length == 0) {
+      return {};
+    }
+
+    /*
+     * When the returned length fits within the buffer,
+     * the complete executable path has been retrieved.
+     */
+    if (length < buffer.size()) {
+      buffer.resize(length);
+
+      return std::filesystem::path(buffer);
+    }
+
+    /*
+     * Windows may truncate long executable paths.
+     * Increase the buffer and try again.
+     */
+    if (buffer.size() >= 32768) {
+      return {};
+    }
+
+    buffer.resize(buffer.size() * 2);
+  }
 }
 
 #endif

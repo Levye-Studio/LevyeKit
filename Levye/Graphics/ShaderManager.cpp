@@ -1,7 +1,6 @@
 #include "ShaderManager.hpp"
-#include <Levye/Debug/Logger.hpp>
 #include <Levye/Assets/AssetPath.hpp>
-
+#include <Levye/Debug/Logger.hpp>
 
 namespace Levye {
 namespace {
@@ -54,7 +53,7 @@ AssetHandle ShaderManager::Load(const std::string &vertexPath,
     return {};
   }
 
-  const AssetHandle handle{.id = m_NextHandle++, AssetType::Shader};
+  const AssetHandle handle{.id = m_NextHandle++, .type = AssetType::Shader};
 
   m_Shaders.emplace(
       handle.id,

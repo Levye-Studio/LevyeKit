@@ -7,11 +7,18 @@
 #include <cstddef>
 #include <cstdint>
 
+/** @brief Exports the unmangled entry point of a reloadable game module. */
+#if defined(_WIN32)
+#define LEVYE_GAME_EXPORT extern "C" __declspec(dllexport)
+#else
+#define LEVYE_GAME_EXPORT extern "C"
+#endif
+
 namespace Levye {
 /**
  * @brief Version of the binary interface shared by the host and game module.
  */
-inline constexpr std::uint32_t GAME_API_VERSION = 11;
+inline constexpr std::uint32_t GAME_API_VERSION = 12;
 
 /**
  * @brief Function table exposed by every Levye game module.

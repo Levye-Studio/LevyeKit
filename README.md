@@ -839,11 +839,13 @@ LevyeKit is intended to provide a common foundation across desktop and mobile ta
 | -------- | ------ | ------ |
 | macOS | Desktop | Development platform |
 | Linux | Desktop | Planned / evolving |
-| Windows | Desktop | Planned / evolving |
+| Windows | Desktop | Debug/Release builds and hot reload verified with MinGW-w64 and MSVC |
 | iOS | Mobile | Planned |
 | Android | Mobile | Planned |
 
 Native code hot reloading is primarily intended for desktop development.
+
+Windows build, CLI, DLL deployment, and hot-reload verification commands are documented in [Tests/Windows](Tests/Windows/README.md).
 
 Mobile platforms may use a different development workflow because of platform restrictions around dynamically replacing executable code.
 
@@ -885,11 +887,11 @@ Mobile platforms may use a different development workflow because of platform re
 * [x] `levye project`
 * [x] CLI help and version information
 * [x] Optional Git initialization for generated projects
+* [x] Windows desktop builds and hot reload with MinGW-w64 and MSVC
 
 ### Future
 
 * [ ] Continue Linux support
-* [ ] Continue Windows support
 * [ ] iOS support
 * [ ] Android support
 * [ ] Improve failed-reload diagnostics

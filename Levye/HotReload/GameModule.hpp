@@ -14,6 +14,7 @@
 #include <Levye/Time/TimeSystem.hpp>
 
 #include <cstdint>
+#include <chrono>
 #include <filesystem>
 #include <string>
 
@@ -179,9 +180,10 @@ private:
    * @brief Copies the build output into the hot-reload directory.
    *
    * @param destination Destination runtime path.
-   * @return true if the copy completed successfully.
+   * @return Success, a retryable build conflict, or a persistent copy failure.
    */
-  bool CopyModule(const std::filesystem::path &destination);
+  enum class CopyResult { Success, Retry, Failed };
+  CopyResult CopyModule(const std::filesystem::path &destination);
 
   /**
    * @brief Loads and validates a module without changing the active one.
@@ -271,6 +273,16 @@ private:
 
   std::uint64_t m_RuntimeGeneration = 0;
   std::uint64_t m_ReloadCount = 0;
+
+#if defined(_WIN32)
+  // Retry one copy per interval, retaining the active module throughout.
+  bool m_ReloadPending = false;
+  bool m_ReportedCopyRetry = false;
+  std::chrono::steady_clock::time_point m_ReloadDeadline{};
+  std::chrono::steady_clock::time_point m_NextCopyAttempt{};
+  std::chrono::steady_clock::time_point m_NextCleanup{};
+  std::string m_LastCopyError;
+#endif
 
   bool m_HasAPI = false;
   bool m_Started = false;

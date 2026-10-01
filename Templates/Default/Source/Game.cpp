@@ -190,7 +190,7 @@ void OnShutdown(
 
 } // namespace
 
-extern "C"
+LEVYE_GAME_EXPORT
 const Levye::GameAPI* GetGameAPI()
 {
     static const Levye::GameAPI api = {

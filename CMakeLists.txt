@@ -12,6 +12,8 @@ option(
     ON
 )
 
+option(LEVYE_BUILD_TESTS "Build Windows hot-reload integration tests" OFF)
+
 project(
     LevyeKit
     VERSION 0.1.0
@@ -22,6 +24,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+if(WIN32 AND NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+endif()
 
 include(FetchContent)
 
@@ -170,6 +176,20 @@ set_target_properties(
             "${CMAKE_CURRENT_SOURCE_DIR}/Targets/$<CONFIG>/bin"
 )
 
+# Copy shared raylib next to the Sandbox executable on Windows.
+# Windows searches the executable directory for runtime DLL dependencies.
+if(WIN32)
+    add_custom_command(
+        TARGET Sandbox
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:raylib>
+            $<TARGET_FILE_DIR:Sandbox>
+        COMMENT "Copying raylib DLL to Sandbox output directory"
+        VERBATIM
+    )
+endif()
+
 endif()
 
 if(LEVYE_BUILD_TOOLS)
@@ -198,6 +218,11 @@ set_target_properties(
         "${CMAKE_SOURCE_DIR}/Targets/Debug/bin"
 )
 
+if(WIN32)
+    set_target_properties(levye PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/Targets/$<CONFIG>/bin")
+endif()
+
 target_include_directories(
     levye
     PRIVATE
@@ -210,4 +235,9 @@ target_link_libraries(
         tomlplusplus::tomlplusplus
 )
 
+endif()
+
+if(LEVYE_BUILD_TESTS AND WIN32)
+    enable_testing()
+    add_subdirectory(Tests/Windows)
 endif()

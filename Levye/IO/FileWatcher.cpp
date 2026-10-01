@@ -33,8 +33,12 @@ bool FileWatcher::Poll() {
    * A temporarily missing file is not treated as a completed change.
    * Some editors replace files using remove/rename operations.
    */
-  if (!ReadState(currentState))
+  if (!ReadState(currentState)) {
+#if defined(_WIN32)
+    m_HasPendingChange = false;
+#endif
     return false;
+  }
 
   if (!m_HasAcceptedState) {
     m_AcceptedState = currentState;
@@ -77,6 +81,12 @@ bool FileWatcher::Poll() {
 }
 
 const std::string &FileWatcher::GetPath() const { return m_Path; }
+
+bool FileWatcher::IsCurrentStateStable() const {
+  FileState state{};
+  return m_HasAcceptedState && !m_HasPendingChange && ReadState(state) &&
+         state == m_AcceptedState;
+}
 
 bool FileWatcher::IsWatching() const {
   return !m_Path.empty() && m_HasAcceptedState;

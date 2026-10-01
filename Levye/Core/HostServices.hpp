@@ -66,6 +66,26 @@ struct HostServices {
    */
   float (*GetAxis)(void *context, const char *axis) = nullptr;
 
+  /**
+   * @brief Associates a keyboard key with an input action.
+   *
+   * @param context Host-owned service context.
+   * @param action Name of the action to bind.
+   * @param key raylib keyboard key code.
+   */
+  void (*BindKey)(void *context, const char *action, int key) = nullptr;
+
+  /**
+   * @brief Associates two keyboard keys with a directional axis.
+   *
+   * @param context Host-owned service context.
+   * @param action Name of the axis to bind.
+   * @param negativeKey Key representing the negative direction.
+   * @param positiveKey Key representing the positive direction.
+   */
+  void (*BindKeyAxis)(void *context, const char *action, int negativeKey,
+                      int positiveKey) = nullptr;
+
   // ---------------------------------------------------------------------
   // Screens
   // ---------------------------------------------------------------------

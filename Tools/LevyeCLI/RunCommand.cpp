@@ -34,9 +34,13 @@ bool RunCommand::Execute(const std::filesystem::path &projectDirectory,
     return false;
   }
 
-  const std::filesystem::path executablePath =
-      projectDirectory / "Targets" / std::string{ToString(configuration)} /
-      "bin" / project->target;
+  std::filesystem::path executablePath = projectDirectory / "Targets" /
+                                         std::string{ToString(configuration)} /
+                                         "bin" / project->target;
+
+#if defined(_WIN32)
+  executablePath += ".exe";
+#endif
 
   if (!std::filesystem::is_regular_file(executablePath)) {
     std::cerr << "[Levye] Game executable not found: " << executablePath << '\n'
@@ -47,7 +51,12 @@ bool RunCommand::Execute(const std::filesystem::path &projectDirectory,
 
   std::cout << "[Levye] Running " << project->target << "...\n";
 
+  // cmd.exe strips the outer quotes of a command starting with a quoted path.
+#if defined(_WIN32)
+  const std::string command = "\"" + QuotePath(executablePath) + "\"";
+#else
   const std::string command = QuotePath(executablePath);
+#endif
 
   const int result = std::system(command.c_str());
 

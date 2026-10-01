@@ -8,6 +8,11 @@ project(
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Single-configuration generators need a default; VS chooses at build time.
+if(WIN32 AND NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+endif()
+
 # LevyeKit checkout used to create this project.
 set(
     LEVYE_ROOT
@@ -89,20 +94,15 @@ target_link_libraries(
 # Output directories
 # ---------------------------------------------------------
 
-if(NOT CMAKE_BUILD_TYPE)
-    set(
-        CMAKE_BUILD_TYPE
-        Debug
-        CACHE STRING
-        "Build type"
-        FORCE
-    )
+if(WIN32)
+    set(LEVYE_TARGET_DIRECTORY "${CMAKE_SOURCE_DIR}/Targets/$<CONFIG>")
+else()
+    # Preserve the existing macOS/Linux configuration and output layout.
+    if(NOT CMAKE_BUILD_TYPE)
+        set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+    endif()
+    set(LEVYE_TARGET_DIRECTORY "${CMAKE_SOURCE_DIR}/Targets/${CMAKE_BUILD_TYPE}")
 endif()
-
-set(
-    LEVYE_TARGET_DIRECTORY
-    "${CMAKE_SOURCE_DIR}/Targets/${CMAKE_BUILD_TYPE}"
-)
 
 set_target_properties(
     Game
@@ -112,9 +112,30 @@ set_target_properties(
         "${LEVYE_TARGET_DIRECTORY}/lib"
 )
 
+if(WIN32)
+    set_target_properties(Game PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${LEVYE_TARGET_DIRECTORY}/lib"
+        ARCHIVE_OUTPUT_DIRECTORY "${LEVYE_TARGET_DIRECTORY}/lib")
+endif()
+
 set_target_properties(
     {{PROJECT_TARGET}}
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY
         "${LEVYE_TARGET_DIRECTORY}/bin"
 )
+
+# Deploy raylib's shared library beside the game executable.
+# Windows requires runtime DLL dependencies to be discoverable
+# when the executable starts.
+if(WIN32)
+    add_custom_command(
+        TARGET ${PROJECT_NAME}
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:raylib>
+            $<TARGET_FILE_DIR:${PROJECT_NAME}>
+        COMMENT "Copying raylib runtime DLL"
+        VERBATIM
+    )
+endif()

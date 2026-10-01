@@ -82,6 +82,40 @@ public:
 
     return host->GetAxis(host->context, axis);
   }
+
+  /**
+   * @brief Binds a keyboard key to an action.
+   *
+   * Multiple keys may be associated with the same action.
+   *
+   * @param action Action name.
+   * @param key raylib keyboard key code.
+   */
+  static void BindKey(const char *action, int key) {
+    const HostServices *host = Services::Get();
+
+    if (!host || !host->BindKey)
+      return;
+
+    host->BindKey(host->context, action, key);
+  }
+
+  /**
+   * @brief Binds a pair of keyboard keys to a directional axis.
+   *
+   * @param action Axis name.
+   * @param negativeKey Negative direction key.
+   * @param positiveKey Positive direction key.
+   */
+  static void BindKeyAxis(const char *action, int negativeKey,
+                          int positiveKey) {
+    const HostServices *host = Services::Get();
+
+    if (!host || !host->BindKeyAxis)
+      return;
+
+    host->BindKeyAxis(host->context, action, negativeKey, positiveKey);
+  }
 };
 
 } // namespace Levye

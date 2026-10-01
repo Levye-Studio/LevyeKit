@@ -8,6 +8,7 @@
 
 namespace Levye {
 namespace {
+
 std::string ResolveAssetPath(HostContext *host, const char *path) {
   if (!host || !path)
     return {};
@@ -87,6 +88,11 @@ float HostGetAxis(void *context, const char *axis) {
 
   return host->input->GetAxis(axis);
 }
+
+void HostBindKey(void *context, const char *action, int key) {}
+
+void HostBindKeyAxis(void *context, const char *action, int negativeKey,
+                     int positiveKey) {}
 
 void HostSetScreen(void *context, const char *screen) {
   if (!context || !screen)
@@ -429,7 +435,12 @@ GameModule::~GameModule() {
 bool GameModule::Load(const std::string &path) {
   Unload();
 
+#if defined(_WIN32)
+  CleanupRuntimeFiles();
+  m_Path = std::filesystem::absolute(path).string();
+#else
   m_Path = path;
+#endif
 
   m_HostContext = {.input = &m_InputMap,
                    .screens = &m_ScreenManager,
@@ -451,6 +462,8 @@ bool GameModule::Load(const std::string &path) {
                     .IsActionReleased = HostIsActionReleased,
 
                     .GetAxis = HostGetAxis,
+                    .BindKey = HostBindKey,
+                    .BindKeyAxis = HostBindKeyAxis,
 
                     .SetScreen = HostSetScreen,
                     .IsScreen = HostIsScreen,
@@ -469,8 +482,13 @@ bool GameModule::Load(const std::string &path) {
                     .ResumeMusic = HostResumeMusic,
                     .StopMusic = HostStopMusic,
                     .SetMusicVolume = HostSetMusicVolume,
+
                     .LoadShader = HostLoadShader,
                     .GetShader = HostGetShader,
+
+                    .LoadFont = HostLoadFont,
+                    .GetFont = HostGetFont,
+
                     .GetDeltaTime = HostGetDeltaTime,
                     .GetUnscaledDeltaTime = HostGetUnscaledDeltaTime,
 
@@ -482,9 +500,7 @@ bool GameModule::Load(const std::string &path) {
 
                     .SetPaused = HostSetPaused,
                     .IsPaused = HostIsPaused,
-                    .GetInterpolationAlpha = HostGetInterpolationAlpha,
-                    .LoadFont = HostLoadFont,
-                    .GetFont = HostGetFont};
+                    .GetInterpolationAlpha = HostGetInterpolationAlpha};
 
   const std::filesystem::path sourcePath(m_Path);
 
@@ -505,12 +521,13 @@ bool GameModule::Load(const std::string &path) {
    *
    * Targets/Debug/lib/Game.dylib
    * Targets/Debug/hotreload/Game_1.dylib
+   * Windows isolates DLL copies in a per-host subdirectory.
    */
-  m_RuntimeDirectory = sourcePath.parent_path().parent_path() / "hotreload";
+  const auto runtimeRoot = sourcePath.parent_path().parent_path() / "hotreload";
 
   std::error_code error;
 
-  std::filesystem::create_directories(m_RuntimeDirectory, error);
+  std::filesystem::create_directories(runtimeRoot, error);
 
   if (error) {
     Logger::Error("Failed to create hot-reload directory: " + error.message());
@@ -518,12 +535,38 @@ bool GameModule::Load(const std::string &path) {
     return false;
   }
 
+#if defined(_WIN32)
+  // Atomically reserve an exclusive session directory. A second host or a
+  // previous crashed session must never share our loaded DLL filenames.
+  const auto session =
+      std::chrono::system_clock::now().time_since_epoch().count();
+  for (std::uint64_t suffix = 0;; ++suffix) {
+    m_RuntimeDirectory =
+        runtimeRoot / (sourcePath.stem().string() + "_" +
+                       std::to_string(session) + "_" + std::to_string(suffix));
+    if (std::filesystem::create_directory(m_RuntimeDirectory, error))
+      break;
+    if (error) {
+      Logger::Error("Failed to reserve runtime directory: " + error.message());
+      m_RuntimeDirectory.clear();
+      return false;
+    }
+  }
+#else
+  // Keep the established dylib location, including loader-relative paths.
+  m_RuntimeDirectory = runtimeRoot;
   CleanupRuntimeFiles();
+#endif
 
   const auto runtimePath = CreateRuntimePath();
 
-  if (!CopyModule(runtimePath))
+  if (CopyModule(runtimePath) != CopyResult::Success) {
+#if defined(_WIN32)
+    Logger::Error("Failed to copy initial game module: " + m_LastCopyError);
+    CleanupRuntimeFiles();
+#endif
     return false;
+  }
 
   DynamicLibrary candidateLibrary;
   GameAPI candidateAPI{};
@@ -582,18 +625,66 @@ bool GameModule::CheckForReload() {
    * A true result means the compiler output changed and remained stable
    * long enough for us to safely attempt a reload.
    */
+#if defined(_WIN32)
+  const auto now = std::chrono::steady_clock::now();
+  if (now >= m_NextCleanup) {
+    CleanupRuntimeFiles();
+    m_NextCleanup = now + std::chrono::seconds(1);
+  }
+
+  if (m_ModuleWatcher.Poll()) {
+    Logger::Info("Stable game module change detected.");
+    m_ReloadPending = true;
+    m_ReportedCopyRetry = false;
+    m_LastCopyError = "Build output did not remain stable.";
+    m_ReloadDeadline = now + std::chrono::seconds(5);
+    m_NextCopyAttempt = now;
+  }
+
+  if (!m_ReloadPending)
+    return false;
+
+  if (now >= m_ReloadDeadline) {
+    Logger::Error(
+        "Hot reload copy timed out after 5 seconds: " + m_LastCopyError +
+        " Keeping current module; rebuild to retry.");
+    m_ReloadPending = false;
+    return false;
+  }
+
+  if (now < m_NextCopyAttempt || !m_ModuleWatcher.IsCurrentStateStable())
+    return false;
+
+  const auto candidatePath = CreateRuntimePath();
+
+  const auto copyResult = CopyModule(candidatePath);
+  if (copyResult == CopyResult::Retry) {
+    if (!m_ReportedCopyRetry) {
+      Logger::Warning(
+          "Game module temporarily unavailable: " + m_LastCopyError +
+          " Retrying across frames; keeping current module.");
+      m_ReportedCopyRetry = true;
+    }
+    m_NextCopyAttempt = now + std::chrono::milliseconds(100);
+    return false;
+  }
+  m_ReloadPending = false;
+  if (copyResult == CopyResult::Failed) {
+    Logger::Error("Failed to copy reload candidate: " + m_LastCopyError +
+                  " Keeping current module.");
+    return false;
+  }
+#else
   if (!m_ModuleWatcher.Poll())
     return false;
 
   Logger::Info("Stable game module change detected.");
-
   const auto candidatePath = CreateRuntimePath();
-
-  if (!CopyModule(candidatePath)) {
+  if (CopyModule(candidatePath) != CopyResult::Success) {
     Logger::Warning("Could not copy reload candidate. Keeping current module.");
-
     return false;
   }
+#endif
 
   DynamicLibrary candidateLibrary;
   GameAPI candidateAPI{};
@@ -704,6 +795,9 @@ void GameModule::Draw() {
 }
 
 void GameModule::Unload() {
+#if defined(_WIN32)
+  m_ReloadPending = false;
+#endif
   if (!m_Library.IsLoaded())
     return;
 
@@ -782,20 +876,46 @@ std::filesystem::path GameModule::CreateRuntimePath() {
   return m_RuntimeDirectory / filename;
 }
 
-bool GameModule::CopyModule(const std::filesystem::path &destination) {
+GameModule::CopyResult
+GameModule::CopyModule(const std::filesystem::path &destination) {
   std::error_code error;
 
+#if defined(_WIN32)
+  std::filesystem::copy_file(m_Path, destination,
+                             std::filesystem::copy_options::none, error);
+
+  CopyResult result = CopyResult::Success;
+  if (error) {
+    m_LastCopyError =
+        error.message() + " (" + std::to_string(error.value()) + ")";
+    result = CopyResult::Failed;
+    // Implementations can map native sharing/lock violations (32/33) to
+    // permission_denied. Bound retries to also diagnose persistent ACL errors.
+    if ((error.category() == std::system_category() &&
+         (error.value() == 32 || error.value() == 33)) ||
+        error == std::errc::permission_denied ||
+        error == std::errc::no_such_file_or_directory)
+      result = CopyResult::Retry;
+  } else if (!m_ModuleWatcher.IsCurrentStateStable()) {
+    m_LastCopyError = "Build output changed during the copy.";
+    result = CopyResult::Retry;
+  }
+
+  if (result != CopyResult::Success) {
+    std::error_code cleanupError;
+    std::filesystem::remove(destination, cleanupError);
+  }
+  return result;
+#else
   std::filesystem::copy_file(m_Path, destination,
                              std::filesystem::copy_options::overwrite_existing,
                              error);
-
   if (error) {
     Logger::Error("Failed to copy game module: " + error.message());
-
-    return false;
+    return CopyResult::Failed;
   }
-
-  return true;
+  return CopyResult::Success;
+#endif
 }
 
 bool GameModule::LoadCandidate(const std::filesystem::path &path,
@@ -841,22 +961,35 @@ void GameModule::CleanupRuntimeFiles() {
     return;
   }
 
+#if defined(_WIN32)
   /*
-   * Runtime libraries are temporary build artifacts. Remove leftovers
-   * from previous runs or crashes before starting a new session.
+   * Only clean this instance's reserved directory. Other hosts may still be
+   * executing their copies. Failed deletions are retried by the next sweep.
    */
+  for (auto entry = std::filesystem::directory_iterator(m_RuntimeDirectory, error);
+       !error && entry != std::filesystem::directory_iterator{};
+       entry.increment(error)) {
+    std::error_code fileError;
+    if (entry->path() == m_RuntimePath || !entry->is_regular_file(fileError))
+      continue;
+
+    std::filesystem::remove(entry->path(), fileError);
+  }
+  // Keep the session directory reserved until the module has been unloaded.
+  if (!m_Library.IsLoaded())
+    std::filesystem::remove(m_RuntimeDirectory, error);
+#else
+  // Preserve the existing macOS/Linux startup and shutdown cleanup policy.
   for (const auto &entry :
        std::filesystem::directory_iterator(m_RuntimeDirectory, error)) {
     if (error)
       break;
-
     if (!entry.is_regular_file())
       continue;
-
     std::filesystem::remove(entry.path(), error);
-
     error.clear();
   }
+#endif
 }
 
 bool GameModule::ValidateAPI(const GameAPI &api) const {

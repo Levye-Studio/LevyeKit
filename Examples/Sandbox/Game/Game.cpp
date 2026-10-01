@@ -132,7 +132,7 @@ void OnDraw(void *state) {
   if (Levye::Screen::Is("Menu")) {
     ClearBackground(BLACK);
 
-    DrawText("LEVYEKIT", 40, 40, 40, RAYWHITE);
+    DrawText("LEVYEKITs", 40, 40, 40, RAYWHITE);
 
     DrawText("Press ENTER to play", 40, 100, 24, LIGHTGRAY);
 
@@ -179,7 +179,7 @@ void OnShutdown(void *state) {
  * extern "C" disables C++ name mangling so the host can reliably locate
  * this function using the symbol name "GetGameAPI".
  */
-extern "C" const Levye::GameAPI *GetGameAPI() {
+LEVYE_GAME_EXPORT const Levye::GameAPI *GetGameAPI() {
   static const Levye::GameAPI api = {.version = Levye::GAME_API_VERSION,
                                      .BindServices = BindServices,
 
