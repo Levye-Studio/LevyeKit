@@ -86,6 +86,20 @@ struct HostServices {
   void (*BindKeyAxis)(void *context, const char *action, int negativeKey,
                       int positiveKey) = nullptr;
 
+  /** @brief Associates a gamepad button with a logical action. */
+  void (*BindGamepadButton)(void *context, const char *action, int gamepad,
+                            int button) = nullptr;
+
+  /** @brief Associates an analog axis and deadzone with a logical axis. */
+  void (*BindGamepadAxis)(void *context, const char *axis, int gamepad,
+                          int gamepadAxis, float deadzone) = nullptr;
+
+  /** @brief Removes an action and its state; leaves axes unchanged. */
+  void (*ClearAction)(void *context, const char *action) = nullptr;
+
+  /** @brief Removes all input actions, axes, bindings and snapshots. */
+  void (*ClearInput)(void *context) = nullptr;
+
   // ---------------------------------------------------------------------
   // Screens
   // ---------------------------------------------------------------------

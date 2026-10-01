@@ -1,0 +1,97 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Levye: Configure Debug",
+            "type": "process",
+            "command": "cmake",
+            "args": [
+                "-S",
+                "${workspaceFolder}",
+                "-B",
+                "${workspaceFolder}/Build/Debug",
+                "-DCMAKE_BUILD_TYPE=Debug",
+                "-DLEVYE_BUILD_EXAMPLES=ON",
+                "-DLEVYE_BUILD_TOOLS=ON"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Levye: Build Debug",
+            "type": "process",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "${workspaceFolder}/Build/Debug",
+                "--config",
+                "Debug",
+                "--parallel"
+            ],
+            "dependsOn": "Levye: Configure Debug",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "windows": {
+                "problemMatcher": [
+                    "$msCompile"
+                ]
+            }
+        },
+        {
+            "label": "Levye: Configure Release",
+            "type": "process",
+            "command": "cmake",
+            "args": [
+                "-S",
+                "${workspaceFolder}",
+                "-B",
+                "${workspaceFolder}/Build/Release",
+                "-DCMAKE_BUILD_TYPE=Release",
+                "-DLEVYE_BUILD_EXAMPLES=ON",
+                "-DLEVYE_BUILD_TOOLS=ON"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Levye: Build Release",
+            "type": "process",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "${workspaceFolder}/Build/Release",
+                "--config",
+                "Release",
+                "--parallel"
+            ],
+            "dependsOn": "Levye: Configure Release",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "windows": {
+                "problemMatcher": [
+                    "$msCompile"
+                ]
+            }
+        }
+    ]
+}

@@ -12,7 +12,7 @@ option(
     ON
 )
 
-option(LEVYE_BUILD_TESTS "Build Windows hot-reload integration tests" OFF)
+option(LEVYE_BUILD_TESTS "Build input and available platform integration tests" OFF)
 
 project(
     LevyeKit
@@ -215,13 +215,8 @@ set_target_properties(
     levye
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY
-        "${CMAKE_SOURCE_DIR}/Targets/Debug/bin"
+        "${CMAKE_SOURCE_DIR}/Targets/$<CONFIG>/bin"
 )
-
-if(WIN32)
-    set_target_properties(levye PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/Targets/$<CONFIG>/bin")
-endif()
 
 target_include_directories(
     levye
@@ -235,9 +230,4 @@ target_link_libraries(
         tomlplusplus::tomlplusplus
 )
 
-endif()
-
-if(LEVYE_BUILD_TESTS AND WIN32)
-    enable_testing()
-    add_subdirectory(Tests/Windows)
 endif()

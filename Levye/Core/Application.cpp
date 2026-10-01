@@ -43,6 +43,9 @@ void Application::Run() {
   }
 
   while (!WindowShouldClose()) {
+    // raylib polls events at EndDrawing(). Sample once before any callbacks,
+    // including reload callbacks, so every callback sees this frame's state.
+    m_GameModule.GetInputMap().Update();
 
     /*
      * Check before executing game callbacks so no function from an

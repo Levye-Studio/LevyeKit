@@ -416,70 +416,105 @@ Individual LevyeKit headers remain available when a game prefers narrower includ
 
 ### Input
 
-LevyeKit uses an **action-based input system**.
-
-Before an action can be queried from game code, it must first be bound to one or more inputs.
-
-For example, an action named `Jump` can be bound to the Space key:
+Register bindings through the public `Levye::Input` API in `OnLoad()`. The
+host owns the input map; reloadable modules access it only through
+`HostServices`.
 
 ```cpp
-input.BindKey("Jump", KEY_SPACE);
+// Multiple keyboard keys and a controller button represent one action.
+Levye::Input::BindKey("Jump", KEY_SPACE);
+Levye::Input::BindKey("Jump", KEY_UP);
+Levye::Input::BindGamepadButton("Jump", 0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN);
+
+// WASD, arrow keys, and the first controller's left stick.
+Levye::Input::BindKeyAxis("MoveX", KEY_A, KEY_D);
+Levye::Input::BindKeyAxis("MoveX", KEY_LEFT, KEY_RIGHT);
+Levye::Input::BindKeyAxis("MoveY", KEY_W, KEY_S);
+Levye::Input::BindKeyAxis("MoveY", KEY_UP, KEY_DOWN);
+Levye::Input::BindGamepadAxis("MoveX", 0, GAMEPAD_AXIS_LEFT_X, 0.15f);
+Levye::Input::BindGamepadAxis("MoveY", 0, GAMEPAD_AXIS_LEFT_Y, 0.15f);
 ```
 
-Multiple inputs can be bound to the same action:
+Actions use the combined state of every bound key and gamepad button:
+
+- `IsDown()` is true while at least one binding is held.
+- `IsPressed()` is true only when the action changes from up to down.
+- `IsReleased()` is true only when the last held binding is released.
+
+For W and UP bound to the same action: pressing W triggers one press, pressing
+UP while W is held does not trigger another, releasing W while UP is held does
+not release the action, and releasing UP finally triggers a release. A gamepad
+button participates in exactly the same way. Disconnecting a gamepad removes
+its contribution; reconnecting a held button may produce a new press.
+
+The host calls `InputMap::Update()` once per frame, after raylib's event polling
+and before reload callbacks, `OnUpdate`, fixed updates, and drawing. Queries
+read one snapshot and never consume transitions. Repeated reads in the same
+frame return the same result, including across a module reload. Handle one-shot
+actions in `OnUpdate`; queue gameplay commands if fixed simulation needs them,
+rather than handling the same edge in every fixed step. New bindings take
+effect on the next host sample. Input remains active while game time is paused.
 
 ```cpp
-input.BindKey("Jump", KEY_SPACE);
-input.BindGamepadButton(
-    "Jump",
-    GAMEPAD_BUTTON_RIGHT_FACE_DOWN
-);
-```
-
-Game code can then query the action through the public `Levye::Input` API:
-
-```cpp
-if (Levye::Input::IsPressed("Jump"))
+void OnUpdate(void* state, float deltaTime)
 {
-    // Jump.
-}
-
-if (Levye::Input::IsDown("Jump"))
-{
-    // The action is currently held.
-}
-
-if (Levye::Input::IsReleased("Jump"))
-{
-    // The action was released this frame.
+    if (Levye::Input::IsPressed("Jump"))
+    {
+        // Queue one jump for the simulation.
+    }
+    const float horizontal = Levye::Input::GetAxis("MoveX");
+    // Apply horizontal movement using deltaTime.
 }
 ```
 
-Analog or directional actions can also be queried as axes:
+Keyboard axes combine directions across **all** bindings, without adding
+multiple keys in the same direction:
+
+| Keys | MoveX |
+| --- | --- |
+| A or Left | -1 |
+| D or Right | +1 |
+| A + Right | 0 |
+| D + Left | 0 |
+| A + Left | -1 |
+| A + Left + Right | 0 |
+
+After combining keyboard directions, the value with the greatest absolute
+magnitude wins between that keyboard result and each available gamepad axis.
+Ties prefer the keyboard, then the first registered gamepad binding. Thus A
+beats a +0.7 stick value, while A + Right cancels the keyboard and allows +0.7
+from the stick. Analog magnitudes below the deadzone are zero; other values
+retain their magnitude without rescaling and are clamped to [-1, 1]. The default
+deadzone is 0.15. Deadzones are clamped to [0, 1], with non-finite values replaced
+by 0.15; non-finite analog samples are ignored. Disconnected controllers
+contribute zero.
+
+Bindings, axis values, and action history survive hot reload. `OnLoad` runs only
+at startup, so bindings need not be recreated in `OnAfterReload`. Re-registering
+an identical key, key pair, or gamepad button is a no-op and does not reset held
+state. Re-registering a gamepad axis updates its deadzone without adding a
+second binding. Changed registrations can be applied in `OnAfterReload`, but
+adding a replacement does not automatically remove an old binding.
 
 ```cpp
-const float horizontal =
-    Levye::Input::GetAxis("MoveHorizontal");
+Levye::Input::ClearAction("Jump"); // Remove action bindings and state immediately.
+Levye::Input::Clear();             // Remove all actions, axes, and cached values.
 ```
 
-The binding itself is owned by the host-side input system, while gameplay code queries actions through `Levye::Input`.
+Clearing does not synthesize release events. `ClearAction` leaves a same-named
+axis intact; there is currently no individual-axis removal function. A cleared
+action starts fresh when rebound, so a held input generates a press on its next
+sample. Do not call `Clear()` on every reload. Null action/axis names and calls
+without bound services are safe no-ops (queries return false or zero).
 
-This keeps gameplay code independent from specific keys or controller buttons:
+The Sandbox uses WASD/arrows or the left stick to move, Enter/controller A to
+start, Escape/controller B to return to the menu, and Space/controller A for a
+sound. `P` pauses game time, `M` pauses music, and `R` resumes music.
 
-```text
-KEY_SPACE
-    |
-    v
-  "Jump"
-    |
-    v
-Levye::Input::IsPressed("Jump")
-    |
-    v
-Gameplay
-```
+The input service additions require `GAME_API_VERSION` **13**. Rebuild and
+restart the host and rebuild game modules together when upgrading from ABI 12;
+this is an ABI change, not a LevyeKit release-version change.
 
-This also allows several physical inputs to represent the same gameplay action without changing the gameplay code.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -845,7 +880,6 @@ LevyeKit is intended to provide a common foundation across desktop and mobile ta
 
 Native code hot reloading is primarily intended for desktop development.
 
-Windows build, CLI, DLL deployment, and hot-reload verification commands are documented in [Tests/Windows](Tests/Windows/README.md).
 
 Mobile platforms may use a different development workflow because of platform restrictions around dynamically replacing executable code.
 

@@ -1,12 +1,17 @@
 {
     "cmake.sourceDirectory": "${workspaceFolder}",
-    "cmake.buildDirectory": "${workspaceFolder}/Build",
+    "cmake.buildDirectory": "${workspaceFolder}/Build/${buildType}",
     "cmake.configureOnOpen": true,
-    "C_Cpp.intelliSenseEngine": "disabled",
+    "cmake.configureSettings": {
+        "LEVYE_BUILD_EXAMPLES": true,
+        "LEVYE_BUILD_TOOLS": true
+    },
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.intelliSenseEngine": "default",
     "files.associations": {
         "*.hpp": "cpp"
     },
     "[cpp]": {
-        "editor.defaultFormatter": "xaver.clang-format"
+        "editor.defaultFormatter": "ms-vscode.cpptools"
     }
 }

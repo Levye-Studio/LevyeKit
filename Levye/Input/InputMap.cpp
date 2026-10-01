@@ -50,6 +50,7 @@ void InputMap::BindKeyAxis(const std::string &axis, KeyboardKey negativeKey,
 
 void InputMap::BindGamepadAxis(const std::string &axis, int gamepad,
                                GamepadAxis gamepadAxis, float deadzone) {
+  deadzone = std::isfinite(deadzone) ? std::clamp(deadzone, 0.0f, 1.0f) : 0.15f;
   auto &bindings = m_Axes[axis].gamepadBindings;
 
   const auto existing = std::find_if(
@@ -71,125 +72,64 @@ void InputMap::BindGamepadAxis(const std::string &axis, int gamepad,
       {.gamepad = gamepad, .axis = gamepadAxis, .deadzone = deadzone});
 }
 
+void InputMap::Update() {
+  for (auto &[name, action] : m_Actions) {
+    bool down = false;
+    for (const auto key : action.keys) {
+      down = m_Input.isKeyDown(key) || down;
+    }
+    for (const auto &binding : action.gamepadButtons) {
+      const bool held = m_Input.isGamepadAvailable(binding.gamepad) &&
+                        m_Input.isGamepadButtonDown(binding.gamepad, binding.button);
+      down = held || down;
+    }
+    action.pressed = down && !action.down;
+    action.released = !down && action.down;
+    action.down = down;
+  }
+
+  for (auto &[name, axis] : m_Axes) {
+    bool negative = false;
+    bool positive = false;
+    for (const auto &binding : axis.keyBindings) {
+      negative = m_Input.isKeyDown(binding.negativeKey) || negative;
+      positive = m_Input.isKeyDown(binding.positiveKey) || positive;
+    }
+    float value = static_cast<float>(positive) - static_cast<float>(negative);
+    for (const auto &binding : axis.gamepadBindings) {
+      if (!m_Input.isGamepadAvailable(binding.gamepad))
+        continue;
+      float analog = m_Input.getGamepadAxisMovement(binding.gamepad, binding.axis);
+      if (!std::isfinite(analog))
+        continue;
+      analog = std::clamp(analog, -1.0f, 1.0f);
+      if (std::abs(analog) < binding.deadzone)
+        analog = 0.0f;
+      if (std::abs(analog) > std::abs(value))
+        value = analog;
+    }
+    axis.value = value;
+  }
+}
+
 float InputMap::GetAxis(const std::string &axis) const {
   const auto iterator = m_Axes.find(axis);
-
-  if (iterator == m_Axes.end())
-    return 0.0f;
-
-  const Axis &inputAxis = iterator->second;
-
-  float value = 0.0f;
-
-  /*
-   * Digital bindings contribute full-strength values.
-   *
-   * Holding both directions cancels them out.
-   */
-  for (const auto &binding : inputAxis.keyBindings) {
-    float digitalValue = 0.0f;
-
-    if (::IsKeyDown(binding.negativeKey))
-      digitalValue -= 1.0f;
-
-    if (::IsKeyDown(binding.positiveKey))
-      digitalValue += 1.0f;
-
-    /*
-     * Keep whichever binding currently has the greatest magnitude.
-     * This prevents multiple keyboard bindings from adding beyond the
-     * valid -1 to +1 range.
-     */
-    if (std::abs(digitalValue) > std::abs(value)) {
-      value = digitalValue;
-    }
-  }
-
-  for (const auto &binding : inputAxis.gamepadBindings) {
-    if (!::IsGamepadAvailable(binding.gamepad))
-      continue;
-
-    float analogValue = ::GetGamepadAxisMovement(binding.gamepad, binding.axis);
-
-    if (std::abs(analogValue) < binding.deadzone) {
-      analogValue = 0.0f;
-    }
-
-    if (std::abs(analogValue) > std::abs(value)) {
-      value = analogValue;
-    }
-  }
-
-  return value;
+  return iterator != m_Axes.end() ? iterator->second.value : 0.0f;
 }
 
 bool InputMap::IsDown(const std::string &action) const {
   const auto iterator = m_Actions.find(action);
-
-  if (iterator == m_Actions.end())
-    return false;
-
-  const Action &inputAction = iterator->second;
-
-  for (const KeyboardKey key : inputAction.keys) {
-    if (::IsKeyDown(key))
-      return true;
-  }
-
-  for (const auto &binding : inputAction.gamepadButtons) {
-    if (::IsGamepadAvailable(binding.gamepad) &&
-        ::IsGamepadButtonDown(binding.gamepad, binding.button)) {
-      return true;
-    }
-  }
-
-  return false;
+  return iterator != m_Actions.end() && iterator->second.down;
 }
 
 bool InputMap::IsPressed(const std::string &action) const {
   const auto iterator = m_Actions.find(action);
-
-  if (iterator == m_Actions.end())
-    return false;
-
-  const Action &inputAction = iterator->second;
-
-  for (const KeyboardKey key : inputAction.keys) {
-    if (::IsKeyPressed(key))
-      return true;
-  }
-
-  for (const auto &binding : inputAction.gamepadButtons) {
-    if (::IsGamepadAvailable(binding.gamepad) &&
-        ::IsGamepadButtonPressed(binding.gamepad, binding.button)) {
-      return true;
-    }
-  }
-
-  return false;
+  return iterator != m_Actions.end() && iterator->second.pressed;
 }
 
 bool InputMap::IsReleased(const std::string &action) const {
   const auto iterator = m_Actions.find(action);
-
-  if (iterator == m_Actions.end())
-    return false;
-
-  const Action &inputAction = iterator->second;
-
-  for (const KeyboardKey key : inputAction.keys) {
-    if (::IsKeyReleased(key))
-      return true;
-  }
-
-  for (const auto &binding : inputAction.gamepadButtons) {
-    if (::IsGamepadAvailable(binding.gamepad) &&
-        ::IsGamepadButtonReleased(binding.gamepad, binding.button)) {
-      return true;
-    }
-  }
-
-  return false;
+  return iterator != m_Actions.end() && iterator->second.released;
 }
 
 void InputMap::ClearAction(const std::string &action) {

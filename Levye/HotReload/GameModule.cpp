@@ -89,10 +89,49 @@ float HostGetAxis(void *context, const char *axis) {
   return host->input->GetAxis(axis);
 }
 
-void HostBindKey(void *context, const char *action, int key) {}
+void HostBindKey(void *context, const char *action, int key) {
+  if (!context || !action) return;
+  auto *host = static_cast<HostContext *>(context);
+  if (host->input) host->input->BindKey(action, static_cast<KeyboardKey>(key));
+}
 
-void HostBindKeyAxis(void *context, const char *action, int negativeKey,
-                     int positiveKey) {}
+void HostBindKeyAxis(void *context, const char *axis, int negativeKey,
+                     int positiveKey) {
+  if (!context || !axis) return;
+  auto *host = static_cast<HostContext *>(context);
+  if (host->input)
+    host->input->BindKeyAxis(axis, static_cast<KeyboardKey>(negativeKey),
+                            static_cast<KeyboardKey>(positiveKey));
+}
+
+void HostBindGamepadButton(void *context, const char *action, int gamepad,
+                           int button) {
+  if (!context || !action) return;
+  auto *host = static_cast<HostContext *>(context);
+  if (host->input)
+    host->input->BindGamepadButton(action, gamepad, static_cast<GamepadButton>(button));
+}
+
+void HostBindGamepadAxis(void *context, const char *axis, int gamepad,
+                         int gamepadAxis, float deadzone) {
+  if (!context || !axis) return;
+  auto *host = static_cast<HostContext *>(context);
+  if (host->input)
+    host->input->BindGamepadAxis(axis, gamepad, static_cast<GamepadAxis>(gamepadAxis),
+                                deadzone);
+}
+
+void HostClearAction(void *context, const char *action) {
+  if (!context || !action) return;
+  auto *host = static_cast<HostContext *>(context);
+  if (host->input) host->input->ClearAction(action);
+}
+
+void HostClearInput(void *context) {
+  if (!context) return;
+  auto *host = static_cast<HostContext *>(context);
+  if (host->input) host->input->Clear();
+}
 
 void HostSetScreen(void *context, const char *screen) {
   if (!context || !screen)
@@ -464,6 +503,10 @@ bool GameModule::Load(const std::string &path) {
                     .GetAxis = HostGetAxis,
                     .BindKey = HostBindKey,
                     .BindKeyAxis = HostBindKeyAxis,
+                    .BindGamepadButton = HostBindGamepadButton,
+                    .BindGamepadAxis = HostBindGamepadAxis,
+                    .ClearAction = HostClearAction,
+                    .ClearInput = HostClearInput,
 
                     .SetScreen = HostSetScreen,
                     .IsScreen = HostIsScreen,

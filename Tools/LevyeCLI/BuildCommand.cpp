@@ -43,12 +43,9 @@ bool BuildCommand::Execute(const std::filesystem::path &projectDirectory,
 
   std::cout << "[Levye] Building project...\n";
 
-  std::string buildCommand = "cmake --build " + QuotePath(buildDirectory);
-#if defined(_WIN32)
-  // Select VS/multi-config configurations; this is also safe for Ninja.
-  // Leave generator/toolchain selection to CMake's cache and environment.
-  buildCommand += " --config " + configurationName;
-#endif
+  // Select the configuration for multi-config generators on every platform.
+  const std::string buildCommand = "cmake --build " + QuotePath(buildDirectory) +
+                                   " --config " + configurationName;
 
   const int buildResult = std::system(buildCommand.c_str());
 

@@ -1,6 +1,4 @@
-#include "Levye/Input/Input.hpp"
 #include <Levye/LevyeKit.hpp>
-
 #include <new>
 
 namespace {
@@ -16,22 +14,79 @@ struct GameState {
   Levye::AssetHandle music{};
 };
 
-void BindServices(const Levye::HostServices *services) {
+void BindServices(const Levye::HostServices* services) {
   if (services)
     Levye::Services::Bind(services);
   else
     Levye::Services::Unbind();
 }
 
-GameState *GetState(void *state) { return static_cast<GameState *>(state); }
+GameState* GetState(void* state) { return static_cast<GameState*>(state); }
 
-void InitializeState(void *state) { new (state) GameState{}; }
+void InitializeState(void* state) { new (state) GameState{}; }
 
-void DestroyState(void *state) { GetState(state)->~GameState(); }
+void DestroyState(void* state) { GetState(state)->~GameState(); }
 
-void OnLoad(void *state) {
-  GameState *game = GetState(state);
+void OnLoad(void* state) {
+  GameState* game = GetState(state);
   // game->initialized = true;
+
+  /*
+   * Keyboard movement.
+   *
+   * Both WASD and arrow keys feed the same logical axes.
+   */
+  Levye::Input::BindKeyAxis("MoveX", KEY_A, KEY_D);
+
+  Levye::Input::BindKeyAxis("MoveX", KEY_LEFT, KEY_RIGHT);
+
+  Levye::Input::BindKeyAxis("MoveY", KEY_W, KEY_S);
+
+  Levye::Input::BindKeyAxis("MoveY", KEY_UP, KEY_DOWN);
+
+  /*
+   * Controller movement.
+   */
+  Levye::Input::BindGamepadAxis("MoveX", 0, GAMEPAD_AXIS_LEFT_X);
+
+  Levye::Input::BindGamepadAxis("MoveY", 0, GAMEPAD_AXIS_LEFT_Y);
+
+  Levye::Input::BindKey("MoveUp", KEY_W);
+
+  Levye::Input::BindKey("MoveUp", KEY_UP);
+
+  Levye::Input::BindKey("MoveDown", KEY_S);
+
+  Levye::Input::BindKey("MoveDown", KEY_DOWN);
+
+  Levye::Input::BindKey("MoveLeft", KEY_A);
+
+  Levye::Input::BindKey("MoveLeft", KEY_LEFT);
+
+  Levye::Input::BindKey("MoveRight", KEY_D);
+
+  Levye::Input::BindKey("MoveRight", KEY_RIGHT);
+
+  Levye::Input::BindKey("Confirm", KEY_ENTER);
+  Levye::Input::BindGamepadButton("Confirm", 0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN);
+
+  Levye::Input::BindKey("Back", KEY_ESCAPE);
+  Levye::Input::BindGamepadButton("Back", 0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT);
+
+  Levye::Input::BindKey("TestSound", KEY_SPACE);
+  Levye::Input::BindGamepadButton("TestSound", 0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN);
+
+  Levye::Input::BindKey("PauseMusic", KEY_M);
+
+  Levye::Input::BindKey("ResumeMusic", KEY_R);
+
+  Levye::Input::BindKey("NormalTime", KEY_ONE);
+
+  Levye::Input::BindKey("SlowTime", KEY_TWO);
+
+  Levye::Input::BindKey("FastTime", KEY_THREE);
+
+  Levye::Input::BindKey("Pause", KEY_P);
 
   game->playerTexture = Levye::Assets::LoadTexture("player.png");
 
@@ -46,13 +101,13 @@ void OnLoad(void *state) {
   Levye::Log::Info("Sandbox started.");
 }
 
-void OnAfterReload(void *state) {
+void OnAfterReload(void* state) {
   (void)state;
 
   Levye::Log::Info("Sandbox reloaded.");
 }
 
-void OnBeforeReload(void *state) {
+void OnBeforeReload(void* state) {
   /*
    * This callback runs while the old game module is still loaded.
    *
@@ -64,14 +119,11 @@ void OnBeforeReload(void *state) {
   Levye::Log::Info("Sandbox preparing for reload.");
 }
 
-void OnUpdate(void *state, float deltaTime) {
-
-  GameState *game = GetState(state);
+void OnUpdate(void* state, float deltaTime) {
+  GameState* game = GetState(state);
 
   if (Levye::Screen::Is("Menu")) {
-
     if (Levye::Input::IsPressed("Confirm")) {
-
       Levye::Screen::Set("Game");
     }
 
@@ -79,7 +131,6 @@ void OnUpdate(void *state, float deltaTime) {
   }
 
   if (Levye::Screen::Is("Game")) {
-
     const float horizontal = Levye::Input::GetAxis("MoveX");
     const float vertical = Levye::Input::GetAxis("MoveY");
 
@@ -87,7 +138,6 @@ void OnUpdate(void *state, float deltaTime) {
     game->playerPosition.y += vertical * game->playerSpeed * deltaTime;
 
     if (Levye::Input::IsPressed("Back")) {
-
       Levye::Screen::Set("Menu");
 
       return;
@@ -111,20 +161,26 @@ void OnUpdate(void *state, float deltaTime) {
       Levye::Time::SetPaused(!paused);
     }
 
+    if (Levye::Input::IsPressed("PauseMusic")) {
+      Levye::Audio::PauseMusic(game->music);
+    }
+    if (Levye::Input::IsPressed("ResumeMusic")) {
+      Levye::Audio::ResumeMusic(game->music);
+    }
+
     if (Levye::Input::IsPressed("TestSound")) {
       Levye::Audio::PlaySound(game->clickSound);
     }
   }
 }
 
-void OnFixedUpdate(void *state, float fixedDeltaTime) {
-
+void OnFixedUpdate(void* state, float fixedDeltaTime) {
   constexpr float playerSpeed = 300.0f;
 }
 
-void OnDraw(void *state) {
-  GameState *game = GetState(state);
-  const Texture2D *playerTexture =
+void OnDraw(void* state) {
+  GameState* game = GetState(state);
+  const Texture2D* playerTexture =
       Levye::Assets::GetTexture(game->playerTexture);
 
   const float alpha = Levye::Time::InterpolationAlpha();
@@ -132,9 +188,9 @@ void OnDraw(void *state) {
   if (Levye::Screen::Is("Menu")) {
     ClearBackground(BLACK);
 
-    DrawText("LEVYEKITs", 40, 40, 40, RAYWHITE);
+    DrawText("LEVYEKIT", 40, 40, 40, RAYWHITE);
 
-    DrawText("Press ENTER to play", 40, 100, 24, LIGHTGRAY);
+    DrawText("Press ENTER / Controller A to play", 40, 100, 24, LIGHTGRAY);
 
     return;
   }
@@ -146,20 +202,19 @@ void OnDraw(void *state) {
       DrawTexture(*playerTexture, static_cast<int>(game->playerPosition.x),
                   static_cast<int>(game->playerPosition.y), WHITE);
     } else {
-
       DrawCircleV(game->playerPosition, 30.0f, GOLD);
     }
 
     DrawText("Move: WASD / Arrows / Controller", 40, 40, 20, RAYWHITE);
 
-    DrawText("ESC: Menu", 40, 70, 20, LIGHTGRAY);
+    DrawText("ESC / Controller B: Menu", 40, 70, 20, LIGHTGRAY);
+    DrawText("P: Pause time | M: Pause music | R: Resume music", 40, 100, 20, LIGHTGRAY);
 
     DrawText(Levye::Time::IsPaused() ? "PAUSED" : "RUNNING", 20, 20, 20, WHITE);
   }
 }
 
-void OnShutdown(void *state) {
-
+void OnShutdown(void* state) {
   /*
    * Unlike OnBeforeReload, this callback only runs when the application is
    * actually shutting down. Persistent gameplay state is no longer needed
@@ -169,7 +224,7 @@ void OnShutdown(void *state) {
 
   Levye::Log::Info("Sandbox shutting down.");
 }
-} // namespace
+}  // namespace
 
 /**
  * @brief Returns the public API implemented by the Sandbox game module.
@@ -179,7 +234,7 @@ void OnShutdown(void *state) {
  * extern "C" disables C++ name mangling so the host can reliably locate
  * this function using the symbol name "GetGameAPI".
  */
-LEVYE_GAME_EXPORT const Levye::GameAPI *GetGameAPI() {
+LEVYE_GAME_EXPORT const Levye::GameAPI* GetGameAPI() {
   static const Levye::GameAPI api = {.version = Levye::GAME_API_VERSION,
                                      .BindServices = BindServices,
 

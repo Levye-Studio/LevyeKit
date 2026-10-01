@@ -1,0 +1,47 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Sandbox (macOS)",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/Targets/Debug/bin/Sandbox",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Levye: Build Debug"
+        },
+        {
+            "name": "Sandbox (Windows)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Targets/Debug/bin/Sandbox.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Levye: Build Debug",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "levye (macOS)",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/Targets/Debug/bin/levye",
+            "args": [
+                "--help"
+            ],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Levye: Build Debug"
+        },
+        {
+            "name": "levye (Windows)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Targets/Debug/bin/levye.exe",
+            "args": [
+                "--help"
+            ],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Levye: Build Debug",
+            "console": "integratedTerminal"
+        }
+    ]
+}
