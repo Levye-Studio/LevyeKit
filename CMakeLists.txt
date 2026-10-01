@@ -16,7 +16,7 @@ option(LEVYE_BUILD_TESTS "Build input and available platform integration tests" 
 
 project(
     LevyeKit
-    VERSION 0.1.0
+    VERSION 0.1.1
     LANGUAGES CXX
 )
 
