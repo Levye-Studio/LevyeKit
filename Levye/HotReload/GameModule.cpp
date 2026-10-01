@@ -1,9 +1,9 @@
 #include "GameModule.hpp"
 #include <Levye/Assets/AssetPath.hpp>
+#include <Levye/Debug/Logger.hpp>
 #include <Levye/Input/InputMap.hpp>
 #include <Levye/Screen/ScreenManager.hpp>
 
-#include <iostream>
 #include <utility>
 
 namespace Levye {
@@ -19,25 +19,25 @@ std::string ResolveAssetPath(HostContext *host, const char *path) {
   return AssetPath::Resolve(*host->assetRoot, path);
 }
 
-void HostLogInfo(const char *message) {
+void HostLogInfo(void *context, const char *message) {
   if (!message)
     return;
 
-  std::cout << "[Game] " << message << '\n';
+  Logger::Info(message);
 }
 
-void HostLogWarning(const char *message) {
+void HostLogWarning(void *context, const char *message) {
   if (!message)
     return;
 
-  std::cerr << "[Game Warning] " << message << '\n';
+  Logger::Warning(message);
 }
 
-void HostLogError(const char *message) {
+void HostLogError(void *context, const char *message) {
   if (!message)
     return;
 
-  std::cerr << "[Game Error] " << message << '\n';
+  Logger::Error(message);
 }
 
 bool HostIsActionDown(void *context, const char *action) {
@@ -320,7 +320,7 @@ double HostGetTime(void *context) {
   if (!host->time)
     return 0.0;
 
-  return host->time->GetTime();
+  return host->time->GetTimeSystem();
 }
 
 double HostGetUnscaledTime(void *context) {
@@ -489,13 +489,13 @@ bool GameModule::Load(const std::string &path) {
   const std::filesystem::path sourcePath(m_Path);
 
   if (!std::filesystem::exists(sourcePath)) {
-    std::cerr << "[LevyeKit] Game module does not exist: " << m_Path << '\n';
+    Logger::Error("Game module does not exist: " + m_Path);
 
     return false;
   }
 
   if (!m_ModuleWatcher.Watch(m_Path)) {
-    std::cerr << "[LevyeKit] Failed to watch game module: " << m_Path << '\n';
+    Logger::Warning("Failed to watch game module: " + m_Path);
   }
 
   /*
@@ -513,8 +513,7 @@ bool GameModule::Load(const std::string &path) {
   std::filesystem::create_directories(m_RuntimeDirectory, error);
 
   if (error) {
-    std::cerr << "[LevyeKit] Failed to create hot-reload directory: "
-              << error.message() << '\n';
+    Logger::Error("Failed to create hot-reload directory: " + error.message());
 
     return false;
   }
@@ -539,15 +538,14 @@ bool GameModule::Load(const std::string &path) {
 
   m_Started = false;
 
-  std::cout << "[LevyeKit] Loaded game module: " << m_Path << '\n';
+  Logger::Info("Loaded game module: " + m_Path);
 
   return true;
 }
 
 bool GameModule::Start() {
   if (!m_HasAPI) {
-    std::cerr << "[LevyeKit] Cannot start game module: "
-              << "no valid GameAPI is loaded.\n";
+    Logger::Error("Cannot start game module: no valid GameAPI is loaded.");
 
     return false;
   }
@@ -555,13 +553,22 @@ bool GameModule::Start() {
   if (m_Started)
     return true;
 
+  if (!m_API.BindServices)
+    return false;
+
+  m_API.BindServices(&m_HostServices);
+
+  m_State = ::operator new(m_API.stateSize);
+
+  m_API.InitializeState(m_State);
+
   if (m_API.OnLoad) {
-    m_API.OnLoad(&m_State, &m_HostServices);
+    m_API.OnLoad(m_State);
   }
 
   m_Started = true;
 
-  std::cout << "[LevyeKit] Game module started.\n";
+  Logger::Info("Game module started.");
 
   return true;
 }
@@ -578,13 +585,12 @@ bool GameModule::CheckForReload() {
   if (!m_ModuleWatcher.Poll())
     return false;
 
-  std::cout << "[LevyeKit] Stable game module change detected.\n";
+  Logger::Info("Stable game module change detected.");
 
   const auto candidatePath = CreateRuntimePath();
 
   if (!CopyModule(candidatePath)) {
-    std::cerr << "[LevyeKit] Could not copy reload candidate. "
-              << "Keeping current module.\n";
+    Logger::Warning("Could not copy reload candidate. Keeping current module.");
 
     return false;
   }
@@ -597,10 +603,22 @@ bool GameModule::CheckForReload() {
    * completely intact.
    */
   if (!LoadCandidate(candidatePath, candidateLibrary, candidateAPI)) {
-    std::cerr << "[LevyeKit] Reload candidate is invalid. "
-              << "Keeping current module.\n";
+    Logger::Warning("Reload candidate is invalid. Keeping current module.");
 
     std::error_code error;
+    std::filesystem::remove(candidatePath, error);
+
+    return false;
+  }
+
+  if (m_State && candidateAPI.stateSize != m_API.stateSize) {
+    Logger::Warning("Hot reload rejected because GameState size changed. "
+                    "Restart the game to apply the new state layout.");
+
+    candidateLibrary.Unload();
+
+    std::error_code error;
+
     std::filesystem::remove(candidatePath, error);
 
     return false;
@@ -613,7 +631,7 @@ bool GameModule::CheckForReload() {
    * replacement without risking interruption from an invalid build.
    */
 
-  m_API.OnBeforeReload(&m_State, &m_HostServices);
+  m_API.OnBeforeReload(m_State);
 
   m_API = {};
   m_HasAPI = false;
@@ -622,14 +640,13 @@ bool GameModule::CheckForReload() {
 
   PromoteCandidate(std::move(candidateLibrary), candidateAPI, candidatePath);
 
+  m_API.BindServices(&m_HostServices);
   /*
    * The new game code is now active and can resume using the persistent
    * host-owned GameState and services.
    */
 
-  m_API.OnAfterReload(&m_State, &m_HostServices);
-
-  ++m_State.reloadCount;
+  m_API.OnAfterReload(m_State);
 
   /*
    * The previous runtime copy is no longer executable and can now be removed.
@@ -640,8 +657,10 @@ bool GameModule::CheckForReload() {
     std::filesystem::remove(previousRuntimePath, error);
   }
 
-  std::cout << "[LevyeKit] Hot reload successful. Reload #"
-            << m_State.reloadCount << '\n';
+  ++m_ReloadCount;
+
+  Logger::Info("Hot reload successful. Reload #" +
+               std::to_string(m_ReloadCount));
 
   return true;
 }
@@ -664,7 +683,7 @@ void GameModule::Update(float deltaTime) {
   if (!m_HasAPI || !m_API.OnUpdate)
     return;
 
-  m_API.OnUpdate(&m_State, &m_HostServices, deltaTime);
+  m_API.OnUpdate(m_State, deltaTime);
 }
 
 void GameModule::UpdateTime(float deltaTime) { m_Time.Update(deltaTime); }
@@ -674,14 +693,14 @@ void GameModule::FixedUpdate(float fixedDeltaTime) {
     return;
   }
 
-  m_API.OnFixedUpdate(&m_State, &m_HostServices, fixedDeltaTime);
+  m_API.OnFixedUpdate(m_State, fixedDeltaTime);
 }
 
 void GameModule::Draw() {
   if (!m_HasAPI || !m_API.OnDraw)
     return;
 
-  m_API.OnDraw(&m_State, &m_HostServices);
+  m_API.OnDraw(m_State);
 }
 
 void GameModule::Unload() {
@@ -702,76 +721,36 @@ void GameModule::Unload() {
     m_RuntimePath.clear();
   }
 
-  std::cout << "[LevyeKit] Game module unloaded.\n";
+  Logger::Info("Game module unloaded.");
 }
 
 void GameModule::Shutdown() {
   if (!m_Library.IsLoaded())
     return;
 
-  /*
-   * OnShutdown is only called for an application that actually started.
-   * Hot reload never invokes this callback.
-   */
-  if (m_Started && m_HasAPI && m_API.OnShutdown) {
-    m_API.OnShutdown(&m_State, &m_HostServices);
+  if (m_State) {
+    if (m_API.OnShutdown) {
+      m_API.OnShutdown(m_State);
+    }
+
+    if (m_API.DestroyState) {
+      m_API.DestroyState(m_State);
+    }
+
+    ::operator delete(m_State);
+
+    m_State = nullptr;
   }
 
   /*
-   * Unload performs the actual dynamic-library teardown after game code has
-   * received its final shutdown notification.
+   * The game module no longer needs access to host-owned systems.
+   * Clear its module-local Services binding before unloading the library.
    */
+  if (m_API.BindServices) {
+    m_API.BindServices(nullptr);
+  }
+
   Unload();
-}
-
-bool GameModule::RestorePreviousModule(
-    const std::filesystem::path &runtimePath) {
-  if (runtimePath.empty())
-    return false;
-
-  if (!m_Library.Load(runtimePath.string())) {
-    std::cerr << "[LevyeKit] Failed to restore previous module.\n";
-
-    return false;
-  }
-
-  void *symbol = m_Library.GetSymbol("GetGameAPI");
-
-  if (!symbol) {
-    std::cerr << "[LevyeKit] Restored module does not export GetGameAPI.\n";
-
-    m_Library.Unload();
-
-    return false;
-  }
-
-  auto getGameAPI = reinterpret_cast<GetGameAPIFn>(symbol);
-
-  GameAPI restoredAPI = getGameAPI();
-
-  if (!ValidateAPI(restoredAPI)) {
-    std::cerr << "[LevyeKit] Restored module has an invalid GameAPI.\n";
-
-    m_Library.Unload();
-
-    return false;
-  }
-
-  m_API = restoredAPI;
-  m_HasAPI = true;
-  m_RuntimePath = runtimePath;
-
-  /*
-   * OnBeforeReload was already called before activation began. Pair it with
-   * OnAfterReload so the restored module knows that execution has resumed.
-   */
-  if (m_Started && m_API.OnAfterReload) {
-    m_API.OnAfterReload(&m_State, &m_HostServices);
-  }
-
-  std::cerr << "[LevyeKit] Previous module restored.\n";
-
-  return true;
 }
 
 bool GameModule::IsLoaded() const { return m_Library.IsLoaded() && m_HasAPI; }
@@ -811,8 +790,7 @@ bool GameModule::CopyModule(const std::filesystem::path &destination) {
                              error);
 
   if (error) {
-    std::cerr << "[LevyeKit] Failed to copy game module: " << error.message()
-              << '\n';
+    Logger::Error("Failed to copy game module: " + error.message());
 
     return false;
   }
@@ -834,12 +812,19 @@ bool GameModule::LoadCandidate(const std::filesystem::path &path,
 
   auto getGameAPI = reinterpret_cast<GetGameAPIFn>(symbol);
 
-  api = getGameAPI();
+  const GameAPI *gameAPI = getGameAPI();
 
-  if (!ValidateAPI(api)) {
+  if (!gameAPI) {
+    Logger::Error("Game module returned a null GameAPI.");
 
     library.Unload();
+    return false;
+  }
 
+  api = *gameAPI;
+
+  if (!ValidateAPI(api)) {
+    library.Unload();
     return false;
   }
 
@@ -876,17 +861,23 @@ void GameModule::CleanupRuntimeFiles() {
 
 bool GameModule::ValidateAPI(const GameAPI &api) const {
   if (api.version != GAME_API_VERSION) {
-    std::cerr << "[LevyeKit] Game API version mismatch. "
-              << "Host: " << GAME_API_VERSION << ", Game: " << api.version
-              << '\n';
+    Logger::Error(
+        "Game API version mismatch. Host: " + std::to_string(GAME_API_VERSION) +
+        ", Game: " + std::to_string(api.version));
 
     return false;
   }
 
-  if (!api.OnLoad || !api.OnBeforeReload || !api.OnAfterReload ||
+  if (api.stateSize == 0) {
+    Logger::Error("Game module reported an invalid state size.");
+
+    return false;
+  }
+
+  if (!api.BindServices || !api.InitializeState || !api.DestroyState ||
+      !api.OnLoad || !api.OnBeforeReload || !api.OnAfterReload ||
       !api.OnUpdate || !api.OnFixedUpdate || !api.OnDraw || !api.OnShutdown) {
-    std::cerr << "[LevyeKit] Game API is missing "
-              << "required callbacks.\n";
+    Logger::Error("Game module is missing required callbacks.");
 
     return false;
   }
@@ -894,7 +885,7 @@ bool GameModule::ValidateAPI(const GameAPI &api) const {
   return true;
 }
 
-Time &GameModule::GetTime() { return m_Time; }
+TimeSystem &GameModule::GetTimeSystem() { return m_Time; }
 
 InputMap &GameModule::GetInputMap() { return m_InputMap; }
 

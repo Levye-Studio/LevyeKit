@@ -1,36 +1,17 @@
 #pragma once
 #include "HostServices.hpp"
+#include "Services.hpp"
 #include <Levye/Assets/AssetHandle.hpp>
 #include <raylib.h>
 
+#include <cstddef>
 #include <cstdint>
 
 namespace Levye {
 /**
  * @brief Version of the binary interface shared by the host and game module.
  */
-inline constexpr std::uint32_t GAME_API_VERSION = 8;
-
-/**
- * @brief Persistent state owned by the Levye host application.
- */
-struct GameState {
-  bool initialized = false;
-  int reloadCount = 0;
-
-  Vector2 playerPreviousPosition{640.0f, 360.0f};
-
-  Vector2 playerPosition{640.0f, 360.0f};
-
-  Vector2 movementInput{0.0f, 0.0f};
-
-  AssetHandle playerTexture{};
-  AssetHandle clickSound{};
-  AssetHandle music{};
-  AssetHandle playerShader{};
-  std::uint64_t fixedUpdateCount = 0;
-  AssetHandle font{};
-};
+inline constexpr std::uint32_t GAME_API_VERSION = 11;
 
 /**
  * @brief Function table exposed by every Levye game module.
@@ -38,17 +19,26 @@ struct GameState {
 struct GameAPI {
   std::uint32_t version = GAME_API_VERSION;
 
+  /**
+   * @brief Binds host services to the currently loaded game module.
+   *
+   * This callback is invoked immediately after a module is loaded and
+   * before any other game callback executes.
+   *
+   * @param services Host service table provided by LevyeKit.
+   */
+  void (*BindServices)(const HostServices *services) = nullptr;
+
   /// Called after the game module has been loaded.
-  void (*OnLoad)(GameState *state, const HostServices *services) = nullptr;
+  void (*OnLoad)(void *state) = nullptr;
 
   /// Called after game code has been successfully hot reloaded.
-  void (*OnBeforeReload)(GameState *, const HostServices *) = nullptr;
+  void (*OnBeforeReload)(void *) = nullptr;
 
-  void (*OnAfterReload)(GameState *, const HostServices *) = nullptr;
+  void (*OnAfterReload)(void *) = nullptr;
 
   /// Called once per frame before rendering.
-  void (*OnUpdate)(GameState *state, const HostServices *services,
-                   float deltaTime) = nullptr;
+  void (*OnUpdate)(void *state, float deltaTime) = nullptr;
 
   /**
    * @brief Runs one fixed-rate simulation step.
@@ -56,18 +46,42 @@ struct GameAPI {
    * Fixed updates are intended for deterministic simulation such as movement,
    * collision detection, and future physics systems.
    */
-  void (*OnFixedUpdate)(GameState *state, const HostServices *services,
-                        float fixedDeltaTime) = nullptr;
+  void (*OnFixedUpdate)(void *state, float fixedDeltaTime) = nullptr;
 
   /// Called once per frame while a raylib drawing context is active.
-  void (*OnDraw)(GameState *state, const HostServices *services) = nullptr;
+  void (*OnDraw)(void *state) = nullptr;
 
   /// Called before the game module is unloaded.
-  void (*OnShutdown)(GameState *state, const HostServices *services) = nullptr;
+  void (*OnShutdown)(void *state) = nullptr;
+
+  /**
+   * @brief Initializes newly allocated persistent game state.
+   *
+   * Called once after the host creates the state storage.
+   *
+   * @param state Host-owned persistent state memory.
+   * @param services Services provided by the application host.
+   */
+  void (*InitializeState)(void *state) = nullptr;
+
+  /**
+   * @brief Performs final cleanup of persistent game state.
+   *
+   * Called during application shutdown before the state storage is released.
+   *
+   * @param state Persistent game state.
+   * @param services Services provided by the application host.
+   */
+  void (*DestroyState)(void *state) = nullptr;
+
+  /**
+   * @brief Size in bytes required for persistent game state.
+   */
+  std::size_t stateSize = 0;
 };
 
 /**
  * @brief Signature of the entry point exported by a Levye game module.
  */
-using GetGameAPIFn = GameAPI (*)();
+using GetGameAPIFn = GameAPI *(*)();
 } // namespace Levye

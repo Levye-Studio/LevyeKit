@@ -1,10 +1,12 @@
 #include "DynamicLibrary.hpp"
+#include <Levye/Debug/Logger.hpp>
 
 #if defined(__APPLE__) || defined(__linux__)
 #include <dlfcn.h>
+#else
+#error "DynamicLibrary is not implemented for this platform."
 #endif
 
-#include <iostream>
 
 namespace Levye {
 DynamicLibrary::~DynamicLibrary() { Unload(); }
@@ -46,10 +48,10 @@ bool DynamicLibrary::Load(const std::string &path) {
   if (!m_Handle) {
     const char *error = dlerror();
 
-    std::cerr << "[LevyeKit] Failed to load dynamic library: " << path << '\n';
+    Logger::Error("Failed to load dynamic library: " + path);
 
     if (error) {
-      std::cerr << "[LevyeKit] " << error << '\n';
+      Logger::Error(error);
     }
 
     return false;
@@ -59,8 +61,7 @@ bool DynamicLibrary::Load(const std::string &path) {
 
 #else
 
-  std::cerr << "[LevyeKit] Dynamic libraries are not implemented "
-            << "for this platform yet.\n";
+  Logger::Error("Dynamic libraries are not implemented for this platform yet.");
 
   return false;
 
@@ -96,8 +97,7 @@ void *DynamicLibrary::GetSymbol(const std::string &name) const {
   const char *error = dlerror();
 
   if (error) {
-    std::cerr << "[LevyeKit] Failed to find symbol '" << name << "': " << error
-              << '\n';
+    Logger::Error("Failed to find symbol '" + name + "': " + error);
 
     return nullptr;
   }

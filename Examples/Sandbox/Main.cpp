@@ -1,6 +1,7 @@
 #include <Levye/Core/Application.hpp>
 #include <Levye/HotReload/GameModule.hpp>
 #include <Levye/Platform/ExecutablePath.hpp>
+#include <Levye/Platform/SharedLibrary.hpp>
 #include <Levye/Project/ProjectConfig.hpp>
 #include <Levye/Project/ProjectLoader.hpp>
 
@@ -10,29 +11,15 @@
 #include <string>
 
 int main() {
-#if defined(__APPLE__)
-
-  const std::string gameLibraryPath = "Targets/Debug/lib/Game.dylib";
-
-#elif defined(__linux__)
-
-  const std::string gameLibraryPath = "Targets/Debug/lib/Game.so";
-
-#elif defined(_WIN32)
-
-  const std::string gameLibraryPath = "Targets/Debug/lib/Game.dll";
-
-#else
-
-#error Unsupported platform
-
-#endif
 
   const std::filesystem::path executableDirectory =
       Levye::ExecutablePath::GetDirectory();
 
+  const std::filesystem::path targetDirectory =
+      executableDirectory.parent_path();
+
   const std::filesystem::path gameModulePath =
-      (executableDirectory / "../lib/Game.dylib").lexically_normal();
+      targetDirectory / "lib" / Levye::SharedLibrary::MakeFilename("Game");
 
   const std::filesystem::path frameworkRoot =
       (executableDirectory / "../../..").lexically_normal();

@@ -1,7 +1,7 @@
 #include "ShaderManager.hpp"
+#include <Levye/Debug/Logger.hpp>
 #include <Levye/Assets/AssetPath.hpp>
 
-#include <iostream>
 
 namespace Levye {
 namespace {
@@ -49,7 +49,7 @@ AssetHandle ShaderManager::Load(const std::string &vertexPath,
   Shader shader = ::LoadShader(vertex, fragment);
 
   if (!IsShaderValid(shader)) {
-    std::cerr << "[LevyeKit] Failed to load shader.\n";
+    Logger::Error("Failed to load shader.");
 
     return {};
   }
@@ -74,8 +74,7 @@ AssetHandle ShaderManager::Load(const std::string &vertexPath,
 
   m_PathLookup.emplace(key, handle);
 
-  std::cout << "[LevyeKit] Loaded shader: " << vertexPath << " | "
-            << fragmentPath << '\n';
+  Logger::Info("Loaded shader: " + vertexPath + " | " + fragmentPath);
 
   return handle;
 }
@@ -106,7 +105,7 @@ bool ShaderManager::Reload(ShaderAsset &asset) {
   Shader replacement = ::LoadShader(vertex, fragment);
 
   if (!IsShaderValid(replacement)) {
-    std::cerr << "[LevyeKit] Failed to reload shader.\n";
+    Logger::Error("Failed to reload shader.");
 
     return false;
   }
@@ -115,8 +114,8 @@ bool ShaderManager::Reload(ShaderAsset &asset) {
 
   asset.shader = replacement;
 
-  std::cout << "[LevyeKit] Reloaded shader: " << asset.vertexPath << " | "
-            << asset.fragmentPath << '\n';
+  Logger::Info("Reloaded shader: " + asset.vertexPath + " | " +
+               asset.fragmentPath);
 
   return true;
 }

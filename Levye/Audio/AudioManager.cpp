@@ -1,8 +1,8 @@
 #include "AudioManager.hpp"
+#include <Levye/Debug/Logger.hpp>
 #include <Levye/Assets/AssetPath.hpp>
 
 #include <algorithm>
-#include <iostream>
 #include <utility>
 
 namespace Levye {
@@ -21,7 +21,7 @@ AssetHandle AudioManager::LoadSound(const std::string &path) {
   Sound sound = ::LoadSound(normalizedPath.c_str());
 
   if (!IsSoundValid(sound)) {
-    std::cerr << "[LevyeKit] Failed to load sound: " << path << '\n';
+    Logger::Error("Failed to load sound: " + path);
 
     return {};
   }
@@ -43,7 +43,7 @@ AssetHandle AudioManager::LoadSound(const std::string &path) {
 
   m_PathLookup.emplace(normalizedPath, handle);
 
-  std::cout << "[LevyeKit] Loaded sound: " << path << '\n';
+  Logger::Info("Loaded sound: " + path);
 
   return handle;
 }
@@ -118,7 +118,7 @@ AssetHandle AudioManager::LoadMusic(const std::string &path) {
   Music music = ::LoadMusicStream(normalizedPath.c_str());
 
   if (!IsMusicValid(music)) {
-    std::cerr << "[LevyeKit] Failed to load music: " << path << '\n';
+    Logger::Error("Failed to load music: " + path);
 
     return {};
   }
@@ -142,7 +142,7 @@ AssetHandle AudioManager::LoadMusic(const std::string &path) {
 
   m_MusicPathLookup.emplace(normalizedPath, handle);
 
-  std::cout << "[LevyeKit] Loaded music: " << path << '\n';
+  Logger::Info("Loaded music: " + path);
 
   return handle;
 }
@@ -301,9 +301,9 @@ void AudioManager::CheckForChanges() {
       continue;
 
     if (ReloadSound(asset)) {
-      std::cout << "[LevyeKit] Reloaded sound: " << asset.path << '\n';
+      Logger::Info("Reloaded sound: " + asset.path);
     } else {
-      std::cerr << "[LevyeKit] Failed to reload sound: " << asset.path << '\n';
+      Logger::Error("Failed to reload sound: " + asset.path);
     }
   }
 
@@ -314,9 +314,9 @@ void AudioManager::CheckForChanges() {
       continue;
 
     if (ReloadMusic(asset)) {
-      std::cout << "[LevyeKit] Reloaded music: " << asset.path << '\n';
+      Logger::Info("Reloaded music: " + asset.path);
     } else {
-      std::cerr << "[LevyeKit] Failed to reload music: " << asset.path << '\n';
+      Logger::Error("Failed to reload music: " + asset.path);
     }
   }
 }

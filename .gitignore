@@ -4,6 +4,10 @@ build/
 Targets/
 **/hotreload/
 
+# Runtime hot-reload copies
+*.runtime.*
+*.hotreload.*
+
 # CMake
 CMakeCache.txt
 CMakeFiles/
@@ -19,9 +23,21 @@ compile_commands.json
 !.vscode/launch.json
 
 .idea/
+*.swp
+*.swo
+
+# Dynamic libraries / binaries
+*.dylib
+*.so
+*.dll
+*.exe
+
+# Debug symbols
+*.dSYM/
 
 # macOS
 .DS_Store
+Desktop.ini
 
 # Windows
 Thumbs.db

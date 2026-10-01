@@ -1,7 +1,7 @@
 #include "TextureManager.hpp"
+#include <Levye/Debug/Logger.hpp>
 #include <Levye/Assets/AssetPath.hpp>
 
-#include <iostream>
 
 namespace Levye {
 TextureManager::~TextureManager() { Clear(); }
@@ -22,7 +22,7 @@ AssetHandle TextureManager::Load(const std::string &path) {
   Texture2D texture = LoadTexture(normalizedPath.c_str());
 
   if (!IsTextureValid(texture)) {
-    std::cerr << "[LevyeKit] Failed to load texture: " << path << '\n';
+    Logger::Error("Failed to load texture: " + path);
 
     return {};
   }
@@ -39,7 +39,7 @@ AssetHandle TextureManager::Load(const std::string &path) {
 
   m_PathLookup.emplace(normalizedPath, handle);
 
-  std::cout << "[LevyeKit] Loaded texture: " << path << '\n';
+  Logger::Info("Loaded texture: " + path);
 
   return handle;
 }
@@ -81,7 +81,7 @@ bool TextureManager::Reload(TextureAsset &asset) {
   Texture2D replacement = LoadTexture(asset.path.c_str());
 
   if (!IsTextureValid(replacement)) {
-    std::cerr << "[LevyeKit] Failed to reload texture: " << asset.path << '\n';
+    Logger::Error("Failed to reload texture: " + asset.path);
 
     return false;
   }
@@ -94,7 +94,7 @@ bool TextureManager::Reload(TextureAsset &asset) {
 
   asset.texture = replacement;
 
-  std::cout << "[LevyeKit] Reloaded texture: " << asset.path << '\n';
+  Logger::Info("Reloaded texture: " + asset.path);
 
   return true;
 }
@@ -108,8 +108,8 @@ std::size_t TextureManager::CheckForChanges() {
     if (!asset.watcher.Poll())
       continue;
 
-    std::cout << "[LevyeKit] Texture change detected: " << asset.path
-              << " | handle=" << id << '\n';
+    Logger::Info("Texture change detected: " + asset.path +
+                 " | handle=" + std::to_string(id));
 
     if (Reload(asset))
       ++reloadCount;

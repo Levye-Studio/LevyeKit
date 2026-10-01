@@ -1,4 +1,5 @@
 #include "Application.hpp"
+#include <Levye/Debug/Logger.hpp>
 
 #include <raylib.h>
 
@@ -51,7 +52,7 @@ void Application::Run() {
 
     m_GameModule.UpdateHostSystems();
 
-    Time &time = m_GameModule.GetTime();
+    TimeSystem &time = m_GameModule.GetTimeSystem();
 
     /*
      * Capture the real frame duration once. Every timing system for this frame

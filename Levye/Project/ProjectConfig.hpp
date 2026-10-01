@@ -17,50 +17,36 @@ namespace Levye {
  */
 struct ProjectConfig {
   /**
-   * @brief Human-readable project name.
+   * @brief Human-readable name displayed to the player.
+   *
+   * This value may contain spaces and is used for things such as the
+   * application window title.
    */
   std::string name = "Levye Game";
 
   /**
-   * @brief Root directory containing project assets.
+   * @brief Build-safe identifier used for the executable and CMake target.
    *
-   * Relative asset paths requested through HostServices are resolved from
-   * this directory.
+   * The target should not contain spaces or characters that are unsuitable
+   * for build-system identifiers.
+   */
+  std::string target = "LevyeGame";
+
+  /**
+   * @brief Root directory containing project assets.
    */
   std::string assetDirectory = "Assets";
 
-  /**
-   * @brief Initial width of the game window in pixels.
-   */
   int windowWidth = 1280;
-
-  /**
-   * @brief Initial height of the game window in pixels.
-   */
   int windowHeight = 720;
-
-  /**
-   * @brief Target rendering frame rate.
-   *
-   * A value less than or equal to zero leaves the frame rate unrestricted.
-   */
   int targetFPS = 60;
-
-  /**
-   * @brief Whether the game window can be resized by the user.
-   */
   bool resizable = true;
-
-  /**
-   * @brief Whether vertical synchronization should be requested.
-   */
   bool vsync = false;
 
   /**
    * @brief Creates the runtime application configuration for this project.
    *
-   * @return Application configuration containing the project's window and
-   *         rendering settings.
+   * @return Application configuration derived from the project settings.
    */
   ApplicationConfig CreateApplicationConfig() const;
 };

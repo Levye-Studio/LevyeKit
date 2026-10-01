@@ -1,39 +1,58 @@
-#include <Levye/Core/GameAPI.hpp>
+#include "Levye/Input/Input.hpp"
+#include <Levye/LevyeKit.hpp>
 
-#include <raylib.h>
-#include <raymath.h>
+#include <new>
+
 namespace {
-void OnLoad(Levye::GameState *state, const Levye::HostServices *services) {
-  state->initialized = true;
+struct GameState {
+  Vector2 playerPosition{640.0f, 360.0f};
 
-  state->playerTexture = services->LoadTexture(services->context, "player.png");
+  float playerSpeed = 250.0f;
 
-  state->clickSound = services->LoadSound(services->context, "click.wav");
+  int score = 1;
 
-  state->music = services->LoadMusic(services->context, "music.ogg");
+  Levye::AssetHandle playerTexture{};
+  Levye::AssetHandle clickSound{};
+  Levye::AssetHandle music{};
+};
 
-  services->SetMusicVolume(services->context, state->music, 0.5f);
-
-  services->PlayMusic(services->context, state->music);
-
-  state->playerShader =
-      services->LoadShader(services->context, nullptr, "test.fs");
-
-  state->font = services->LoadFont(services->context, "test.ttf", 32);
-
-  if (services->LogInfo)
-    services->LogInfo("Sandbox started");
+void BindServices(const Levye::HostServices *services) {
+  if (services)
+    Levye::Services::Bind(services);
+  else
+    Levye::Services::Unbind();
 }
 
-void OnAfterReload(Levye::GameState *state,
-                   const Levye::HostServices *services) {
+GameState *GetState(void *state) { return static_cast<GameState *>(state); }
+
+void InitializeState(void *state) { new (state) GameState{}; }
+
+void DestroyState(void *state) { GetState(state)->~GameState(); }
+
+void OnLoad(void *state) {
+  GameState *game = GetState(state);
+  // game->initialized = true;
+
+  game->playerTexture = Levye::Assets::LoadTexture("player.png");
+
+  game->clickSound = Levye::Audio::LoadSound("click.wav");
+
+  game->music = Levye::Audio::LoadMusic("music.ogg");
+
+  Levye::Audio::SetMusicVolume(game->music, 0.5f);
+
+  Levye::Audio::PlayMusic(game->music);
+
+  Levye::Log::Info("Sandbox started.");
+}
+
+void OnAfterReload(void *state) {
   (void)state;
-  if (services->LogInfo)
-    services->LogInfo("Sandbox code reloaded.");
+
+  Levye::Log::Info("Sandbox reloaded.");
 }
 
-void OnBeforeReload(Levye::GameState *state,
-                    const Levye::HostServices *services) {
+void OnBeforeReload(void *state) {
   /*
    * This callback runs while the old game module is still loaded.
    *
@@ -42,175 +61,104 @@ void OnBeforeReload(Levye::GameState *state,
    */
   (void)state;
 
-  if (services->LogInfo)
-    services->LogInfo("Sandbox preparing for code reload.");
+  Levye::Log::Info("Sandbox preparing for reload.");
 }
 
-void OnUpdate(Levye::GameState *state, const Levye::HostServices *services,
-              float deltaTime) {
-  //   (void)state;
-  //   (void)deltaTime;
-  // (void)services;
+void OnUpdate(void *state, float deltaTime) {
 
-  if (services->IsScreen(services->context, "Menu")) {
-    if (services->IsActionPressed(services->context, "Confirm")) {
-      services->SetScreen(services->context, "Game");
+  GameState *game = GetState(state);
+
+  if (Levye::Screen::Is("Menu")) {
+
+    if (Levye::Input::IsPressed("Confirm")) {
+
+      Levye::Screen::Set("Game");
     }
 
     return;
   }
 
-  if (services->IsScreen(services->context, "Game")) {
+  if (Levye::Screen::Is("Game")) {
 
-    if (services->IsActionPressed(services->context, "Back")) {
-      services->SetScreen(services->context, "Menu");
+    const float horizontal = Levye::Input::GetAxis("MoveX");
+    const float vertical = Levye::Input::GetAxis("MoveY");
+
+    game->playerPosition.x += horizontal * game->playerSpeed * deltaTime;
+    game->playerPosition.y += vertical * game->playerSpeed * deltaTime;
+
+    if (Levye::Input::IsPressed("Back")) {
+
+      Levye::Screen::Set("Menu");
 
       return;
     }
 
-    // constexpr float speed = 100.0f;
-
-    state->movementInput = {services->GetAxis(services->context, "MoveX"),
-
-                            services->GetAxis(services->context, "MoveY")};
-
-    if (Vector2Length(state->movementInput) > 1.0f) {
-      state->movementInput = Vector2Normalize(state->movementInput);
+    if (Levye::Input::IsPressed("NormalTime")) {
+      Levye::Time::SetScale(1.0f);
     }
 
-    // Vector2 movement{services->GetAxis(services->context, "MoveX"),
-
-    //                  services->GetAxis(services->context, "MoveY")};
-
-    // if (Vector2Length(movement) > 1.0f) {
-    //   movement = Vector2Normalize(movement);
-    // }
-
-    // state->playerPosition.x += movement.x * speed * deltaTime;
-
-    // state->playerPosition.y += movement.y * speed * deltaTime;
-
-    if (services->IsActionPressed(services->context, "TestSound")) {
-      services->PlaySound(services->context, state->clickSound);
+    if (Levye::Input::IsPressed("SlowTime")) {
+      Levye::Time::SetScale(0.25f);
     }
 
-    if (services->IsActionPressed(services->context, "PauseMusic")) {
-      services->PauseMusic(services->context, state->music);
+    if (Levye::Input::IsPressed("FastTime")) {
+      Levye::Time::SetScale(2.0f);
     }
 
-    if (services->IsActionPressed(services->context, "ResumeMusic")) {
-      services->ResumeMusic(services->context, state->music);
+    if (Levye::Input::IsPressed("Pause")) {
+      const bool paused = Levye::Time::IsPaused();
+
+      Levye::Time::SetPaused(!paused);
     }
 
-    if (services->IsActionPressed(services->context, "NormalTime")) {
-      services->SetTimeScale(services->context, 1.0f);
-    }
-
-    if (services->IsActionPressed(services->context, "SlowTime")) {
-      services->SetTimeScale(services->context, 0.25f);
-    }
-
-    if (services->IsActionPressed(services->context, "FastTime")) {
-      services->SetTimeScale(services->context, 2.0f);
-    }
-
-    if (services->IsActionPressed(services->context, "Pause")) {
-      const bool paused = services->IsPaused(services->context);
-
-      services->SetPaused(services->context, !paused);
+    if (Levye::Input::IsPressed("TestSound")) {
+      Levye::Audio::PlaySound(game->clickSound);
     }
   }
 }
 
-void OnFixedUpdate(Levye::GameState *state, const Levye::HostServices *services,
-                   float fixedDeltaTime) {
-  (void)services;
+void OnFixedUpdate(void *state, float fixedDeltaTime) {
+
   constexpr float playerSpeed = 300.0f;
-
-  /*
-   * Preserve the previous simulation position before advancing the
-   * current position. Rendering interpolates between these two states.
-   */
-  state->playerPreviousPosition = state->playerPosition;
-
-  /*
-   * Apply the input captured during OnUpdate to the fixed-rate simulation.
-   */
-  state->playerPosition.x +=
-      state->movementInput.x * playerSpeed * fixedDeltaTime;
-
-  state->playerPosition.y +=
-      state->movementInput.y * playerSpeed * fixedDeltaTime;
-
-  ++state->fixedUpdateCount;
 }
 
-void OnDraw(Levye::GameState *state, const Levye::HostServices *services) {
-  if (!state->initialized)
-    return;
-
+void OnDraw(void *state) {
+  GameState *game = GetState(state);
   const Texture2D *playerTexture =
-      services->GetTexture(services->context, state->playerTexture);
+      Levye::Assets::GetTexture(game->playerTexture);
 
-  const Shader *playerShader =
-      services->GetShader(services->context, state->playerShader);
+  const float alpha = Levye::Time::InterpolationAlpha();
 
-  const float alpha = services->GetInterpolationAlpha(services->context);
-  const Vector2 renderPosition{
-      state->playerPreviousPosition.x +
-          (state->playerPosition.x - state->playerPreviousPosition.x) * alpha,
-
-      state->playerPreviousPosition.y +
-          (state->playerPosition.y - state->playerPreviousPosition.y) * alpha};
-
-  const Font *font = services->GetFont(services->context, state->font);
-
-  if (services->IsScreen(services->context, "Menu")) {
+  if (Levye::Screen::Is("Menu")) {
     ClearBackground(BLACK);
 
     DrawText("LEVYEKIT", 40, 40, 40, RAYWHITE);
 
     DrawText("Press ENTER to play", 40, 100, 24, LIGHTGRAY);
 
-    if (font) {
-      DrawTextEx(*font, "LevyeKit FontManager", Vector2{40.0f, 140.0f}, 32.0f,
-                 1.0f, RAYWHITE);
-    }
-
     return;
   }
 
-  if (services->IsScreen(services->context, "Game")) {
+  if (Levye::Screen::Is("Game")) {
     ClearBackground(DARKBLUE);
 
-    DrawText(TextFormat("Fixed updates: %llu", static_cast<unsigned long long>(
-                                                   state->fixedUpdateCount)),
-             20, 200, 20, WHITE);
-
-    if (playerTexture && playerShader) {
-      BeginShaderMode(*playerShader);
-      DrawTexture(*playerTexture, static_cast<int>(renderPosition.x),
-                  static_cast<int>(renderPosition.y), WHITE);
-
-      EndShaderMode();
-    } else if (playerTexture) {
-      DrawTexture(*playerTexture, static_cast<int>(renderPosition.x),
-                  static_cast<int>(renderPosition.y), WHITE);
+    if (playerTexture) {
+      DrawTexture(*playerTexture, static_cast<int>(game->playerPosition.x),
+                  static_cast<int>(game->playerPosition.y), WHITE);
     } else {
 
-      DrawCircleV(state->playerPosition, 30.0f, GOLD);
+      DrawCircleV(game->playerPosition, 30.0f, GOLD);
     }
 
     DrawText("Move: WASD / Arrows / Controller", 40, 40, 20, RAYWHITE);
 
     DrawText("ESC: Menu", 40, 70, 20, LIGHTGRAY);
 
-    DrawText(TextFormat("Reloads: %i", state->reloadCount), 40, 100, 20,
-             LIGHTGRAY);
+    DrawText(Levye::Time::IsPaused() ? "PAUSED" : "RUNNING", 20, 20, 20, WHITE);
   }
 }
 
-void OnShutdown(Levye::GameState *state, const Levye::HostServices *services) {
+void OnShutdown(void *state) {
 
   /*
    * Unlike OnBeforeReload, this callback only runs when the application is
@@ -219,8 +167,7 @@ void OnShutdown(Levye::GameState *state, const Levye::HostServices *services) {
    */
   (void)state;
 
-  if (services->LogInfo)
-    services->LogInfo("Sandbox shutting down.");
+  Levye::Log::Info("Sandbox shutting down.");
 }
 } // namespace
 
@@ -232,14 +179,24 @@ void OnShutdown(Levye::GameState *state, const Levye::HostServices *services) {
  * extern "C" disables C++ name mangling so the host can reliably locate
  * this function using the symbol name "GetGameAPI".
  */
-extern "C" Levye::GameAPI GetGameAPI() {
-  return {.version = Levye::GAME_API_VERSION,
+extern "C" const Levye::GameAPI *GetGameAPI() {
+  static const Levye::GameAPI api = {.version = Levye::GAME_API_VERSION,
+                                     .BindServices = BindServices,
 
-          .OnLoad = OnLoad,
-          .OnBeforeReload = OnBeforeReload,
-          .OnAfterReload = OnAfterReload,
-          .OnUpdate = OnUpdate,
-          .OnFixedUpdate = OnFixedUpdate,
-          .OnDraw = OnDraw,
-          .OnShutdown = OnShutdown};
+                                     .OnLoad = OnLoad,
+
+                                     .OnBeforeReload = OnBeforeReload,
+                                     .OnAfterReload = OnAfterReload,
+
+                                     .OnUpdate = OnUpdate,
+                                     .OnFixedUpdate = OnFixedUpdate,
+                                     .OnDraw = OnDraw,
+                                     .OnShutdown = OnShutdown,
+
+                                     .InitializeState = InitializeState,
+                                     .DestroyState = DestroyState,
+
+                                     .stateSize = sizeof(GameState)};
+
+  return &api;
 }

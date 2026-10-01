@@ -1,5 +1,7 @@
 #pragma once
 
+#include "BuildConfiguration.hpp"
+
 #include <filesystem>
 
 namespace Levye {
@@ -15,14 +17,12 @@ public:
   /**
    * @brief Configures and builds a LevyeKit project.
    *
-   * The project is configured in Debug mode and built inside its Build
-   * directory.
-   *
-   * @param projectDirectory Root directory containing levye.project and the
-   *        project's CMakeLists.txt.
-   * @return True when both CMake configuration and compilation succeed.
+   * @param projectDirectory Root directory of the project.
+   * @param configuration Build configuration to compile.
+   * @return True when configuration and compilation succeed.
    */
-  static bool Execute(const std::filesystem::path &projectDirectory);
+  static bool Execute(const std::filesystem::path &projectDirectory,
+                      BuildConfiguration configuration);
 };
 
 } // namespace Levye

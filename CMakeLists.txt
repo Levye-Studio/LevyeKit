@@ -72,9 +72,12 @@ add_library(
     Levye/IO/FileWatcher.cpp
     Levye/Assets/AssetPath.cpp
     Levye/Platform/ExecutablePath.cpp
-    Levye/Time/Time.cpp    
+    Levye/Platform/SharedLibrary.cpp
+    Levye/Time/TimeSystem.cpp
     Levye/Project/ProjectConfig.cpp
     Levye/Project/ProjectLoader.cpp
+
+    Levye/Debug/Logger.cpp
 )
 
 target_include_directories(
@@ -90,6 +93,7 @@ target_link_libraries(
     PUBLIC
         raylib
         tomlplusplus::tomlplusplus
+        ${CMAKE_DL_LIBS}
 )
 
 # CMAKE_DL_LIBS contains the platform-specific library required for dynamic
@@ -180,6 +184,7 @@ add_executable(
     Tools/LevyeCLI/ProjectLocator.cpp
     Tools/LevyeCLI/BuildCommand.cpp
     Tools/LevyeCLI/RunCommand.cpp
+    Tools/LevyeCLI/CleanCommand.cpp
 
     Levye/Project/ProjectConfig.cpp
     Levye/Project/ProjectLoader.cpp

@@ -27,8 +27,12 @@ ProjectLoader::Load(const std::filesystem::path &path) {
 
   ProjectConfig config;
 
-  if (auto name = table["name"].value<std::string>()) {
+  if (auto name = table["project"]["name"].value<std::string>()) {
     config.name = *name;
+  }
+
+  if (auto target = table["project"]["target"].value<std::string>()) {
+    config.target = *target;
   }
 
   if (auto width = table["window"]["width"].value<int>()) {
@@ -54,6 +58,19 @@ ProjectLoader::Load(const std::filesystem::path &path) {
   if (auto assets = table["paths"]["assets"].value<std::string>()) {
     config.assetDirectory = *assets;
   }
+
+  if (config.name.empty()) {
+    std::cerr << "[LevyeKit] Project name cannot be empty.\n";
+
+    return std::nullopt;
+  }
+
+  if (config.target.empty()) {
+    std::cerr << "[LevyeKit] Project target cannot be empty.\n";
+
+    return std::nullopt;
+  }
+
   return config;
 }
 

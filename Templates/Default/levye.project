@@ -1,4 +1,6 @@
+[project]
 name = "{{PROJECT_NAME}}"
+target = "{{PROJECT_TARGET}}"
 
 [window]
 width = 1280

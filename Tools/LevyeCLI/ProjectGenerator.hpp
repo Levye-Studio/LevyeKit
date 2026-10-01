@@ -28,7 +28,18 @@ public:
                        const std::filesystem::path &templateDirectory,
                        const std::filesystem::path &frameworkDirectory);
 
-private:
+  /**
+   * @brief Converts a human-readable project name into a build-safe target.
+   *
+   * Spaces and unsupported characters are removed while alphanumeric
+   * characters are preserved.
+   *
+   * @param name Human-readable project name.
+   * @return Build-safe project target, or an empty string when no valid
+   *         characters remain.
+   */
+  static std::string CreateTargetName(const std::string &name);
+
 private:
   /**
    * @brief Replaces supported tokens inside a generated text file.
@@ -41,6 +52,7 @@ private:
   static bool
   ProcessTemplateFile(const std::filesystem::path &path,
                       const std::string &projectName,
+                      const std::string &projectTarget,
                       const std::filesystem::path &frameworkDirectory);
 };
 

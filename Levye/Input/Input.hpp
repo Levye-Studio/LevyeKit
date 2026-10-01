@@ -1,143 +1,87 @@
 #pragma once
 
-#include <raylib.h>
+#include <Levye/Core/Services.hpp>
 
 namespace Levye {
+
 /**
- * @brief Provides centralized access to player input.
+ * @brief Provides access to the host-owned input system.
  *
- * Input exposes common keyboard, mouse and gamepad queries while keeping
- * raylib's native input types available to game code.
+ * Input queries named actions and axes configured through LevyeKit's
+ * InputMap. The implementation is header-only so reloadable game modules
+ * communicate with the host exclusively through HostServices.
  *
- * These functions are defined inline so reloadable game modules can use
- * the input API without linking another copy of LevyeKit into the module.
+ * Raw keyboard, mouse, and gamepad input can still be queried directly
+ * through raylib when an action mapping is not required.
  */
 class Input {
 public:
-  // -----------------------------------------------------------------
-  // Keyboard
-  // -----------------------------------------------------------------
-
   /**
-   * @brief Returns whether a keyboard key is currently held.
+   * @brief Returns whether a named action is currently active.
    *
-   * @param key raylib keyboard key to query.
+   * @param action Name of the configured input action.
+   * @return true while any binding for the action is active.
    */
-  static bool IsKeyDown(KeyboardKey key) { return ::IsKeyDown(key); }
+  static bool IsDown(const char *action) {
+    const HostServices *host = Services::Get();
 
-  /**
-   * @brief Returns whether a keyboard key was pressed this frame.
-   *
-   * @param key raylib keyboard key to query.
-   */
-  static bool IsKeyPressed(KeyboardKey key) { return ::IsKeyPressed(key); }
+    if (!host || !host->IsActionDown || !action) {
+      return false;
+    }
 
-  /**
-   * @brief Returns whether a keyboard key was released this frame.
-   *
-   * @param key raylib keyboard key to query.
-   */
-  static bool IsKeyReleased(KeyboardKey key) { return ::IsKeyReleased(key); }
-
-  // -----------------------------------------------------------------
-  // Mouse
-  // -----------------------------------------------------------------
-
-  /**
-   * @brief Returns whether a mouse button is currently held.
-   *
-   * @param button raylib mouse button to query.
-   */
-  static bool IsMouseButtonDown(MouseButton button) {
-    return ::IsMouseButtonDown(button);
+    return host->IsActionDown(host->context, action);
   }
 
   /**
-   * @brief Returns whether a mouse button was pressed this frame.
+   * @brief Returns whether a named action became active this frame.
    *
-   * @param button raylib mouse button to query.
+   * @param action Name of the configured input action.
+   * @return true only on the frame the action becomes active.
    */
-  static bool IsMouseButtonPressed(MouseButton button) {
-    return ::IsMouseButtonPressed(button);
+  static bool IsPressed(const char *action) {
+    const HostServices *host = Services::Get();
+
+    if (!host || !host->IsActionPressed || !action) {
+      return false;
+    }
+
+    return host->IsActionPressed(host->context, action);
   }
 
   /**
-   * @brief Returns whether a mouse button was released this frame.
+   * @brief Returns whether a named action was released this frame.
    *
-   * @param button raylib mouse button to query.
+   * @param action Name of the configured input action.
+   * @return true only on the frame the action is released.
    */
-  static bool IsMouseButtonReleased(MouseButton button) {
-    return ::IsMouseButtonReleased(button);
+  static bool IsReleased(const char *action) {
+    const HostServices *host = Services::Get();
+
+    if (!host || !host->IsActionReleased || !action) {
+      return false;
+    }
+
+    return host->IsActionReleased(host->context, action);
   }
 
   /**
-   * @brief Returns the current mouse position in window coordinates.
-   */
-  static Vector2 GetMousePosition() { return ::GetMousePosition(); }
-
-  /**
-   * @brief Returns mouse movement since the previous frame.
-   */
-  static Vector2 GetMouseDelta() { return ::GetMouseDelta(); }
-
-  /**
-   * @brief Returns mouse wheel movement for the current frame.
-   */
-  static Vector2 GetMouseWheel() { return ::GetMouseWheelMoveV(); }
-
-  // -----------------------------------------------------------------
-  // Gamepad
-  // -----------------------------------------------------------------
-
-  /**
-   * @brief Returns whether a gamepad is currently available.
+   * @brief Returns the current value of a named input axis.
    *
-   * @param gamepad Gamepad index, starting at zero.
+   * Digital bindings normally produce values between -1 and 1. Analog
+   * bindings may produce intermediate values depending on the device.
+   *
+   * @param axis Name of the configured input axis.
+   * @return Current axis value, or 0 when unavailable.
    */
-  static bool IsGamepadAvailable(int gamepad) {
-    return ::IsGamepadAvailable(gamepad);
-  }
+  static float GetAxis(const char *axis) {
+    const HostServices *host = Services::Get();
 
-  /**
-   * @brief Returns whether a gamepad button is currently held.
-   *
-   * @param gamepad Gamepad index.
-   * @param button raylib gamepad button to query.
-   */
-  static bool IsGamepadButtonDown(int gamepad, GamepadButton button) {
-    return ::IsGamepadButtonDown(gamepad, button);
-  }
+    if (!host || !host->GetAxis || !axis) {
+      return 0.0f;
+    }
 
-  /**
-   * @brief Returns whether a gamepad button was pressed this frame.
-   *
-   * @param gamepad Gamepad index.
-   * @param button raylib gamepad button to query.
-   */
-  static bool IsGamepadButtonPressed(int gamepad, GamepadButton button) {
-    return ::IsGamepadButtonPressed(gamepad, button);
-  }
-
-  /**
-   * @brief Returns whether a gamepad button was released this frame.
-   *
-   * @param gamepad Gamepad index.
-   * @param button raylib gamepad button to query.
-   */
-  static bool IsGamepadButtonReleased(int gamepad, GamepadButton button) {
-    return ::IsGamepadButtonReleased(gamepad, button);
-  }
-
-  /**
-   * @brief Returns the current value of a gamepad axis.
-   *
-   * Axis values normally range from -1.0 to 1.0.
-   *
-   * @param gamepad Gamepad index.
-   * @param axis raylib gamepad axis to query.
-   */
-  static float GetGamepadAxis(int gamepad, GamepadAxis axis) {
-    return ::GetGamepadAxisMovement(gamepad, axis);
+    return host->GetAxis(host->context, axis);
   }
 };
+
 } // namespace Levye

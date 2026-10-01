@@ -1,5 +1,7 @@
 #pragma once
 
+#include "BuildConfiguration.hpp"
+
 #include <filesystem>
 
 namespace Levye {
@@ -13,15 +15,14 @@ namespace Levye {
 class RunCommand {
 public:
   /**
-   * @brief Runs the Debug build of a LevyeKit project.
+   * @brief Runs an existing build of a LevyeKit project.
    *
-   * The project name is read from levye.project and used to locate the
-   * executable inside Targets/Debug/bin.
-   *
-   * @param projectDirectory Root directory containing levye.project.
-   * @return True when the game was launched and exited successfully.
+   * @param projectDirectory Root directory of the project.
+   * @param configuration Build configuration to run.
+   * @return True when the application launches and exits successfully.
    */
-  static bool Execute(const std::filesystem::path &projectDirectory);
+  static bool Execute(const std::filesystem::path &projectDirectory,
+                      BuildConfiguration configuration);
 };
 
 } // namespace Levye

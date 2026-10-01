@@ -22,7 +22,8 @@ std::string QuotePath(const std::filesystem::path &path) {
 
 namespace Levye {
 
-bool RunCommand::Execute(const std::filesystem::path &projectDirectory) {
+bool RunCommand::Execute(const std::filesystem::path &projectDirectory,
+                         BuildConfiguration configuration) {
   const std::filesystem::path projectFile = projectDirectory / "levye.project";
 
   const auto project = ProjectLoader::Load(projectFile);
@@ -34,7 +35,8 @@ bool RunCommand::Execute(const std::filesystem::path &projectDirectory) {
   }
 
   const std::filesystem::path executablePath =
-      projectDirectory / "Targets" / "Debug" / "bin" / project->name;
+      projectDirectory / "Targets" / std::string{ToString(configuration)} /
+      "bin" / project->target;
 
   if (!std::filesystem::is_regular_file(executablePath)) {
     std::cerr << "[Levye] Game executable not found: " << executablePath << '\n'
@@ -43,7 +45,7 @@ bool RunCommand::Execute(const std::filesystem::path &projectDirectory) {
     return false;
   }
 
-  std::cout << "[Levye] Running " << project->name << "...\n";
+  std::cout << "[Levye] Running " << project->target << "...\n";
 
   const std::string command = QuotePath(executablePath);
 

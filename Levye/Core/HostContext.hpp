@@ -8,7 +8,7 @@ class ScreenManager;
 class TextureManager;
 class AudioManager;
 class ShaderManager;
-class Time;
+class TimeSystem;
 class FontManager;
 
 /**
@@ -25,7 +25,7 @@ struct HostContext {
   ShaderManager *shaders = nullptr;
   FontManager *fonts = nullptr;
 
-  Time *time = nullptr;
+  TimeSystem *time = nullptr;
 
   /**
    * @brief Root directory used to resolve relative game asset paths.

@@ -1,5 +1,6 @@
 #include "ProjectGenerator.hpp"
 
+#include <cctype>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -31,6 +32,15 @@ bool ProjectGenerator::Generate(
     return false;
   }
 
+  const std::string target = CreateTargetName(name);
+
+  if (target.empty()) {
+    std::cerr << "[Levye] Project name does not contain "
+              << "a valid target name.\n";
+
+    return false;
+  }
+
   if (!std::filesystem::exists(templateDirectory)) {
     std::cerr << "[Levye] Project template does not exist: "
               << templateDirectory << '\n';
@@ -38,7 +48,7 @@ bool ProjectGenerator::Generate(
     return false;
   }
 
-  const std::filesystem::path projectDirectory = outputDirectory / name;
+  const std::filesystem::path projectDirectory = outputDirectory / target;
 
   if (std::filesystem::exists(projectDirectory)) {
     std::cerr << "[Levye] Directory already exists: " << projectDirectory
@@ -70,15 +80,12 @@ bool ProjectGenerator::Generate(
     return false;
   }
 
-  std::cout << "[Levye] Created project \"" << name << "\" at "
-            << projectDirectory << '\n';
-
   const std::filesystem::path filesToProcess[] = {
       projectDirectory / "levye.project", projectDirectory / "CMakeLists.txt",
       projectDirectory / "Source/Game.cpp"};
 
   for (const auto &path : filesToProcess) {
-    if (!ProcessTemplateFile(path, name, frameworkDirectory)) {
+    if (!ProcessTemplateFile(path, name, target, frameworkDirectory)) {
       std::cerr << "[Levye] Failed to process template file: " << path << '\n';
 
       std::filesystem::remove_all(projectDirectory);
@@ -87,11 +94,29 @@ bool ProjectGenerator::Generate(
     }
   }
 
+  std::cout << "[Levye] Created project \"" << name << "\" at "
+            << projectDirectory << '\n';
+
   return true;
+}
+
+std::string ProjectGenerator::CreateTargetName(const std::string &name) {
+  std::string target;
+
+  target.reserve(name.size());
+
+  for (const unsigned char character : name) {
+    if (std::isalnum(character) || character == '_') {
+      target += static_cast<char>(character);
+    }
+  }
+
+  return target;
 }
 
 bool ProjectGenerator::ProcessTemplateFile(
     const std::filesystem::path &path, const std::string &projectName,
+    const std::string &projectTarget,
     const std::filesystem::path &frameworkDirectory) {
   std::ifstream input(path);
 
@@ -108,6 +133,8 @@ bool ProjectGenerator::ProcessTemplateFile(
    * generator. Binary assets copied from the template are never modified.
    */
   ReplaceAll(content, "{{PROJECT_NAME}}", projectName);
+
+  ReplaceAll(content, "{{PROJECT_TARGET}}", projectTarget);
 
   ReplaceAll(content, "{{LEVYE_ROOT}}", frameworkDirectory.generic_string());
 

@@ -1,7 +1,7 @@
 #include "FontManager.hpp"
+#include <Levye/Debug/Logger.hpp>
 #include <Levye/Assets/AssetPath.hpp>
 
-#include <iostream>
 
 namespace Levye {
 FontManager::~FontManager() { Clear(); }
@@ -32,7 +32,7 @@ AssetHandle FontManager::Load(const std::string &path, int fontSize) {
   Font font = ::LoadFontEx(normalizedPath.c_str(), fontSize, nullptr, 0);
 
   if (!::IsFontValid(font)) {
-    std::cerr << "[LevyeKit] Failed to load font: " << path << '\n';
+    Logger::Error("Failed to load font: " + path);
 
     return {};
   }
@@ -46,7 +46,7 @@ AssetHandle FontManager::Load(const std::string &path, int fontSize) {
 
   m_PathLookup.emplace(key, handle);
 
-  std::cout << "[LevyeKit] Loaded font: " << path << '\n';
+  Logger::Info("Loaded font: " + path);
 
   return handle;
 }
@@ -117,7 +117,7 @@ bool FontManager::Reload(FontAsset &asset) {
       ::LoadFontEx(asset.path.c_str(), asset.fontSize, nullptr, 0);
 
   if (!::IsFontValid(replacement)) {
-    std::cerr << "[LevyeKit] Failed to reload font: " << asset.path << '\n';
+    Logger::Error("Failed to reload font: " + asset.path);
 
     return false;
   }
@@ -126,7 +126,7 @@ bool FontManager::Reload(FontAsset &asset) {
 
   asset.font = replacement;
 
-  std::cout << "[LevyeKit] Reloaded font: " << asset.path << '\n';
+  Logger::Info("Reloaded font: " + asset.path);
 
   return true;
 }

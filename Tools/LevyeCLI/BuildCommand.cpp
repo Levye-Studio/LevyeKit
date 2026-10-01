@@ -20,14 +20,18 @@ std::string QuotePath(const std::filesystem::path &path) {
 
 namespace Levye {
 
-bool BuildCommand::Execute(const std::filesystem::path &projectDirectory) {
-  const std::filesystem::path buildDirectory = projectDirectory / "Build";
+bool BuildCommand::Execute(const std::filesystem::path &projectDirectory,
+                           BuildConfiguration configuration) {
+  const std::string configurationName{ToString(configuration)};
+
+  const std::filesystem::path buildDirectory =
+      projectDirectory / "Build" / configurationName;
 
   std::cout << "[Levye] Configuring project...\n";
 
   const std::string configureCommand =
       "cmake -S " + QuotePath(projectDirectory) + " -B " +
-      QuotePath(buildDirectory) + " -DCMAKE_BUILD_TYPE=Debug";
+      QuotePath(buildDirectory) + " -DCMAKE_BUILD_TYPE=" + configurationName;
 
   const int configureResult = std::system(configureCommand.c_str());
 

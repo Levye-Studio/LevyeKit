@@ -1,4 +1,6 @@
-name = "LevyeKit Sandbox Testing"
+[project]
+name = "LevyeKit Sandbox"
+target = "Sandbox"
 
 [window]
 width = 1280

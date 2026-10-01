@@ -11,7 +11,7 @@
 #include <Levye/IO/FileWatcher.hpp>
 #include <Levye/Input/InputMap.hpp>
 #include <Levye/Screen/ScreenManager.hpp>
-#include <Levye/Time/Time.hpp>
+#include <Levye/Time/TimeSystem.hpp>
 
 #include <cstdint>
 #include <filesystem>
@@ -128,7 +128,7 @@ public:
   /**
    * @brief Returns the host-owned time system.
    */
-  Time &GetTime();
+  TimeSystem &GetTimeSystem();
 
   /**
    * @brief Returns the host-owned input map.
@@ -240,7 +240,7 @@ private:
   DynamicLibrary m_Library;
 
   GameAPI m_API{};
-  GameState m_State{};
+  void *m_State = nullptr;
   HostServices m_HostServices{};
   HostContext m_HostContext{};
 
@@ -252,7 +252,7 @@ private:
   ShaderManager m_ShaderManager;
   FontManager m_FontManager;
 
-  Time m_Time;
+  TimeSystem m_Time;
 
   std::string m_AssetRoot;
 
@@ -270,6 +270,7 @@ private:
   std::filesystem::path m_RuntimeDirectory;
 
   std::uint64_t m_RuntimeGeneration = 0;
+  std::uint64_t m_ReloadCount = 0;
 
   bool m_HasAPI = false;
   bool m_Started = false;

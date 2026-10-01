@@ -1,220 +1,189 @@
 #pragma once
 
 #include <Levye/Assets/AssetHandle.hpp>
+
 #include <raylib.h>
 
 namespace Levye {
+
 /**
- * @brief Services provided by the Levye host to reloadable game code.
+ * @brief Services exposed by the LevyeKit host to reloadable game code.
+ *
+ * HostServices forms part of the stable boundary between the application
+ * host and the reloadable game module.
+ *
+ * Game code should use these callbacks to access host-owned systems instead
+ * of directly accessing their manager implementations.
  */
 struct HostServices {
+  /**
+   * @brief Opaque host-owned context passed to service callbacks.
+   *
+   * Game code must not cast, modify, or attempt to own this pointer.
+   */
   void *context = nullptr;
-  // -----------------------------------------------------------------
+
+  // ---------------------------------------------------------------------
   // Logging
-  // -----------------------------------------------------------------
+  // ---------------------------------------------------------------------
 
   /**
-   * @brief Writes an informational message through the host.
-   *
-   * @param message Null-terminated message to write.
+   * @brief Writes an informational message to the host logger.
    */
-  void (*LogInfo)(const char *message) = nullptr;
+  void (*LogInfo)(void *context, const char *message) = nullptr;
 
   /**
-   * @brief Writes a warning message through the host.
-   *
-   * @param message Null-terminated message to write.
+   * @brief Writes a warning message to the host logger.
    */
-  void (*LogWarning)(const char *message) = nullptr;
+  void (*LogWarning)(void *context, const char *message) = nullptr;
 
   /**
-   * @brief Writes an error message through the host.
-   *
-   * @param message Null-terminated message to write.
+   * @brief Writes an error message to the host logger.
    */
-  void (*LogError)(const char *message) = nullptr;
+  void (*LogError)(void *context, const char *message) = nullptr;
 
-  // -----------------------------------------------------------------
-  // Input Actions
-  // -----------------------------------------------------------------
+  // ---------------------------------------------------------------------
+  // Input
+  // ---------------------------------------------------------------------
 
   /**
-   * @brief Returns whether a named input action is currently held.
+   * @brief Returns whether an input action is currently active.
    */
   bool (*IsActionDown)(void *context, const char *action) = nullptr;
 
   /**
-   * @brief Returns whether a named input action was pressed this frame.
+   * @brief Returns whether an input action became active this frame.
    */
   bool (*IsActionPressed)(void *context, const char *action) = nullptr;
 
   /**
-   * @brief Returns whether a named input action was released this frame.
+   * @brief Returns whether an input action was released this frame.
    */
   bool (*IsActionReleased)(void *context, const char *action) = nullptr;
 
-  // -----------------------------------------------------------------
-  // Input Axes
-  // -----------------------------------------------------------------
-
   /**
    * @brief Returns the current value of a named input axis.
-   *
-   * @return Value between -1 and +1.
    */
   float (*GetAxis)(void *context, const char *axis) = nullptr;
 
-  // -----------------------------------------------------------------
+  // ---------------------------------------------------------------------
   // Screens
-  // -----------------------------------------------------------------
+  // ---------------------------------------------------------------------
 
   /**
-   * @brief Changes the currently active logical screen.
-   *
-   * @param context Host-owned service context.
-   * @param screen Name of the screen to activate.
+   * @brief Changes the active logical game screen.
    */
   void (*SetScreen)(void *context, const char *screen) = nullptr;
 
   /**
-   * @brief Returns whether a logical screen is currently active.
-   *
-   * @param context Host-owned service context.
-   * @param screen Screen name to test.
+   * @brief Returns whether the specified logical screen is active.
    */
   bool (*IsScreen)(void *context, const char *screen) = nullptr;
 
-  // -----------------------------------------------------------------
+  // ---------------------------------------------------------------------
   // Textures
-  // -----------------------------------------------------------------
+  // ---------------------------------------------------------------------
 
   /**
-   * @brief Loads a texture through the host-owned texture manager.
-   *
-   * Loading the same path more than once returns the existing handle.
-   *
-   * @param context Host-owned service context.
-   * @param path Path to the texture file.
-   * @return Handle identifying the texture.
+   * @brief Loads or retrieves a texture managed by the host.
    */
   AssetHandle (*LoadTexture)(void *context, const char *path) = nullptr;
 
   /**
-   * @brief Returns a host-owned texture for drawing.
-   *
-   * The returned texture remains owned by LevyeKit. Game code may use it for
-   * rendering but must never call UnloadTexture() on it.
-   *
-   * @param context Host-owned service context.
-   * @param handle Texture asset handle.
-   * @return Pointer to the texture, or nullptr when the handle is invalid.
-   *
-   * @warning The returned pointer must not be stored permanently. Retrieve it
-   * again when needed so future asset hot reloads can replace the resource.
+   * @brief Returns the raylib texture represented by a texture handle.
    */
   const Texture2D *(*GetTexture)(void *context, AssetHandle handle) = nullptr;
 
-  // -----------------------------------------------------------------
-  // Audio
-  // -----------------------------------------------------------------
+  // ---------------------------------------------------------------------
+  // Sound
+  // ---------------------------------------------------------------------
 
   /**
-   * @brief Loads a short sound effect through the host audio system.
+   * @brief Loads or retrieves a sound managed by the host.
    */
   AssetHandle (*LoadSound)(void *context, const char *path) = nullptr;
 
-  /**
-   * @brief Plays a previously loaded sound effect.
-   */
+  /** @brief Starts playback of a loaded sound. */
   void (*PlaySound)(void *context, AssetHandle handle) = nullptr;
 
-  /**
-   * @brief Stops a currently playing sound effect.
-   */
+  /** @brief Stops playback of a loaded sound. */
   void (*StopSound)(void *context, AssetHandle handle) = nullptr;
 
-  /**
-   * @brief Changes the volume of a sound effect.
-   */
+  /** @brief Changes the playback volume of a loaded sound. */
   void (*SetSoundVolume)(void *context, AssetHandle handle,
                          float volume) = nullptr;
 
-  // -----------------------------------------------------------------
+  // ---------------------------------------------------------------------
   // Music
-  // -----------------------------------------------------------------
+  // ---------------------------------------------------------------------
 
   /**
-   * @brief Loads a streaming music track through the host audio system.
+   * @brief Loads or retrieves a music stream managed by the host.
    */
   AssetHandle (*LoadMusic)(void *context, const char *path) = nullptr;
 
-  /**
-   * @brief Starts or resumes music playback.
-   */
+  /** @brief Starts playback of a music stream. */
   void (*PlayMusic)(void *context, AssetHandle handle) = nullptr;
 
-  /**
-   * @brief Pauses music playback.
-   */
+  /** @brief Pauses a playing music stream. */
   void (*PauseMusic)(void *context, AssetHandle handle) = nullptr;
 
-  /**
-   * @brief Resumes paused music playback.
-   */
+  /** @brief Resumes a paused music stream. */
   void (*ResumeMusic)(void *context, AssetHandle handle) = nullptr;
 
-  /**
-   * @brief Stops music playback.
-   */
+  /** @brief Stops a music stream. */
   void (*StopMusic)(void *context, AssetHandle handle) = nullptr;
 
-  /**
-   * @brief Changes the volume of a music track.
-   */
+  /** @brief Changes the playback volume of a music stream. */
   void (*SetMusicVolume)(void *context, AssetHandle handle,
                          float volume) = nullptr;
 
-  // -----------------------------------------------------------------
+  // ---------------------------------------------------------------------
   // Shaders
-  // -----------------------------------------------------------------
+  // ---------------------------------------------------------------------
 
   /**
-   * @brief Loads a shader through the host graphics system.
+   * @brief Loads or retrieves a shader managed by the host.
    *
-   * Either source path may be nullptr to use raylib's default shader stage.
+   * Either shader path may be null when only one shader stage is required.
    */
   AssetHandle (*LoadShader)(void *context, const char *vertexPath,
                             const char *fragmentPath) = nullptr;
 
   /**
-   * @brief Retrieves a host-owned shader.
-   *
-   * The returned pointer is temporary and must not be stored by game code.
+   * @brief Returns the raylib shader represented by a shader handle.
    */
   const Shader *(*GetShader)(void *context, AssetHandle handle) = nullptr;
 
-  // -----------------------------------------------------------------------------
-  // Time
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------
+  // Fonts
+  // ---------------------------------------------------------------------
 
   /**
-   * @brief Returns the scaled frame duration in seconds.
+   * @brief Loads or retrieves a font managed by the host.
    */
+  AssetHandle (*LoadFont)(void *context, const char *path,
+                          int fontSize) = nullptr;
+
+  /**
+   * @brief Returns the raylib font represented by a font handle.
+   */
+  const Font *(*GetFont)(void *context, AssetHandle handle) = nullptr;
+
+  // ---------------------------------------------------------------------
+  // Time
+  // ---------------------------------------------------------------------
+
+  /** @brief Returns scaled frame delta time in seconds. */
   float (*GetDeltaTime)(void *context) = nullptr;
 
-  /**
-   * @brief Returns the unscaled frame duration in seconds.
-   */
+  /** @brief Returns unscaled frame delta time in seconds. */
   float (*GetUnscaledDeltaTime)(void *context) = nullptr;
 
-  /**
-   * @brief Returns total scaled runtime in seconds.
-   */
+  /** @brief Returns accumulated scaled game time in seconds. */
   double (*GetTime)(void *context) = nullptr;
 
-  /**
-   * @brief Returns total unscaled runtime in seconds.
-   */
+  /** @brief Returns accumulated unscaled game time in seconds. */
   double (*GetUnscaledTime)(void *context) = nullptr;
 
   /**
@@ -222,46 +191,21 @@ struct HostServices {
    */
   void (*SetTimeScale)(void *context, float scale) = nullptr;
 
-  /**
-   * @brief Returns the current game time scale.
-   */
+  /** @brief Returns the current game-time scale. */
   float (*GetTimeScale)(void *context) = nullptr;
 
   /**
-   * @brief Pauses or resumes scaled game time.
+   * @brief Changes the paused state of scaled game time.
    */
   void (*SetPaused)(void *context, bool paused) = nullptr;
 
-  /**
-   * @brief Returns whether scaled game time is paused.
-   */
+  /** @brief Returns whether scaled game time is paused. */
   bool (*IsPaused)(void *context) = nullptr;
 
   /**
-   * @brief Returns interpolation progress between fixed simulation states.
-   *
-   * The value is normally in the range [0, 1).
+   * @brief Returns the interpolation factor for fixed-step rendering.
    */
   float (*GetInterpolationAlpha)(void *context) = nullptr;
-
-  /////
-  /**
-   * @brief Loads a host-owned font.
-   *
-   * @param context Host service context.
-   * @param path Path to the font file.
-   * @param fontSize Base font size.
-   * @return Handle to the loaded font.
-   */
-  AssetHandle (*LoadFont)(void *context, const char *path,
-                          int fontSize) = nullptr;
-
-  /**
-   * @brief Returns a loaded font.
-   *
-   * @warning The returned pointer is temporary and must not be stored by
-   * persistent game state.
-   */
-  const Font *(*GetFont)(void *context, AssetHandle handle) = nullptr;
 };
+
 } // namespace Levye

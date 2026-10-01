@@ -1,9 +1,9 @@
-#include "Time.hpp"
+#include "TimeSystem.hpp"
 
 #include <algorithm>
 
 namespace Levye {
-void Time::Update(float deltaTime) {
+void TimeSystem::Update(float deltaTime) {
   /*
    * Frame duration should never move backward. Protect the rest of the
    * framework if an invalid negative value is supplied.
@@ -22,29 +22,31 @@ void Time::Update(float deltaTime) {
   m_Time += static_cast<double>(m_DeltaTime);
 }
 
-float Time::GetDeltaTime() const { return m_DeltaTime; }
+float TimeSystem::GetDeltaTime() const { return m_DeltaTime; }
 
-float Time::GetUnscaledDeltaTime() const { return m_UnscaledDeltaTime; }
+float TimeSystem::GetUnscaledDeltaTime() const { return m_UnscaledDeltaTime; }
 
-double Time::GetTime() const { return m_Time; }
+double TimeSystem::GetTimeSystem() const { return m_Time; }
 
-double Time::GetUnscaledTime() const { return m_UnscaledTime; }
+double TimeSystem::GetUnscaledTime() const { return m_UnscaledTime; }
 
-void Time::SetTimeScale(float scale) { m_TimeScale = std::max(scale, 0.0f); }
+void TimeSystem::SetTimeScale(float scale) {
+  m_TimeScale = std::max(scale, 0.0f);
+}
 
-float Time::GetTimeScale() const { return m_TimeScale; }
+float TimeSystem::GetTimeScale() const { return m_TimeScale; }
 
-void Time::SetPaused(bool paused) { m_Paused = paused; }
+void TimeSystem::SetPaused(bool paused) { m_Paused = paused; }
 
-bool Time::IsPaused() const { return m_Paused; }
+bool TimeSystem::IsPaused() const { return m_Paused; }
 
-float Time::GetFixedDeltaTime() const { return m_UnscaledFixedDeltaTime; }
+float TimeSystem::GetFixedDeltaTime() const { return m_UnscaledFixedDeltaTime; }
 
-float Time::GetUnscaledFixedDeltaTime() const {
+float TimeSystem::GetUnscaledFixedDeltaTime() const {
   return m_UnscaledFixedDeltaTime;
 }
 
-void Time::SetFixedUpdateRate(float updatesPerSecond) {
+void TimeSystem::SetFixedUpdateRate(float updatesPerSecond) {
   if (updatesPerSecond <= 0.0f)
     return;
 
@@ -59,9 +61,9 @@ void Time::SetFixedUpdateRate(float updatesPerSecond) {
   m_FixedAccumulator = 0.0;
 }
 
-float Time::GetFixedUpdateRate() const { return m_FixedUpdateRate; }
+float TimeSystem::GetFixedUpdateRate() const { return m_FixedUpdateRate; }
 
-int Time::ConsumeFixedSteps() {
+int TimeSystem::ConsumeFixedSteps() {
   if (m_Paused)
     return 0;
 
@@ -94,7 +96,7 @@ int Time::ConsumeFixedSteps() {
   return steps;
 }
 
-float Time::GetInterpolationAlpha() const {
+float TimeSystem::GetInterpolationAlpha() const {
   const double fixedStep = static_cast<double>(GetFixedDeltaTime());
 
   if (fixedStep <= 0.0)
@@ -103,7 +105,7 @@ float Time::GetInterpolationAlpha() const {
   return static_cast<float>(m_FixedAccumulator / fixedStep);
 }
 
-float Time::Interpolate(float previous, float current) const {
+float TimeSystem::Interpolate(float previous, float current) const {
   const float alpha = GetInterpolationAlpha();
 
   return previous + (current - previous) * alpha;
