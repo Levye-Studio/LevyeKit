@@ -44,6 +44,7 @@
         <li><a href="#design-philosophy">Design Philosophy</a></li>
       </ul>
     </li>
+    <li><a href="#showcase">Showcase</a></li>
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
@@ -138,6 +139,20 @@ Its main goals are:
 * Add systems only when games actually need them
 
 LevyeKit deliberately avoids trying to become a full editor-driven engine.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- SHOWCASE -->
+
+## Showcase
+
+### Sandbox Demo
+
+![LevyeKit v0.1.0 Sandbox demo](images/levyekit-v0.1.0-demo.gif)
+
+### Hot Reload Demo
+
+![LevyeKit code hot-reload demo](images/levyekit-hot-reload-demo.gif)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
