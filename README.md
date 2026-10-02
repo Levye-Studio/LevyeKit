@@ -146,7 +146,7 @@ LevyeKit deliberately avoids trying to become a full editor-driven engine.
 
 ## Showcase
 
-### Sandbox Demo
+### CLI Demo
 
 ![LevyeKit v0.1.0 Sandbox demo](images/levyekit-v0.1.0-demo.gif)
 
@@ -973,7 +973,11 @@ For bugs, include steps to reproduce the issue and describe the platform and bui
 
 ## License
 
-License to be determined.
+LevyeKit is licensed under the Apache License, Version 2.0.
+
+You are free to use, modify, and distribute LevyeKit, including in commercial projects, under the terms of the Apache 2.0 license.
+
+See the LICENSE file for the full license text.
 
 Third-party libraries used by LevyeKit retain their respective licenses.
 
