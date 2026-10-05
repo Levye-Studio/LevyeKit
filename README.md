@@ -93,6 +93,8 @@ LevyeKit provides reusable systems for:
 * Native C++ game modules
 * Code hot reloading
 * Persistent game state
+* Optional framework modules
+* YAML serialization
 * Input management
 * Texture, shader, and font management
 * Asset hot reloading
@@ -106,7 +108,7 @@ LevyeKit provides reusable systems for:
 
 The framework stays intentionally small so games can use raylib directly whenever it already provides the required functionality.
 
-> **Status:** LevyeKit `v0.1` is the first game-ready development milestone. The framework is still evolving and APIs may change in future releases.
+> **Status:** LevyeKit `v0.2` adds the optional module system and YAML serialization to the game-ready foundation introduced in `v0.1`. The framework is still evolving and APIs may change in future releases.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -392,7 +394,9 @@ Levye::Screen
 Levye::Time
 Levye::Assets
 Levye::Audio
+Levye::Serialization // Optional module
 ```
+Optional modules expose their APIs through their respective module headers.
 
 For example:
 
@@ -824,7 +828,7 @@ Normal hot reloads do not reconstruct the state.
 
 If `sizeof(GameState)` changes while the application is running, LevyeKit rejects the reload and requires the game to restart.
 
-For `v0.1`, changing the layout of `GameState` should therefore be treated as a restart-required change.
+Changing the layout of `GameState` while the application is running is therefore a restart-required change.
 
 Game state should store lightweight LevyeKit handles rather than copies or pointers to host-owned resources.
 
@@ -886,6 +890,8 @@ LevyeKit/
 │   ├── HotReload/
 │   ├── IO/
 │   ├── Input/
+│   ├── Modules/
+│   │   └── Serialization/
 │   ├── Platform/
 │   ├── Project/
 │   ├── Screen/
@@ -997,16 +1003,6 @@ Mobile platforms may use a different development workflow because of platform re
 * [ ] Expand the framework only as real games require new reusable systems
 
 LevyeKit intentionally does not plan to become a full editor-driven game engine.
-
-### Future
-
-* [ ] Continue Linux support
-* [ ] iOS support
-* [ ] Android support
-* [ ] Improve failed-reload diagnostics
-* [ ] Expand the framework only as real games require new reusable systems
-
-LevyeKit intentionally does not currently plan to become a full editor-driven engine.
 
 See the [open issues][issues-url] for proposed features and reported bugs.
 
