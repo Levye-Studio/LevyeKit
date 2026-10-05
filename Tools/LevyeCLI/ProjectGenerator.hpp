@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <string>
+#include <vector>
 
 namespace Levye {
 
@@ -10,7 +11,7 @@ namespace Levye {
  * template.
  */
 class ProjectGenerator {
-public:
+ public:
   /**
    * @brief Creates a new LevyeKit project from the default template.
    *
@@ -23,10 +24,11 @@ public:
    * @param frameworkDirectory Root directory of the LevyeKit checkout.
    * @return True when the complete project was generated successfully.
    */
-  static bool Generate(const std::string &name,
-                       const std::filesystem::path &outputDirectory,
-                       const std::filesystem::path &templateDirectory,
-                       const std::filesystem::path &frameworkDirectory);
+  static bool Generate(const std::string& name,
+                       const std::filesystem::path& outputDirectory,
+                       const std::filesystem::path& templateDirectory,
+                       const std::filesystem::path& frameworkDirectory,
+                       const std::vector<std::string>& modules = {});
 
   /**
    * @brief Converts a human-readable project name into a build-safe target.
@@ -38,9 +40,9 @@ public:
    * @return Build-safe project target, or an empty string when no valid
    *         characters remain.
    */
-  static std::string CreateTargetName(const std::string &name);
+  static std::string CreateTargetName(const std::string& name);
 
-private:
+ private:
   /**
    * @brief Replaces supported tokens inside a generated text file.
    *
@@ -49,11 +51,10 @@ private:
    * @param frameworkDirectory Root directory of the LevyeKit checkout.
    * @return True when the file was processed successfully.
    */
-  static bool
-  ProcessTemplateFile(const std::filesystem::path &path,
-                      const std::string &projectName,
-                      const std::string &projectTarget,
-                      const std::filesystem::path &frameworkDirectory);
+  static bool ProcessTemplateFile(
+      const std::filesystem::path& path, const std::string& projectName,
+      const std::string& projectTarget,
+      const std::filesystem::path& frameworkDirectory);
 };
 
-} // namespace Levye
+}  // namespace Levye

@@ -12,22 +12,45 @@ option(
     ON
 )
 
-option(LEVYE_BUILD_TESTS "Build input and available platform integration tests" OFF)
+option(
+    LEVYE_WITH_SERIALIZATION
+    "Build the optional LevyeKit serialization module"
+    OFF
+)
 
 project(
     LevyeKit
-    VERSION 0.1.1
+    VERSION 0.2.0
     LANGUAGES CXX
 )
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-if(WIN32 AND NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+# ---------------------------------------------------------------------------
+# Default build configuration
+# ---------------------------------------------------------------------------
+
+# Single-configuration generators (Ninja and Unix Makefiles) require
+# CMAKE_BUILD_TYPE to be set explicitly.
+#
+# Multi-configuration generators (Xcode, Visual Studio and Ninja
+# Multi-Config) select the configuration at build time instead.
+#
+# Default to Debug on every platform when no configuration was
+# explicitly selected.
+
+if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+    set(
+        CMAKE_BUILD_TYPE
+        Debug
+        CACHE STRING "Build type"
+        FORCE
+    )
 endif()
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
 
@@ -111,6 +134,43 @@ target_link_libraries(
         ${CMAKE_DL_LIBS}
 )
 
+# ---------------------------------------------------------
+# Optional modules
+# ---------------------------------------------------------
+
+if(LEVYE_WITH_SERIALIZATION)
+    add_subdirectory(
+        Levye/Modules/Serialization
+    )
+
+    # yaml-cpp may be shared; Windows does not use build-tree rpaths.
+    function(levye_copy_serialization_runtime target)
+        if(WIN32)
+            get_target_property(yaml_type yaml-cpp TYPE)
+            if(yaml_type STREQUAL "SHARED_LIBRARY")
+                add_custom_command(TARGET ${target} POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        $<TARGET_FILE:yaml-cpp> $<TARGET_FILE_DIR:${target}>
+                    VERBATIM)
+            endif()
+        endif()
+    endfunction()
+
+    target_link_libraries(
+        LevyeKit
+
+        PRIVATE
+            LevyeSerialization
+    )
+
+    target_compile_definitions(
+        LevyeKit
+
+        PUBLIC
+            LEVYE_WITH_SERIALIZATION=1
+    )
+endif()
+
 if(LEVYE_BUILD_EXAMPLES)
 
 # ---------------------------------------------------------------------------
@@ -168,6 +228,17 @@ target_link_libraries(
         LevyeKit
 )
 
+# ------------------------------------------------------------
+# Sandbox runtime dependency
+# ------------------------------------------------------------
+
+# Sandbox loads Game dynamically rather than linking against it.
+#
+# Ensure that building the Sandbox target also builds the game
+# module, preventing the executable from loading an outdated
+# Game library during development.
+add_dependencies(Sandbox Game)
+
 set_target_properties(
     Sandbox
 
@@ -175,6 +246,10 @@ set_target_properties(
         RUNTIME_OUTPUT_DIRECTORY
             "${CMAKE_CURRENT_SOURCE_DIR}/Targets/$<CONFIG>/bin"
 )
+
+if(LEVYE_WITH_SERIALIZATION)
+    levye_copy_serialization_runtime(Sandbox)
+endif()
 
 # Copy shared raylib next to the Sandbox executable on Windows.
 # Windows searches the executable directory for runtime DLL dependencies.
@@ -205,6 +280,7 @@ add_executable(
     Tools/LevyeCLI/BuildCommand.cpp
     Tools/LevyeCLI/RunCommand.cpp
     Tools/LevyeCLI/CleanCommand.cpp
+    Tools/LevyeCLI/AddCommand.cpp
 
     Levye/Project/ProjectConfig.cpp
     Levye/Project/ProjectLoader.cpp

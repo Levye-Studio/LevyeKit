@@ -60,6 +60,7 @@
       <a href="#usage-api">Usage API</a>
       <ul>
         <li><a href="#public-api">Public API</a></li>
+        <li><a href="#serialization">Serialization</a></li>
         <li><a href="#architecture">Architecture</a></li>
         <li><a href="#game-api">Game API</a></li>
         <li><a href="#hot-reloading">Hot Reloading</a></li>
@@ -532,6 +533,42 @@ this is an ABI change, not a LevyeKit release-version change.
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+### Serialization
+
+YAML serialization is an optional host-owned module. Enable it with
+`-DLEVYE_WITH_SERIALIZATION=ON`; yaml-cpp stays behind the versioned
+`SerializationAPI` callback table and is not part of game-facing headers.
+
+```cpp
+#include <Levye/Modules/Serialization/Serialization.hpp>
+
+if (Levye::Serialization::Available()) {
+    const auto document = Levye::Serialization::Create();
+    if (document != Levye::InvalidDocumentHandle) {
+        const bool written =
+            Levye::Serialization::SetInt(document, "player.score", 250) &&
+            Levye::Serialization::CreateArray(document, "items") &&
+            Levye::Serialization::AppendObject(document, "items") &&
+            Levye::Serialization::SetString(document, "items[0].name", "key");
+        if (written && !Levye::Serialization::Save(document, "save.yaml")) {
+            Levye::Log::Error("Could not save document.");
+        }
+        Levye::Serialization::Destroy(document);
+    }
+}
+```
+
+Dotted keys and bracketed array indices can be combined. Missing intermediate
+maps are created, and loaded YAML nulls can become maps. Scalars cannot be
+traversed as maps, and array indices must already exist. Malformed or invalid
+write paths leave the document unchanged; reads never create nodes. Existing
+YAML aliases retain yaml-cpp's shared-node behavior when values are replaced.
+
+For hot reload, store only the document handle in persistent game state. Create
+it in `OnLoad`, reuse it in `OnAfterReload`, and destroy it in `OnShutdown`.
+The Sandbox checks scalar and array persistence, modification after reload,
+and a save/load round trip.
 
 ### Architecture
 

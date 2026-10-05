@@ -138,8 +138,8 @@ class Input {
    * @param axis Logical axis name.
    * @param gamepad Zero-based gamepad index.
    * @param gamepadAxis raylib gamepad axis code.
-   * @param deadzone Magnitudes below this threshold are zero, without rescaling.
-   * Clamped to [0, 1]; non-finite values use 0.15.
+   * @param deadzone Magnitudes below this threshold are zero, without
+   * rescaling. Clamped to [0, 1]; non-finite values use 0.15.
    */
   static void BindGamepadAxis(const char* axis, int gamepad, int gamepadAxis,
                               float deadzone = 0.15f) {
@@ -149,7 +149,8 @@ class Input {
   }
 
   /**
-   * @brief Removes an action and its state immediately, without a release event.
+   * @brief Removes an action and its state immediately, without a release
+   * event.
    * @param action Logical action name. Same-named axes remain bound.
    */
   static void ClearAction(const char* action) {
@@ -169,7 +170,6 @@ class Input {
     if (!host || !host->ClearInput) return;
     host->ClearInput(host->context);
   }
-
 };
 
 }  // namespace Levye

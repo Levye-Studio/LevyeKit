@@ -10,6 +10,9 @@ class AudioManager;
 class ShaderManager;
 class TimeSystem;
 class FontManager;
+class SerializationService;
+struct SerializationAPI;
+class Application;
 
 /**
  * @brief Internal collection of host-owned systems exposed to game services.
@@ -18,18 +21,25 @@ class FontManager;
  * through HostServices. They should never access HostContext directly.
  */
 struct HostContext {
-  InputMap *input = nullptr;
-  ScreenManager *screens = nullptr;
-  TextureManager *textures = nullptr;
-  AudioManager *audio = nullptr;
-  ShaderManager *shaders = nullptr;
-  FontManager *fonts = nullptr;
+  InputMap* input = nullptr;
+  ScreenManager* screens = nullptr;
+  TextureManager* textures = nullptr;
+  AudioManager* audio = nullptr;
+  ShaderManager* shaders = nullptr;
+  FontManager* fonts = nullptr;
+  SerializationService* serialization = nullptr;
+  SerializationAPI* serializationAPI = nullptr;
 
-  TimeSystem *time = nullptr;
+  TimeSystem* time = nullptr;
 
   /**
    * @brief Root directory used to resolve relative game asset paths.
    */
-  const std::string *assetRoot = nullptr;
+  const std::string* assetRoot = nullptr;
+
+  /**
+   * @brief Running application that owns the host loop.
+   */
+  Application* application = nullptr;
 };
-} // namespace Levye
+}  // namespace Levye

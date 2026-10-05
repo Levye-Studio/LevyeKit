@@ -1,12 +1,15 @@
 #include "Application.hpp"
-#include <Levye/Debug/Logger.hpp>
 
 #include <raylib.h>
 
+#include <Levye/Debug/Logger.hpp>
+
 namespace Levye {
-Application::Application(const ApplicationConfig &config,
-                         GameModule &gameModule)
-    : m_Config(config), m_GameModule(gameModule) {}
+Application::Application(const ApplicationConfig& config,
+                         GameModule& gameModule)
+    : m_Config(config), m_GameModule(gameModule) {
+  m_GameModule.SetApplication(this);
+}
 
 void Application::Run() {
   unsigned int windowFlags = 0;
@@ -42,7 +45,7 @@ void Application::Run() {
     return;
   }
 
-  while (!WindowShouldClose()) {
+  while (!WindowShouldClose() && !m_QuitRequested) {
     // raylib polls events at EndDrawing(). Sample once before any callbacks,
     // including reload callbacks, so every callback sees this frame's state.
     m_GameModule.GetInputMap().Update();
@@ -55,7 +58,7 @@ void Application::Run() {
 
     m_GameModule.UpdateHostSystems();
 
-    TimeSystem &time = m_GameModule.GetTimeSystem();
+    TimeSystem& time = m_GameModule.GetTimeSystem();
 
     /*
      * Capture the real frame duration once. Every timing system for this frame
@@ -98,4 +101,6 @@ void Application::Run() {
 
   CloseWindow();
 }
-} // namespace Levye
+
+void Application::RequestQuit() { m_QuitRequested = true; }
+}  // namespace Levye

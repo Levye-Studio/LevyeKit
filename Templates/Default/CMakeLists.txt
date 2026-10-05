@@ -42,6 +42,31 @@ set(
     FORCE
 )
 
+# ---------------------------------------------------------
+# Optional LevyeKit modules
+# ---------------------------------------------------------
+
+set(LEVYE_WITH_SERIALIZATION OFF)
+
+# Read the serialization setting from levye.project.
+file(
+    STRINGS
+    "${CMAKE_CURRENT_SOURCE_DIR}/levye.project"
+    LEVYE_SERIALIZATION_SETTING
+    REGEX "^[ \t]*serialization[ \t]*=[ \t]*(true|false)[ \t]*$"
+)
+
+if(LEVYE_SERIALIZATION_SETTING)
+    if(LEVYE_SERIALIZATION_SETTING MATCHES "=[ \t]*true[ \t]*$")
+        set(LEVYE_WITH_SERIALIZATION ON)
+    endif()
+endif()
+
+message(
+    STATUS
+    "LevyeKit serialization: ${LEVYE_WITH_SERIALIZATION}"
+)
+
 add_subdirectory(
     "${LEVYE_ROOT}"
     "${CMAKE_BINARY_DIR}/LevyeKit"

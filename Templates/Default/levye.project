@@ -11,3 +11,6 @@ vsync = false
 
 [paths]
 assets = "Assets"
+
+[modules]
+serialization = false

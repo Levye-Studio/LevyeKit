@@ -12,13 +12,18 @@
 #include <Levye/Input/InputMap.hpp>
 #include <Levye/Screen/ScreenManager.hpp>
 #include <Levye/Time/TimeSystem.hpp>
+#ifdef LEVYE_WITH_SERIALIZATION
+#include <Levye/Modules/Serialization/SerializationBridge.hpp>
+#include <Levye/Modules/Serialization/SerializationService.hpp>
+#endif
 
-#include <cstdint>
 #include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <string>
 
 namespace Levye {
+class Application;
 /**
  * @brief Owns and manages a dynamically reloadable Levye game module.
  *
@@ -30,7 +35,7 @@ namespace Levye {
  * code contained in the dynamic library can be replaced.
  */
 class GameModule {
-public:
+ public:
   GameModule() = default;
 
   /**
@@ -38,8 +43,8 @@ public:
    */
   ~GameModule();
 
-  GameModule(const GameModule &) = delete;
-  GameModule &operator=(const GameModule &) = delete;
+  GameModule(const GameModule&) = delete;
+  GameModule& operator=(const GameModule&) = delete;
 
   /**
    * @brief Loads the initial game module.
@@ -47,7 +52,7 @@ public:
    * @param path Path to the build output shared library.
    * @return true if a valid runtime copy was loaded.
    */
-  bool Load(const std::string &path);
+  bool Load(const std::string& path);
 
   /**
    * @brief Starts the loaded game module.
@@ -124,12 +129,12 @@ public:
   /**
    * @brief Returns the original build-output path being watched.
    */
-  const std::string &GetPath() const;
+  const std::string& GetPath() const;
 
   /**
    * @brief Returns the host-owned time system.
    */
-  TimeSystem &GetTimeSystem();
+  TimeSystem& GetTimeSystem();
 
   /**
    * @brief Returns the host-owned input map.
@@ -137,7 +142,7 @@ public:
    * This allows the application or project configuration to register logical
    * game actions while keeping the map alive across game-code reloads.
    */
-  InputMap &GetInputMap();
+  InputMap& GetInputMap();
 
   /**
    * @brief Returns the host-owned screen manager.
@@ -145,7 +150,7 @@ public:
    * The active screen survives game-code hot reloads because the manager is
    * stored outside the reloadable game module.
    */
-  ScreenManager &GetScreenManager();
+  ScreenManager& GetScreenManager();
 
   /**
    * @brief Releases host-owned game resources.
@@ -163,14 +168,16 @@ public:
    *
    * @param path Project asset directory.
    */
-  void SetAssetRoot(const std::string &path);
+  void SetAssetRoot(const std::string& path);
 
   /**
    * @brief Returns the configured project asset root.
    */
-  const std::string &GetAssetRoot() const;
+  const std::string& GetAssetRoot() const;
 
-private:
+  void SetApplication(Application* application);
+
+ private:
   /**
    * @brief Creates a unique path for the next runtime module copy.
    */
@@ -183,7 +190,7 @@ private:
    * @return Success, a retryable build conflict, or a persistent copy failure.
    */
   enum class CopyResult { Success, Retry, Failed };
-  CopyResult CopyModule(const std::filesystem::path &destination);
+  CopyResult CopyModule(const std::filesystem::path& destination);
 
   /**
    * @brief Loads and validates a module without changing the active one.
@@ -193,8 +200,8 @@ private:
    * @param api Receives the module's GameAPI.
    * @return true if the module and API are valid.
    */
-  bool LoadCandidate(const std::filesystem::path &path, DynamicLibrary &library,
-                     GameAPI &api);
+  bool LoadCandidate(const std::filesystem::path& path, DynamicLibrary& library,
+                     GameAPI& api);
 
   /**
    * @brief Removes runtime module copies that are no longer needed.
@@ -210,7 +217,7 @@ private:
    * @param api API table to validate.
    * @return true when the API can safely be activated.
    */
-  bool ValidateAPI(const GameAPI &api) const;
+  bool ValidateAPI(const GameAPI& api) const;
 
   /**
    * @brief Restores a previously active runtime module after reload activation
@@ -222,7 +229,7 @@ private:
    * @param runtimePath Runtime library path of the previous known-good module.
    * @return True when the previous module was successfully restored.
    */
-  bool RestorePreviousModule(const std::filesystem::path &runtimePath);
+  bool RestorePreviousModule(const std::filesystem::path& runtimePath);
 
   /**
    * @brief Promotes a validated candidate module to the active game module.
@@ -235,14 +242,14 @@ private:
    * @param api Validated API exported by the candidate.
    * @param runtimePath Runtime path associated with the candidate.
    */
-  void PromoteCandidate(DynamicLibrary &&library, const GameAPI &api,
-                        const std::filesystem::path &runtimePath);
+  void PromoteCandidate(DynamicLibrary&& library, const GameAPI& api,
+                        const std::filesystem::path& runtimePath);
 
-private:
+ private:
   DynamicLibrary m_Library;
 
   GameAPI m_API{};
-  void *m_State = nullptr;
+  void* m_State = nullptr;
   HostServices m_HostServices{};
   HostContext m_HostContext{};
 
@@ -257,6 +264,8 @@ private:
   TimeSystem m_Time;
 
   std::string m_AssetRoot;
+
+  Application* m_Application = nullptr;
 
   /**
    * @brief Watches the compiler-produced game module for stable changes.
@@ -286,5 +295,11 @@ private:
 
   bool m_HasAPI = false;
   bool m_Started = false;
+
+ private:
+#ifdef LEVYE_WITH_SERIALIZATION
+  SerializationService m_SerializationService;
+  SerializationAPI m_SerializationAPI;
+#endif
 };
-} // namespace Levye
+}  // namespace Levye

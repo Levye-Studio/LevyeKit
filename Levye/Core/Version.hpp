@@ -22,6 +22,6 @@ inline constexpr std::uint32_t VERSION_PATCH = 0;
 /**
  * @brief Human-readable LevyeKit version string.
  */
-inline constexpr const char* VERSION = "0.1.1";
+inline constexpr const char* VERSION = "0.2.0";
 
 }  // namespace Levye

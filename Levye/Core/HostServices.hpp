@@ -1,8 +1,9 @@
 #pragma once
 
-#include <Levye/Assets/AssetHandle.hpp>
-
 #include <raylib.h>
+
+#include <Levye/Assets/AssetHandle.hpp>
+#include <Levye/Core/ModuleAPI.hpp>
 
 namespace Levye {
 
@@ -21,7 +22,7 @@ struct HostServices {
    *
    * Game code must not cast, modify, or attempt to own this pointer.
    */
-  void *context = nullptr;
+  void* context = nullptr;
 
   // ---------------------------------------------------------------------
   // Logging
@@ -30,17 +31,17 @@ struct HostServices {
   /**
    * @brief Writes an informational message to the host logger.
    */
-  void (*LogInfo)(void *context, const char *message) = nullptr;
+  void (*LogInfo)(void* context, const char* message) = nullptr;
 
   /**
    * @brief Writes a warning message to the host logger.
    */
-  void (*LogWarning)(void *context, const char *message) = nullptr;
+  void (*LogWarning)(void* context, const char* message) = nullptr;
 
   /**
    * @brief Writes an error message to the host logger.
    */
-  void (*LogError)(void *context, const char *message) = nullptr;
+  void (*LogError)(void* context, const char* message) = nullptr;
 
   // ---------------------------------------------------------------------
   // Input
@@ -49,22 +50,22 @@ struct HostServices {
   /**
    * @brief Returns whether an input action is currently active.
    */
-  bool (*IsActionDown)(void *context, const char *action) = nullptr;
+  bool (*IsActionDown)(void* context, const char* action) = nullptr;
 
   /**
    * @brief Returns whether an input action became active this frame.
    */
-  bool (*IsActionPressed)(void *context, const char *action) = nullptr;
+  bool (*IsActionPressed)(void* context, const char* action) = nullptr;
 
   /**
    * @brief Returns whether an input action was released this frame.
    */
-  bool (*IsActionReleased)(void *context, const char *action) = nullptr;
+  bool (*IsActionReleased)(void* context, const char* action) = nullptr;
 
   /**
    * @brief Returns the current value of a named input axis.
    */
-  float (*GetAxis)(void *context, const char *axis) = nullptr;
+  float (*GetAxis)(void* context, const char* axis) = nullptr;
 
   /**
    * @brief Associates a keyboard key with an input action.
@@ -73,7 +74,7 @@ struct HostServices {
    * @param action Name of the action to bind.
    * @param key raylib keyboard key code.
    */
-  void (*BindKey)(void *context, const char *action, int key) = nullptr;
+  void (*BindKey)(void* context, const char* action, int key) = nullptr;
 
   /**
    * @brief Associates two keyboard keys with a directional axis.
@@ -83,22 +84,22 @@ struct HostServices {
    * @param negativeKey Key representing the negative direction.
    * @param positiveKey Key representing the positive direction.
    */
-  void (*BindKeyAxis)(void *context, const char *action, int negativeKey,
+  void (*BindKeyAxis)(void* context, const char* action, int negativeKey,
                       int positiveKey) = nullptr;
 
   /** @brief Associates a gamepad button with a logical action. */
-  void (*BindGamepadButton)(void *context, const char *action, int gamepad,
+  void (*BindGamepadButton)(void* context, const char* action, int gamepad,
                             int button) = nullptr;
 
   /** @brief Associates an analog axis and deadzone with a logical axis. */
-  void (*BindGamepadAxis)(void *context, const char *axis, int gamepad,
+  void (*BindGamepadAxis)(void* context, const char* axis, int gamepad,
                           int gamepadAxis, float deadzone) = nullptr;
 
   /** @brief Removes an action and its state; leaves axes unchanged. */
-  void (*ClearAction)(void *context, const char *action) = nullptr;
+  void (*ClearAction)(void* context, const char* action) = nullptr;
 
   /** @brief Removes all input actions, axes, bindings and snapshots. */
-  void (*ClearInput)(void *context) = nullptr;
+  void (*ClearInput)(void* context) = nullptr;
 
   // ---------------------------------------------------------------------
   // Screens
@@ -107,12 +108,12 @@ struct HostServices {
   /**
    * @brief Changes the active logical game screen.
    */
-  void (*SetScreen)(void *context, const char *screen) = nullptr;
+  void (*SetScreen)(void* context, const char* screen) = nullptr;
 
   /**
    * @brief Returns whether the specified logical screen is active.
    */
-  bool (*IsScreen)(void *context, const char *screen) = nullptr;
+  bool (*IsScreen)(void* context, const char* screen) = nullptr;
 
   // ---------------------------------------------------------------------
   // Textures
@@ -121,12 +122,12 @@ struct HostServices {
   /**
    * @brief Loads or retrieves a texture managed by the host.
    */
-  AssetHandle (*LoadTexture)(void *context, const char *path) = nullptr;
+  AssetHandle (*LoadTexture)(void* context, const char* path) = nullptr;
 
   /**
    * @brief Returns the raylib texture represented by a texture handle.
    */
-  const Texture2D *(*GetTexture)(void *context, AssetHandle handle) = nullptr;
+  const Texture2D* (*GetTexture)(void* context, AssetHandle handle) = nullptr;
 
   // ---------------------------------------------------------------------
   // Sound
@@ -135,16 +136,16 @@ struct HostServices {
   /**
    * @brief Loads or retrieves a sound managed by the host.
    */
-  AssetHandle (*LoadSound)(void *context, const char *path) = nullptr;
+  AssetHandle (*LoadSound)(void* context, const char* path) = nullptr;
 
   /** @brief Starts playback of a loaded sound. */
-  void (*PlaySound)(void *context, AssetHandle handle) = nullptr;
+  void (*PlaySound)(void* context, AssetHandle handle) = nullptr;
 
   /** @brief Stops playback of a loaded sound. */
-  void (*StopSound)(void *context, AssetHandle handle) = nullptr;
+  void (*StopSound)(void* context, AssetHandle handle) = nullptr;
 
   /** @brief Changes the playback volume of a loaded sound. */
-  void (*SetSoundVolume)(void *context, AssetHandle handle,
+  void (*SetSoundVolume)(void* context, AssetHandle handle,
                          float volume) = nullptr;
 
   // ---------------------------------------------------------------------
@@ -154,22 +155,22 @@ struct HostServices {
   /**
    * @brief Loads or retrieves a music stream managed by the host.
    */
-  AssetHandle (*LoadMusic)(void *context, const char *path) = nullptr;
+  AssetHandle (*LoadMusic)(void* context, const char* path) = nullptr;
 
   /** @brief Starts playback of a music stream. */
-  void (*PlayMusic)(void *context, AssetHandle handle) = nullptr;
+  void (*PlayMusic)(void* context, AssetHandle handle) = nullptr;
 
   /** @brief Pauses a playing music stream. */
-  void (*PauseMusic)(void *context, AssetHandle handle) = nullptr;
+  void (*PauseMusic)(void* context, AssetHandle handle) = nullptr;
 
   /** @brief Resumes a paused music stream. */
-  void (*ResumeMusic)(void *context, AssetHandle handle) = nullptr;
+  void (*ResumeMusic)(void* context, AssetHandle handle) = nullptr;
 
   /** @brief Stops a music stream. */
-  void (*StopMusic)(void *context, AssetHandle handle) = nullptr;
+  void (*StopMusic)(void* context, AssetHandle handle) = nullptr;
 
   /** @brief Changes the playback volume of a music stream. */
-  void (*SetMusicVolume)(void *context, AssetHandle handle,
+  void (*SetMusicVolume)(void* context, AssetHandle handle,
                          float volume) = nullptr;
 
   // ---------------------------------------------------------------------
@@ -181,13 +182,13 @@ struct HostServices {
    *
    * Either shader path may be null when only one shader stage is required.
    */
-  AssetHandle (*LoadShader)(void *context, const char *vertexPath,
-                            const char *fragmentPath) = nullptr;
+  AssetHandle (*LoadShader)(void* context, const char* vertexPath,
+                            const char* fragmentPath) = nullptr;
 
   /**
    * @brief Returns the raylib shader represented by a shader handle.
    */
-  const Shader *(*GetShader)(void *context, AssetHandle handle) = nullptr;
+  const Shader* (*GetShader)(void* context, AssetHandle handle) = nullptr;
 
   // ---------------------------------------------------------------------
   // Fonts
@@ -196,50 +197,77 @@ struct HostServices {
   /**
    * @brief Loads or retrieves a font managed by the host.
    */
-  AssetHandle (*LoadFont)(void *context, const char *path,
+  AssetHandle (*LoadFont)(void* context, const char* path,
                           int fontSize) = nullptr;
 
   /**
    * @brief Returns the raylib font represented by a font handle.
    */
-  const Font *(*GetFont)(void *context, AssetHandle handle) = nullptr;
+  const Font* (*GetFont)(void* context, AssetHandle handle) = nullptr;
 
   // ---------------------------------------------------------------------
   // Time
   // ---------------------------------------------------------------------
 
   /** @brief Returns scaled frame delta time in seconds. */
-  float (*GetDeltaTime)(void *context) = nullptr;
+  float (*GetDeltaTime)(void* context) = nullptr;
 
   /** @brief Returns unscaled frame delta time in seconds. */
-  float (*GetUnscaledDeltaTime)(void *context) = nullptr;
+  float (*GetUnscaledDeltaTime)(void* context) = nullptr;
 
   /** @brief Returns accumulated scaled game time in seconds. */
-  double (*GetTime)(void *context) = nullptr;
+  double (*GetTime)(void* context) = nullptr;
 
   /** @brief Returns accumulated unscaled game time in seconds. */
-  double (*GetUnscaledTime)(void *context) = nullptr;
+  double (*GetUnscaledTime)(void* context) = nullptr;
 
   /**
    * @brief Changes the scale applied to game time.
    */
-  void (*SetTimeScale)(void *context, float scale) = nullptr;
+  void (*SetTimeScale)(void* context, float scale) = nullptr;
 
   /** @brief Returns the current game-time scale. */
-  float (*GetTimeScale)(void *context) = nullptr;
+  float (*GetTimeScale)(void* context) = nullptr;
 
   /**
    * @brief Changes the paused state of scaled game time.
    */
-  void (*SetPaused)(void *context, bool paused) = nullptr;
+  void (*SetPaused)(void* context, bool paused) = nullptr;
 
   /** @brief Returns whether scaled game time is paused. */
-  bool (*IsPaused)(void *context) = nullptr;
+  bool (*IsPaused)(void* context) = nullptr;
 
   /**
    * @brief Returns the interpolation factor for fixed-step rendering.
    */
-  float (*GetInterpolationAlpha)(void *context) = nullptr;
+  float (*GetInterpolationAlpha)(void* context) = nullptr;
+
+  // ---------------------------------------------------------------------
+  // Optional modules
+  // ---------------------------------------------------------------------
+
+  /**
+   * @brief Retrieves an optional host-provided module API.
+   *
+   * @param context Opaque host context.
+   * @param module Identifier of the requested module.
+   * @param version Required version of its function table.
+   *
+   * @return Pointer to the requested module API, or nullptr when
+   *         the module is unavailable or the version is unsupported.
+   *
+   * @warning The returned pointer is owned by the host. Game modules
+   *          must not modify or destroy it.
+   */
+  const void* (*GetModuleAPI)(void* context, ModuleID module,
+                              ModuleAPIVersion version) = nullptr;
+
+  /**
+   * @brief Requests a clean shutdown of the host application.
+   *
+   * @param context Opaque host-owned service context.
+   */
+  void (*RequestQuit)(void* context) = nullptr;
 };
 
-} // namespace Levye
+}  // namespace Levye

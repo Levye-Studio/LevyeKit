@@ -15,7 +15,7 @@ namespace Levye {
  * API.
  */
 class Services {
-public:
+ public:
   /**
    * @brief Binds host services to the current game module.
    *
@@ -24,7 +24,7 @@ public:
    * @warning The supplied HostServices object must remain valid for the
    * lifetime of the loaded game module.
    */
-  static void Bind(const HostServices *services) { s_Host = services; }
+  static void Bind(const HostServices* services) { s_Host = services; }
 
   /**
    * @brief Removes the current host-service binding.
@@ -36,21 +36,29 @@ public:
    *
    * @return Pointer to HostServices, or nullptr when no host is bound.
    */
-  static const HostServices *Get() { return s_Host; }
+  static const HostServices* Get() { return s_Host; }
 
   /**
    * @brief Returns whether host services are currently available.
    */
   static bool IsBound() { return s_Host != nullptr; }
 
-private:
+  static void RequestQuit() {
+    const auto* services = Get();
+
+    if (services && services->RequestQuit) {
+      services->RequestQuit(services->context);
+    }
+  }
+
+ private:
   /**
    * @brief Module-local pointer to the host service table.
    *
    * inline ensures there is one instance for the game module without
    * requiring a separately linked implementation file.
    */
-  inline static const HostServices *s_Host = nullptr;
+  inline static const HostServices* s_Host = nullptr;
 };
 
-} // namespace Levye
+}  // namespace Levye

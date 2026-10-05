@@ -7,8 +7,8 @@
 
 namespace {
 
-void ReplaceAll(std::string &content, const std::string &token,
-                const std::string &value) {
+void ReplaceAll(std::string& content, const std::string& token,
+                const std::string& value) {
   std::size_t position = 0;
 
   while ((position = content.find(token, position)) != std::string::npos) {
@@ -18,14 +18,15 @@ void ReplaceAll(std::string &content, const std::string &token,
   }
 }
 
-} // namespace
+}  // namespace
 
 namespace Levye {
 
-bool ProjectGenerator::Generate(
-    const std::string &name, const std::filesystem::path &outputDirectory,
-    const std::filesystem::path &templateDirectory,
-    const std::filesystem::path &frameworkDirectory) {
+bool ProjectGenerator::Generate(const std::string& name,
+                                const std::filesystem::path& outputDirectory,
+                                const std::filesystem::path& templateDirectory,
+                                const std::filesystem::path& frameworkDirectory,
+                                const std::vector<std::string>& modules) {
   if (name.empty()) {
     std::cerr << "[Levye] Project name cannot be empty.\n";
 
@@ -84,12 +85,60 @@ bool ProjectGenerator::Generate(
       projectDirectory / "levye.project", projectDirectory / "CMakeLists.txt",
       projectDirectory / "Source/Game.cpp"};
 
-  for (const auto &path : filesToProcess) {
+  for (const auto& path : filesToProcess) {
     if (!ProcessTemplateFile(path, name, target, frameworkDirectory)) {
       std::cerr << "[Levye] Failed to process template file: " << path << '\n';
 
       std::filesystem::remove_all(projectDirectory);
 
+      return false;
+    }
+  }
+
+  // Enable optional modules requested during project creation.
+  if (!modules.empty()) {
+    const auto configPath = projectDirectory / "levye.project";
+
+    std::ifstream input(configPath);
+
+    if (!input) {
+      std::filesystem::remove_all(projectDirectory);
+      return false;
+    }
+
+    std::string content{std::istreambuf_iterator<char>(input),
+                        std::istreambuf_iterator<char>()};
+
+    input.close();
+
+    for (const auto& module : modules) {
+      const std::string setting = module + " = false";
+      const std::string replacement = module + " = true";
+
+      const auto position = content.find(setting);
+
+      if (position == std::string::npos) {
+        std::cerr << "[Levye] Module setting not found: " << module << '\n';
+
+        std::filesystem::remove_all(projectDirectory);
+        return false;
+      }
+
+      content.replace(position, setting.size(), replacement);
+    }
+
+    std::ofstream output(configPath, std::ios::trunc);
+
+    if (!output) {
+      std::filesystem::remove_all(projectDirectory);
+      return false;
+    }
+
+    output << content;
+    output.close();
+
+    if (!output) {
+      std::filesystem::remove_all(projectDirectory);
       return false;
     }
   }
@@ -100,7 +149,7 @@ bool ProjectGenerator::Generate(
   return true;
 }
 
-std::string ProjectGenerator::CreateTargetName(const std::string &name) {
+std::string ProjectGenerator::CreateTargetName(const std::string& name) {
   std::string target;
 
   target.reserve(name.size());
@@ -115,13 +164,12 @@ std::string ProjectGenerator::CreateTargetName(const std::string &name) {
 }
 
 bool ProjectGenerator::ProcessTemplateFile(
-    const std::filesystem::path &path, const std::string &projectName,
-    const std::string &projectTarget,
-    const std::filesystem::path &frameworkDirectory) {
+    const std::filesystem::path& path, const std::string& projectName,
+    const std::string& projectTarget,
+    const std::filesystem::path& frameworkDirectory) {
   std::ifstream input(path);
 
-  if (!input)
-    return false;
+  if (!input) return false;
 
   std::string content{std::istreambuf_iterator<char>(input),
                       std::istreambuf_iterator<char>()};
@@ -140,12 +188,11 @@ bool ProjectGenerator::ProcessTemplateFile(
 
   std::ofstream output(path, std::ios::trunc);
 
-  if (!output)
-    return false;
+  if (!output) return false;
 
   output << content;
 
   return output.good();
 }
 
-} // namespace Levye
+}  // namespace Levye

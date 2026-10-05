@@ -1,18 +1,20 @@
-#include "BuildCommand.hpp"
-#include "CleanCommand.hpp"
-#include "ProjectGenerator.hpp"
-#include "ProjectLocator.hpp"
-#include "RunCommand.hpp"
 #include <Levye/Core/Version.hpp>
-
 #include <Levye/Platform/ExecutablePath.hpp>
-
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <vector>
+
+#include "AddCommand.hpp"
+#include "BuildCommand.hpp"
+#include "CleanCommand.hpp"
+#include "ModuleRegistry.hpp"
+#include "ProjectGenerator.hpp"
+#include "ProjectLocator.hpp"
+#include "RunCommand.hpp"
 
 namespace {
 
@@ -20,23 +22,25 @@ namespace {
  * @brief Prints the main Levye CLI help message.
  */
 void PrintHelp() {
-  std::cout << "LevyeKit CLI\n"
-            << "\n"
-            << "Usage:\n"
-            << "  levye <command> [options]\n"
-            << "\n"
-            << "Commands:\n"
-            << "  new <name>       Create a new LevyeKit project\n"
-            << "  build            Build the current project\n"
-            << "  run              Run the current project\n"
-            << "  clean            Remove generated build files\n"
-            << "  project          Show information about the current project\n"
-            << "\n"
-            << "Options:\n"
-            << "  -h, --help       Show this help message\n"
-            << "  -v, --version    Show the LevyeKit CLI version\n"
-            << "\n"
-            << "Run 'levye <command> --help' for command-specific help.\n";
+  std::cout
+      << "LevyeKit CLI\n"
+      << "\n"
+      << "Usage:\n"
+      << "  levye <command> [options]\n"
+      << "\n"
+      << "Commands:\n"
+      << "  new <name>       Create a new LevyeKit project\n"
+      << "  build            Build the current project\n"
+      << "  run              Run the current project\n"
+      << "  clean            Remove generated build files\n"
+      << "  project          Show information about the current project\n"
+      << "\n"
+      << "Options:\n"
+      << "  -h, --help       Show this help message\n"
+      << "  -v, --version    Show the LevyeKit CLI version\n"
+      << "\n"
+      << "Run 'levye <command> --help' for command-specific help.\n"
+      << "  add <module>     Add an optional module to the current project\n";
 }
 
 /**
@@ -60,7 +64,8 @@ void PrintNewHelp() {
       << "Options:\n"
       << "  --git             Initialize a Git repository\n"
       << "  --commit          Initialize Git and create an initial commit\n"
-      << "  -h, --help        Show this help message\n";
+      << "  -h, --help        Show this help message\n"
+      << "  --with <module>   Enable an optional module\n";
 }
 
 /**
@@ -153,7 +158,7 @@ bool IsOption(std::string_view argument, std::string_view option) {
  * @param projectDirectory Root directory of the generated project.
  * @return true when Git initialization succeeds.
  */
-bool InitializeGit(const std::filesystem::path &projectDirectory) {
+bool InitializeGit(const std::filesystem::path& projectDirectory) {
   const std::string command =
       "git -C \"" + projectDirectory.string() + "\" init";
 
@@ -168,7 +173,7 @@ bool InitializeGit(const std::filesystem::path &projectDirectory) {
  * @param projectDirectory Root directory of the generated project.
  * @return true when the initial commit succeeds.
  */
-bool CreateInitialCommit(const std::filesystem::path &projectDirectory) {
+bool CreateInitialCommit(const std::filesystem::path& projectDirectory) {
   const std::string directory = projectDirectory.string();
 
   const std::string addCommand = "git -C \"" + directory + "\" add .";
@@ -194,9 +199,9 @@ std::optional<std::filesystem::path> FindCurrentProject() {
   return projectDirectory;
 }
 
-} // namespace
+}  // namespace
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   if (argc < 2) {
     PrintHelp();
     return 0;
@@ -232,6 +237,8 @@ int main(int argc, char **argv) {
     bool initializeGit = false;
     bool createInitialCommit = false;
 
+    std::vector<std::string> modules;
+
     for (int i = 3; i < argc; ++i) {
       const std::string_view argument = argv[i];
 
@@ -240,6 +247,20 @@ int main(int argc, char **argv) {
       } else if (argument == "--commit") {
         createInitialCommit = true;
         initializeGit = true;
+      } else if (argument == "--with") {
+        if (i + 1 >= argc) {
+          std::cerr << "[Levye] Missing module name after --with.\n";
+          return 1;
+        }
+
+        const std::string module = argv[++i];
+
+        if (!Levye::ModuleRegistry::Exists(module)) {
+          std::cerr << "[Levye] Unknown module: " << module << '\n';
+          return 1;
+        }
+
+        modules.push_back(module);
       } else {
         std::cerr << "[Levye] Unknown new option: " << argument << "\n\n";
 
@@ -264,13 +285,12 @@ int main(int argc, char **argv) {
         frameworkRoot / "Templates/Default";
 
     if (!Levye::ProjectGenerator::Generate(projectName, outputDirectory,
-                                           templateDirectory, frameworkRoot)) {
+                                           templateDirectory, frameworkRoot,
+                                           modules)) {
       return 1;
     }
 
-    // ProjectGenerator uses the sanitized target as the directory name.
-    // Use the actual generated project path here if you already have it
-    // available from the generator.
+    // The generator uses the sanitized target name for the new directory.
     const std::filesystem::path projectDirectory =
         outputDirectory /
         Levye::ProjectGenerator::CreateTargetName(projectName);
@@ -340,8 +360,7 @@ int main(int argc, char **argv) {
 
     const auto projectDirectory = FindCurrentProject();
 
-    if (!projectDirectory)
-      return 1;
+    if (!projectDirectory) return 1;
 
     Levye::BuildConfiguration configuration = Levye::BuildConfiguration::Debug;
 
@@ -364,6 +383,28 @@ int main(int argc, char **argv) {
     return 0;
   }
 
+  else if (command == "add") {
+    if (argc == 3 && IsHelpArgument(argv[2])) {
+      std::cout << "Usage:\n"
+                << "  levye add <module>\n\n"
+                << "Available modules:\n"
+                << "  serialization\n";
+
+      return 0;
+    }
+
+    if (argc != 3) {
+      std::cerr << "[Levye] Usage: levye add <module>\n";
+      return 1;
+    }
+
+    const auto projectDirectory = FindCurrentProject();
+
+    if (!projectDirectory) return 1;
+
+    return Levye::AddCommand::Execute(*projectDirectory, argv[2]) ? 0 : 1;
+  }
+
   else if (command == "run") {
     if (argc >= 3 && IsHelpArgument(argv[2])) {
       PrintRunHelp();
@@ -379,8 +420,7 @@ int main(int argc, char **argv) {
 
     const auto projectDirectory = FindCurrentProject();
 
-    if (!projectDirectory)
-      return 1;
+    if (!projectDirectory) return 1;
 
     Levye::BuildConfiguration configuration = Levye::BuildConfiguration::Debug;
 
@@ -417,8 +457,7 @@ int main(int argc, char **argv) {
     }
     const auto projectDirectory = FindCurrentProject();
 
-    if (!projectDirectory)
-      return 1;
+    if (!projectDirectory) return 1;
 
     if (argc >= 3) {
       const std::string option = argv[2];
