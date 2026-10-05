@@ -938,42 +938,65 @@ Mobile platforms may use a different development workflow because of platform re
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- ROADMAP -->
-
 ## Roadmap
 
 ### v0.1 — Game Ready
 
-* [x] CMake project
-* [x] raylib integration
-* [x] Application lifecycle
-* [x] Game API boundary
-* [x] Dynamic library loading
-* [x] Native game-module hot reload
-* [x] Persistent host-owned game state
-* [x] Hot-reload compatibility checks
-* [x] File watching
-* [x] Logging
-* [x] Input system
-* [x] Screen management
-* [x] Time and fixed-step simulation
-* [x] Texture management
-* [x] Shader management
-* [x] Font management
-* [x] Audio and music management
-* [x] Asset hot reloading
-* [x] Public game-facing API
-* [x] `LevyeKit.hpp` umbrella header
-* [x] Project configuration
+* [x] Core application lifecycle
+* [x] Native C++ game modules
+* [x] Code hot reloading
+* [x] Persistent game state
+* [x] Input, audio, assets, shaders, fonts, screens, and time systems
+* [x] Project configuration and generation
 * [x] Debug and Release configurations
-* [x] Game project template
-* [x] `levye new`
-* [x] `levye build`
-* [x] `levye run`
-* [x] `levye clean`
-* [x] `levye project`
-* [x] CLI help and version information
-* [x] Optional Git initialization for generated projects
+* [x] Levye CLI development workflow
 * [x] Windows desktop builds and hot reload with MinGW-w64 and MSVC
+
+### v0.2 — Modules & Serialization
+
+* [x] Optional framework module system
+* [x] YAML serialization module
+* [x] Scalar serialization
+* [x] Nested objects and arrays
+* [x] Save and load YAML documents
+* [x] Serialization persistence across game-module hot reloads
+* [x] Serialization regression and reload testing
+* [ ] Custom game-data serialization
+* [ ] Nested custom types and containers
+* [ ] Built-in serialization support for common raylib types
+* [ ] Mouse action bindings
+* [ ] Mouse movement axes
+* [ ] Mouse wheel axes
+
+### Planned Modules
+
+* [ ] Entity Component System
+  * [ ] EnTT backend
+  * [ ] Keep the public ECS API reasonably independent from the backend
+* [ ] Extended 3D model loading
+  * [ ] Additional formats such as STL
+* [ ] Optional Dear ImGui development/debugging tools
+
+### Levye CLI
+
+* [ ] Game export and packaging
+  * [ ] `levye export --platform windows --release`
+  * [ ] `levye export --platform linux --release`
+  * [ ] `levye export --platform macos --release`
+  * [ ] `levye export --platform android --release`
+  * [ ] `levye export --platform ios --release`
+* [ ] Platform-specific packaging
+* [ ] Release asset preparation
+
+### Platform & Framework
+
+* [ ] Continue Linux verification and support
+* [ ] Android support
+* [ ] iOS support
+* [ ] Improve failed-reload diagnostics
+* [ ] Expand the framework only as real games require new reusable systems
+
+LevyeKit intentionally does not plan to become a full editor-driven game engine.
 
 ### Future
 
