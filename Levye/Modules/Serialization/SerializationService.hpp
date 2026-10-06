@@ -61,6 +61,19 @@ class SerializationService {
   [[nodiscard]] bool Contains(DocumentHandle handle) const;
 
   /**
+   * @brief Checks whether a path exists in a document.
+   *
+   * The document is never modified while resolving the path.
+   *
+   * @param handle Document to inspect.
+   * @param path Dot/bracket-separated path.
+   *
+   * @return True when the complete path resolves to an existing node.
+   */
+  [[nodiscard]] bool ContainsPath(DocumentHandle handle,
+                                  const char* path) const;
+
+  /**
    * @brief Writes an integer to a document.
    *
    * @return false if the document or path is invalid.
@@ -146,6 +159,16 @@ class SerializationService {
    * @return True if an object was appended.
    */
   [[nodiscard]] bool AppendObject(DocumentHandle handle, const char* path);
+
+  /**
+   * @brief Appends an empty sequence to an existing sequence.
+   *
+   * @param handle Document containing the destination array.
+   * @param path Path to the destination array.
+   *
+   * @return True if the nested array was appended.
+   */
+  [[nodiscard]] bool AppendArray(DocumentHandle handle, const char* path);
 
   /**
    * @brief Appends an integer to an existing YAML sequence.

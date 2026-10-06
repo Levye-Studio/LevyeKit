@@ -666,6 +666,28 @@ bool SerializationService::Contains(DocumentHandle handle) const {
   return m_Documents.contains(handle);
 }
 
+bool SerializationService::ContainsPath(DocumentHandle handle,
+                                        const char* path) const {
+  if (path == nullptr || *path == '\0') {
+    return false;
+  }
+
+  const auto it = m_Documents.find(handle);
+
+  if (it == m_Documents.end()) {
+    return false;
+  }
+
+  try {
+    const YAML::Node node = ResolveReadPath(it->second->root, path);
+
+    return node.IsDefined();
+
+  } catch (const YAML::Exception&) {
+    return false;
+  }
+}
+
 bool SerializationService::SetInt(DocumentHandle handle,
                                   const std::string& path, std::int64_t value) {
   const auto it = m_Documents.find(handle);
@@ -797,6 +819,23 @@ bool SerializationService::AppendObject(DocumentHandle handle,
 
   return AppendValue(it->second->root, path, YAML::Node(YAML::NodeType::Map));
 }
+
+bool SerializationService::AppendArray(DocumentHandle handle,
+                                       const char* path) {
+  if (path == nullptr || *path == '\0') {
+    return false;
+  }
+
+  const auto it = m_Documents.find(handle);
+
+  if (it == m_Documents.end()) {
+    return false;
+  }
+
+  return AppendValue(it->second->root, path,
+                     YAML::Node(YAML::NodeType::Sequence));
+}
+
 /**
  * @brief Appends an integer to an existing sequence.
  *

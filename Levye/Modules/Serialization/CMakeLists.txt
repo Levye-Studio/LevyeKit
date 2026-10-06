@@ -23,7 +23,7 @@ add_library(
     LevyeSerialization STATIC
 
     SerializationService.cpp
-    SerializationBridge.cpp
+    SerializationBridge.cpp    
 )
 
 target_include_directories(

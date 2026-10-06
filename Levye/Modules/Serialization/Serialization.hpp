@@ -4,7 +4,9 @@
 
 #include <Levye/Core/ModuleAPI.hpp>
 #include <Levye/Core/Services.hpp>
+#include <Levye/Modules/Serialization/Archive.hpp>
 #include <Levye/Modules/Serialization/SerializationAPI.hpp>
+#include <algorithm>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -54,6 +56,20 @@ class Serialization {
     const auto* api = GetAPI();
 
     return api && api->Contains && api->Contains(api->context, handle);
+  }
+
+  /**
+   * @brief Checks whether a path exists in a document.
+   *
+   * Unlike the typed getters, this distinguishes a missing path
+   * from a path containing an empty, false, zero, or null value.
+   */
+  [[nodiscard]] static bool ContainsPath(DocumentHandle handle,
+                                         const char* path) {
+    const auto* api = GetAPI();
+
+    return api && api->ContainsPath && path != nullptr && *path != '\0' &&
+           api->ContainsPath(api->context, handle, path);
   }
 
   /**
@@ -413,6 +429,14 @@ class Serialization {
     return api->AppendObject(api->context, document, path);
   }
 
+  [[nodiscard]] static bool AppendArray(DocumentHandle document,
+                                        const char* path) {
+    const auto* api = GetAPI();
+
+    return api && api->AppendArray && path != nullptr && *path != '\0' &&
+           api->AppendArray(api->context, document, path);
+  }
+
   /**
    * @brief Appends an integer to an existing array.
    *
@@ -504,6 +528,54 @@ class Serialization {
     return api->IsArray(api->context, document, path);
   }
 
+  /**
+   * @brief Writes a user-defined serializable type into a document.
+   *
+   * The type must provide a compatible free Serialize() function.
+   *
+   * @tparam T Type to serialize.
+   * @param document Destination document.
+   * @param path Parent path where the object will be written.
+   * @param value Object to serialize.
+   *
+   * @return True if every serialized field was written successfully.
+   */
+  template <typename T>
+  [[nodiscard]] static bool Write(DocumentHandle document,
+                                  const std::string& path, T& value) {
+    if (!Contains(document) || path.empty()) {
+      return false;
+    }
+
+    WriteArchive archive(document, path);
+
+    return Serialize(archive, value);
+  }
+
+  /**
+   * @brief Reads a user-defined serializable type from a document.
+   *
+   * Existing values in the object act as fallbacks for fields that cannot
+   * be read.
+   *
+   * @tparam T Type to deserialize.
+   * @param document Source document.
+   * @param path Parent path containing the serialized object.
+   * @param value Object that receives the serialized values.
+   *
+   * @return True if the serialization function completed successfully.
+   */
+  template <typename T>
+  [[nodiscard]] static bool Read(DocumentHandle document,
+                                 const std::string& path, T& value) {
+    if (!Contains(document) || path.empty()) {
+      return false;
+    }
+
+    ReadArchive archive(document, path);
+    return Serialize(archive, value);
+  }
+
  private:
   /**
    * @brief Retrieves the versioned serialization function table.
@@ -522,5 +594,250 @@ class Serialization {
     return static_cast<const SerializationAPI*>(module);
   }
 };
+
+inline bool WriteArchive::Field(const char* name, const int& value) {
+  return Serialization::SetInt(m_Document, MakePath(name).c_str(), value);
+}
+
+inline bool WriteArchive::Field(const char* name, const float& value) {
+  return Serialization::SetFloat(m_Document, MakePath(name).c_str(), value);
+}
+
+inline bool WriteArchive::Field(const char* name, const bool& value) {
+  return Serialization::SetBool(m_Document, MakePath(name).c_str(), value);
+}
+
+inline bool WriteArchive::Field(const char* name, const std::string& value) {
+  return Serialization::SetString(m_Document, MakePath(name).c_str(),
+                                  value.c_str());
+}
+
+inline bool ReadArchive::Field(const char* name, int& value) const {
+  const std::string path = MakePath(name);
+
+  value =
+      static_cast<int>(Serialization::GetInt(m_Document, path.c_str(), value));
+
+  return true;
+}
+
+inline bool ReadArchive::Field(const char* name, float& value) const {
+  const std::string path = MakePath(name);
+
+  value = static_cast<float>(
+      Serialization::GetFloat(m_Document, path.c_str(), value));
+
+  return true;
+}
+
+inline bool ReadArchive::Field(const char* name, bool& value) const {
+  const std::string path = MakePath(name);
+
+  value = Serialization::GetBool(m_Document, path.c_str(), value);
+
+  return true;
+}
+
+inline bool ReadArchive::Field(const char* name, std::string& value) const {
+  const std::string path = MakePath(name);
+
+  if (!Serialization::ContainsPath(m_Document, path.c_str())) {
+    return true;
+  }
+
+  value = Serialization::GetString(m_Document, path.c_str());
+
+  return true;
+}
+
+inline bool WriteArchive::WriteElement(const std::string& path, int value) {
+  return Serialization::SetInt(m_Document, path.c_str(), value);
+}
+
+inline bool WriteArchive::WriteElement(const std::string& path, float value) {
+  return Serialization::SetFloat(m_Document, path.c_str(), value);
+}
+
+inline bool WriteArchive::WriteElement(const std::string& path, bool value) {
+  return Serialization::SetBool(m_Document, path.c_str(), value);
+}
+
+inline bool WriteArchive::WriteElement(const std::string& path,
+                                       const std::string& value) {
+  return Serialization::SetString(m_Document, path.c_str(), value.c_str());
+}
+
+inline bool WriteArchive::Field(const char* name, const Vector2& value) {
+  const std::string path = MakePath(name);
+
+  return Serialization::SetVector2(m_Document, path.c_str(), value);
+}
+
+inline bool WriteArchive::Field(const char* name, const Vector3& value) {
+  const std::string path = MakePath(name);
+
+  return Serialization::SetVector3(m_Document, path.c_str(), value);
+}
+
+inline bool WriteArchive::Field(const char* name, const Vector4& value) {
+  WriteArchive nested(m_Document, MakePath(name));
+
+  return nested.Field("x", value.x) && nested.Field("y", value.y) &&
+         nested.Field("z", value.z) && nested.Field("w", value.w);
+}
+
+inline bool WriteArchive::Field(const char* name, const Rectangle& value) {
+  WriteArchive nested(m_Document, MakePath(name));
+
+  return nested.Field("x", value.x) && nested.Field("y", value.y) &&
+         nested.Field("width", value.width) &&
+         nested.Field("height", value.height);
+}
+
+inline bool WriteArchive::Field(const char* name, const Color& value) {
+  WriteArchive nested(m_Document, MakePath(name));
+
+  const int r = value.r;
+  const int g = value.g;
+  const int b = value.b;
+  const int a = value.a;
+
+  return nested.Field("r", r) && nested.Field("g", g) && nested.Field("b", b) &&
+         nested.Field("a", a);
+}
+
+inline bool ReadArchive::ReadElement(const std::string& path,
+                                     int& value) const {
+  value =
+      static_cast<int>(Serialization::GetInt(m_Document, path.c_str(), value));
+
+  return true;
+}
+
+inline bool ReadArchive::ReadElement(const std::string& path,
+                                     float& value) const {
+  value = static_cast<float>(
+      Serialization::GetFloat(m_Document, path.c_str(), value));
+
+  return true;
+}
+
+inline bool ReadArchive::ReadElement(const std::string& path,
+                                     bool& value) const {
+  value = Serialization::GetBool(m_Document, path.c_str(), value);
+
+  return true;
+}
+
+inline bool ReadArchive::ReadElement(const std::string& path,
+                                     std::string& value) const {
+  if (!Serialization::ContainsPath(m_Document, path.c_str())) {
+    return true;
+  }
+
+  value = Serialization::GetString(m_Document, path.c_str());
+
+  return true;
+}
+
+inline bool ReadArchive::Field(const char* name, Vector2& value) const {
+  const std::string path = MakePath(name);
+
+  value = Serialization::GetVector2(m_Document, path.c_str(), value);
+
+  return true;
+}
+
+inline bool ReadArchive::Field(const char* name, Vector3& value) const {
+  const std::string path = MakePath(name);
+
+  value = Serialization::GetVector3(m_Document, path.c_str(), value);
+
+  return true;
+}
+
+inline bool ReadArchive::Field(const char* name, Vector4& value) const {
+  ReadArchive nested(m_Document, MakePath(name));
+
+  return nested.Field("x", value.x) && nested.Field("y", value.y) &&
+         nested.Field("z", value.z) && nested.Field("w", value.w);
+}
+
+inline bool ReadArchive::Field(const char* name, Rectangle& value) const {
+  ReadArchive nested(m_Document, MakePath(name));
+
+  return nested.Field("x", value.x) && nested.Field("y", value.y) &&
+         nested.Field("width", value.width) &&
+         nested.Field("height", value.height);
+}
+
+inline bool ReadArchive::Field(const char* name, Color& value) const {
+  ReadArchive nested(m_Document, MakePath(name));
+
+  int r = value.r;
+  int g = value.g;
+  int b = value.b;
+  int a = value.a;
+
+  if (!nested.Field("r", r) || !nested.Field("g", g) || !nested.Field("b", b) ||
+      !nested.Field("a", a)) {
+    return false;
+  }
+
+  value.r = static_cast<unsigned char>(std::clamp(r, 0, 255));
+
+  value.g = static_cast<unsigned char>(std::clamp(g, 0, 255));
+
+  value.b = static_cast<unsigned char>(std::clamp(b, 0, 255));
+
+  value.a = static_cast<unsigned char>(std::clamp(a, 0, 255));
+
+  return true;
+}
+
+inline bool ReadArchive::IsArray(const std::string& path) const {
+  return Serialization::IsArray(m_Document, path.c_str());
+}
+
+inline std::uint64_t ReadArchive::GetArraySize(const std::string& path) const {
+  return Serialization::GetArraySize(m_Document, path.c_str());
+}
+
+inline bool ReadArchive::ContainsPath(const std::string& path) const {
+  return Serialization::ContainsPath(m_Document, path.c_str());
+}
+
+inline bool WriteArchive::AppendElement(const std::string& path, int value) {
+  return Serialization::AppendInt(m_Document, path.c_str(), value);
+}
+
+inline bool WriteArchive::AppendElement(const std::string& path, float value) {
+  return Serialization::AppendFloat(m_Document, path.c_str(), value);
+}
+
+inline bool WriteArchive::AppendElement(const std::string& path, bool value) {
+  return Serialization::AppendBool(m_Document, path.c_str(), value);
+}
+
+inline bool WriteArchive::AppendElement(const std::string& path,
+                                        const std::string& value) {
+  return Serialization::AppendString(m_Document, path.c_str(), value.c_str());
+}
+
+inline bool WriteArchive::AppendObject(const std::string& path) {
+  return Serialization::AppendObject(m_Document, path.c_str());
+}
+
+inline bool WriteArchive::AppendArray(const std::string& path) {
+  return Serialization::AppendArray(m_Document, path.c_str());
+}
+
+inline std::uint64_t WriteArchive::GetArraySize(const std::string& path) const {
+  return Serialization::GetArraySize(m_Document, path.c_str());
+}
+
+inline bool WriteArchive::CreateArray(const std::string& path) {
+  return Serialization::CreateArray(m_Document, path.c_str());
+}
 
 }  // namespace Levye

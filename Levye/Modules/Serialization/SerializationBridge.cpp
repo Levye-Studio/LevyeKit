@@ -30,6 +30,13 @@ bool ContainsDocument(void* context, DocumentHandle handle) {
   return service && service->Contains(handle);
 }
 
+bool ContainsPathDocument(void* context, DocumentHandle handle,
+                          const char* path) {
+  auto* service = GetService(context);
+
+  return service && service->ContainsPath(handle, path);
+}
+
 bool WriteInt(void* context, DocumentHandle handle, const char* path,
               std::int64_t value) {
   auto* service = GetService(context);
@@ -154,6 +161,20 @@ bool BridgeAppendObject(void* context, DocumentHandle document,
 }
 
 /**
+ * @brief Forwards object appending to the host-owned service.
+ */
+bool BridgeAppendArray(void* context, DocumentHandle document,
+                       const char* path) {
+  if (context == nullptr || path == nullptr) {
+    return false;
+  }
+
+  auto* service = static_cast<SerializationService*>(context);
+
+  return service->AppendArray(document, path);
+}
+
+/**
  * @brief Forwards integer appending to the host service.
  */
 bool BridgeAppendInt(void* context, DocumentHandle document, const char* path,
@@ -233,6 +254,7 @@ SerializationAPI MakeSerializationAPI(SerializationService& service) {
           .Create = CreateDocument,
           .Destroy = DestroyDocument,
           .Contains = ContainsDocument,
+          .ContainsPath = ContainsPathDocument,
 
           .SetInt = WriteInt,
           .SetFloat = WriteFloat,
@@ -250,6 +272,7 @@ SerializationAPI MakeSerializationAPI(SerializationService& service) {
           .CreateArray = &BridgeCreateArray,
           .GetArraySize = &BridgeGetArraySize,
           .AppendObject = &BridgeAppendObject,
+          .AppendArray = &BridgeAppendArray,
 
           .AppendInt = &BridgeAppendInt,
           .AppendFloat = &BridgeAppendFloat,

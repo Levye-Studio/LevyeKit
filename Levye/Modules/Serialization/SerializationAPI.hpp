@@ -11,7 +11,7 @@ namespace Levye {
  * Increment this when the layout or signatures of SerializationAPI
  * change. This version is independent of GAME_API_VERSION.
  */
-inline constexpr std::uint32_t SERIALIZATION_API_VERSION = 4;
+inline constexpr std::uint32_t SERIALIZATION_API_VERSION = 6;
 
 /**
  * @brief Public function table for the optional serialization module.
@@ -58,6 +58,17 @@ struct SerializationAPI {
    * @brief Checks whether a document handle is currently valid.
    */
   bool (*Contains)(void* context, DocumentHandle handle) = nullptr;
+
+  /**
+   * @brief Checks whether a path exists in a document.
+   *
+   * This operation never modifies the document.
+   *
+   * A path is considered present even when its value is null,
+   * empty, false, or zero.
+   */
+  bool (*ContainsPath)(void* context, DocumentHandle handle,
+                       const char* path) = nullptr;
 
   // -------------------------------------------------------------
   // Writing values
@@ -142,6 +153,9 @@ struct SerializationAPI {
    */
   bool (*AppendObject)(void* context, DocumentHandle document,
                        const char* path) = nullptr;
+
+  bool (*AppendArray)(void* context, DocumentHandle handle,
+                      const char* path) = nullptr;
 
   /**
    * @brief Appends an integer to an existing array.
