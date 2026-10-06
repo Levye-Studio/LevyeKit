@@ -108,11 +108,11 @@ LevyeKit provides reusable systems for:
 
 The framework stays intentionally small so games can use raylib directly whenever it already provides the required functionality.
 
-> **Status:** LevyeKit `v0.2.0` adds the optional module system and YAML
-> serialization to the game-ready foundation introduced in `v0.1`.
-> Development toward `v0.2.1` expands serialization for custom game data and
-> adds mouse input support. The framework is still evolving and APIs may change
-> in future releases.
+> **Status:** LevyeKit `v0.2.1` expands the optional YAML serialization module
+> with custom game-data serialization, nested types and containers, and common
+> raylib types. It also adds mouse button bindings, frame-sampled mouse movement,
+> and mouse wheel input. The framework is still evolving and APIs may change in
+> future releases.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
