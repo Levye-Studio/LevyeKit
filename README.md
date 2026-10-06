@@ -94,8 +94,8 @@ LevyeKit provides reusable systems for:
 * Code hot reloading
 * Persistent game state
 * Optional framework modules
-* YAML serialization
-* Input management
+* YAML game-data serialization
+* Keyboard, mouse, and gamepad input
 * Texture, shader, and font management
 * Asset hot reloading
 * Audio and music management
@@ -108,7 +108,11 @@ LevyeKit provides reusable systems for:
 
 The framework stays intentionally small so games can use raylib directly whenever it already provides the required functionality.
 
-> **Status:** LevyeKit `v0.2` adds the optional module system and YAML serialization to the game-ready foundation introduced in `v0.1`. The framework is still evolving and APIs may change in future releases.
+> **Status:** LevyeKit `v0.2.0` adds the optional module system and YAML
+> serialization to the game-ready foundation introduced in `v0.1`.
+> Development toward `v0.2.1` expands serialization for custom game data and
+> adds mouse input support. The framework is still evolving and APIs may change
+> in future releases.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -136,7 +140,7 @@ Its main goals are:
 * Support native C++ hot reloading during development
 * Preserve game state across compatible code reloads
 * Keep resources owned by the stable application host
-* Provide reusable input, audio, asset, shader, font, screen, and time systems
+* Provide reusable input, serialization, audio, asset, shader, font, screen, and time systems
 * Make creating and running a new game fast
 * Keep the framework understandable
 * Add systems only when games actually need them
@@ -441,21 +445,35 @@ host owns the input map; reloadable modules access it only through
 `HostServices`.
 
 ```cpp
-// Multiple keyboard keys and a controller button represent one action.
-Levye::Input::BindKey("Jump", KEY_SPACE);
-Levye::Input::BindKey("Jump", KEY_UP);
-Levye::Input::BindGamepadButton("Jump", 0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN);
+// Keyboard, mouse, and controller inputs can represent the same action.
+Levye::Input::BindKey("Action", KEY_SPACE);
+Levye::Input::BindMouseButton("Action", MOUSE_BUTTON_LEFT);
+Levye::Input::BindGamepadButton(
+    "Action",
+    0,
+    GAMEPAD_BUTTON_RIGHT_FACE_DOWN
+);
 
 // WASD, arrow keys, and the first controller's left stick.
 Levye::Input::BindKeyAxis("MoveX", KEY_A, KEY_D);
 Levye::Input::BindKeyAxis("MoveX", KEY_LEFT, KEY_RIGHT);
 Levye::Input::BindKeyAxis("MoveY", KEY_W, KEY_S);
 Levye::Input::BindKeyAxis("MoveY", KEY_UP, KEY_DOWN);
-Levye::Input::BindGamepadAxis("MoveX", 0, GAMEPAD_AXIS_LEFT_X, 0.15f);
-Levye::Input::BindGamepadAxis("MoveY", 0, GAMEPAD_AXIS_LEFT_Y, 0.15f);
+Levye::Input::BindGamepadAxis(
+    "MoveX",
+    0,
+    GAMEPAD_AXIS_LEFT_X,
+    0.15f
+);
+Levye::Input::BindGamepadAxis(
+    "MoveY",
+    0,
+    GAMEPAD_AXIS_LEFT_Y,
+    0.15f
+);
 ```
 
-Actions use the combined state of every bound key and gamepad button:
+Actions use the combined state of every bound keyboard key, mouse button, and gamepad button:
 
 - `IsDown()` is true while at least one binding is held.
 - `IsPressed()` is true only when the action changes from up to down.
@@ -511,15 +529,20 @@ contribute zero.
 
 Bindings, axis values, and action history survive hot reload. `OnLoad` runs only
 at startup, so bindings need not be recreated in `OnAfterReload`. Re-registering
-an identical key, key pair, or gamepad button is a no-op and does not reset held
+an identical key, mouse button, key pair, or gamepad button is a no-op and does not reset held
 state. Re-registering a gamepad axis updates its deadzone without adding a
 second binding. Changed registrations can be applied in `OnAfterReload`, but
 adding a replacement does not automatically remove an old binding.
 
 ```cpp
+const Vector2 mouseDelta = Levye::Input::GetMouseDelta();
+const float mouseWheel = Levye::Input::GetMouseWheel();
+
 Levye::Input::ClearAction("Jump"); // Remove action bindings and state immediately.
 Levye::Input::Clear();             // Remove all actions, axes, and cached values.
 ```
+
+Mouse movement and wheel input are sampled once per host frame alongside actions and axes. `GetMouseDelta()` returns the frame's raw mouse movement, while `GetMouseWheel()` returns the raw wheel movement. These values are intentionally not exposed as named axes because LevyeKit's named axes are normalized to `[-1, 1]`, while mouse delta and wheel movement preserve their raw magnitude.
 
 Clearing does not synthesize release events. `ClearAction` leaves a same-named
 axis intact; there is currently no individual-axis removal function. A cleared
@@ -531,9 +554,7 @@ The Sandbox uses WASD/arrows or the left stick to move, Enter/controller A to
 start, Escape/controller B to return to the menu, and Space/controller A for a
 sound. `P` pauses game time, `M` pauses music, and `R` resumes music.
 
-The input service additions require `GAME_API_VERSION` **13**. Rebuild and
-restart the host and rebuild game modules together when upgrading from ABI 12;
-this is an ABI change, not a LevyeKit release-version change.
+The current input service API requires `GAME_API_VERSION` **15**. Rebuild and restart the host and rebuild game modules together when upgrading across an incompatible game API version. `GAME_API_VERSION` tracks the hot-reload ABI independently from the LevyeKit release version.
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -541,38 +562,195 @@ this is an ABI change, not a LevyeKit release-version change.
 ### Serialization
 
 YAML serialization is an optional host-owned module. Enable it with
-`-DLEVYE_WITH_SERIALIZATION=ON`; yaml-cpp stays behind the versioned
-`SerializationAPI` callback table and is not part of game-facing headers.
+`-DLEVYE_WITH_SERIALIZATION=ON`.
+
+The implementation uses yaml-cpp internally, but yaml-cpp types are not exposed
+to game code. Reloadable game modules communicate with the serialization system
+through LevyeKit's versioned `SerializationAPI`.
 
 ```cpp
 #include <Levye/Modules/Serialization/Serialization.hpp>
+```
 
-if (Levye::Serialization::Available()) {
-    const auto document = Levye::Serialization::Create();
-    if (document != Levye::InvalidDocumentHandle) {
-        const bool written =
-            Levye::Serialization::SetInt(document, "player.score", 250) &&
-            Levye::Serialization::CreateArray(document, "items") &&
-            Levye::Serialization::AppendObject(document, "items") &&
-            Levye::Serialization::SetString(document, "items[0].name", "key");
-        if (written && !Levye::Serialization::Save(document, "save.yaml")) {
-            Levye::Log::Error("Could not save document.");
-        }
-        Levye::Serialization::Destroy(document);
+#### Custom Types
+
+Game types can define which fields should be serialized with a free `Serialize`
+function:
+
+```cpp
+struct PlayerSave
+{
+    std::string name = "Player";
+    int score = 0;
+    Vector2 position{};
+};
+
+template <typename Archive>
+bool Serialize(Archive& archive, PlayerSave& player)
+{
+    return archive.Field("name", player.name) &&
+           archive.Field("score", player.score) &&
+           archive.Field("position", player.position);
+}
+```
+
+The same function is used for both writing and reading.
+
+```cpp
+PlayerSave player;
+player.name = "Nesmy";
+player.score = 250;
+player.position = { 120.0f, 80.0f };
+
+const auto document = Levye::Serialization::Create();
+
+if (document != Levye::InvalidDocumentHandle)
+{
+    Levye::Serialization::Write(document, "player", player);
+    Levye::Serialization::Save(document, "save.yaml");
+
+    Levye::Serialization::Destroy(document);
+}
+```
+
+Loading uses the same type:
+
+```cpp
+const auto document = Levye::Serialization::Load("save.yaml");
+
+if (document != Levye::InvalidDocumentHandle)
+{
+    PlayerSave player;
+
+    if (Levye::Serialization::Read(document, "player", player))
+    {
+        // player now contains the serialized values.
     }
+
+    Levye::Serialization::Destroy(document);
+}
+```
+
+#### Nested Types and Containers
+
+Serializable types can contain other serializable types:
+
+```cpp
+struct InventoryItem
+{
+    std::string name;
+    int amount = 0;
+};
+
+template <typename Archive>
+bool Serialize(Archive& archive, InventoryItem& item)
+{
+    return archive.Field("name", item.name) &&
+           archive.Field("amount", item.amount);
+}
+
+struct SaveGame
+{
+    PlayerSave player;
+    std::vector<InventoryItem> inventory;
+};
+
+template <typename Archive>
+bool Serialize(Archive& archive, SaveGame& save)
+{
+    return archive.Field("player", save.player) &&
+           archive.Field("inventory", save.inventory);
+}
+```
+
+`std::vector<T>` is supported for serializable element types, including nested
+vectors such as `std::vector<std::vector<T>>`.
+
+Common raylib data types can also participate directly in custom serialization:
+
+* `Vector2`
+* `Vector3`
+* `Vector4`
+* `Rectangle`
+* `Color`
+
+`Color` components are clamped to the valid `0`–`255` range when read.
+
+#### Optional and Required Fields
+
+`Field()` is default-preserving when reading. If a field is missing from an
+older save file, the existing value is left unchanged:
+
+```cpp
+struct Settings
+{
+    float volume = 1.0f;
+    bool fullscreen = false;
+};
+
+template <typename Archive>
+bool Serialize(Archive& archive, Settings& settings)
+{
+    return archive.Field("volume", settings.volume) &&
+           archive.Field("fullscreen", settings.fullscreen);
+}
+```
+
+This allows new fields with sensible defaults to be added without immediately
+invalidating older save files.
+
+Use `RequiredField()` when the field must exist:
+
+```cpp
+template <typename Archive>
+bool Serialize(Archive& archive, PlayerSave& player)
+{
+    return archive.RequiredField("name", player.name) &&
+           archive.Field("score", player.score) &&
+           archive.Field("position", player.position);
+}
+```
+
+#### Low-Level Document API
+
+The lower-level document API remains available when direct path-based access is
+more appropriate:
+
+```cpp
+const auto document = Levye::Serialization::Create();
+
+if (document != Levye::InvalidDocumentHandle)
+{
+    const bool written =
+        Levye::Serialization::SetInt(document, "player.score", 250) &&
+        Levye::Serialization::CreateArray(document, "items") &&
+        Levye::Serialization::AppendObject(document, "items") &&
+        Levye::Serialization::SetString(
+            document,
+            "items[0].name",
+            "key"
+        );
+
+    if (written)
+    {
+        Levye::Serialization::Save(document, "save.yaml");
+    }
+
+    Levye::Serialization::Destroy(document);
 }
 ```
 
 Dotted keys and bracketed array indices can be combined. Missing intermediate
-maps are created, and loaded YAML nulls can become maps. Scalars cannot be
-traversed as maps, and array indices must already exist. Malformed or invalid
-write paths leave the document unchanged; reads never create nodes. Existing
-YAML aliases retain yaml-cpp's shared-node behavior when values are replaced.
+maps may be created during writes, while reads never create nodes. Array indices
+must already exist before direct indexed writes.
 
-For hot reload, store only the document handle in persistent game state. Create
-it in `OnLoad`, reuse it in `OnAfterReload`, and destroy it in `OnShutdown`.
-The Sandbox checks scalar and array persistence, modification after reload,
-and a save/load round trip.
+Serialization documents are owned by the host and survive compatible game-module
+hot reloads. Store only the document handle in persistent game state and destroy
+it during final shutdown.
+
+The current serialization service API uses `SERIALIZATION_API_VERSION` **5**.
+The serialization API version is independent from both the LevyeKit release
+version and `GAME_API_VERSION`.
 
 ### Architecture
 
@@ -946,7 +1124,7 @@ Mobile platforms may use a different development workflow because of platform re
 <!-- ROADMAP -->
 ## Roadmap
 
-### v0.1 — Game Ready
+### v0.1.0 — Game Ready
 
 * [x] Core application lifecycle
 * [x] Native C++ game modules
@@ -958,7 +1136,7 @@ Mobile platforms may use a different development workflow because of platform re
 * [x] Levye CLI development workflow
 * [x] Windows desktop builds and hot reload with MinGW-w64 and MSVC
 
-### v0.2 — Modules & Serialization
+### v0.2.0 — Modules & Serialization
 
 * [x] Optional framework module system
 * [x] YAML serialization module
@@ -966,13 +1144,24 @@ Mobile platforms may use a different development workflow because of platform re
 * [x] Nested objects and arrays
 * [x] Save and load YAML documents
 * [x] Serialization persistence across game-module hot reloads
-* [x] Serialization regression and reload testing
-* [ ] Custom game-data serialization
-* [ ] Nested custom types and containers
-* [ ] Built-in serialization support for common raylib types
-* [ ] Mouse action bindings
-* [ ] Mouse movement axes
-* [ ] Mouse wheel axes
+
+### v0.2.1 — Game Data & Mouse Input
+
+* [x] Custom struct and class serialization
+* [x] Nested custom types
+* [x] `std::vector<T>` serialization
+* [x] Nested vector serialization
+* [x] Common raylib type serialization
+  * [x] `Vector2`
+  * [x] `Vector3`
+  * [x] `Vector4`
+  * [x] `Rectangle`
+  * [x] `Color`
+* [x] Default-preserving optional fields
+* [x] Required serialization fields
+* [x] Mouse button action bindings
+* [x] Frame-sampled mouse movement
+* [x] Frame-sampled mouse wheel input
 
 ### Planned Modules
 
