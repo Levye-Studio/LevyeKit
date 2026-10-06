@@ -26,6 +26,9 @@ class InputMap {
    */
   struct InputState {
     bool (*isKeyDown)(int) = ::IsKeyDown;
+    bool (*isMouseButtonDown)(int) = ::IsMouseButtonDown;
+    Vector2 (*getMouseDelta)() = ::GetMouseDelta;
+    float (*getMouseWheelMove)() = ::GetMouseWheelMove;
     bool (*isGamepadAvailable)(int) = ::IsGamepadAvailable;
     bool (*isGamepadButtonDown)(int, int) = ::IsGamepadButtonDown;
     float (*getGamepadAxisMovement)(int, int) = ::GetGamepadAxisMovement;
@@ -52,6 +55,38 @@ class InputMap {
    * @param key Keyboard key associated with the action.
    */
   void BindKey(const std::string& action, KeyboardKey key);
+
+  /**
+   * @brief Adds a mouse button binding to an action.
+   *
+   * The action is created automatically if it does not already exist.
+   * Registering the same button more than once is a no-op.
+   *
+   * @param action Logical action name.
+   * @param button Mouse button associated with the action.
+   */
+  void BindMouseButton(const std::string& action, MouseButton button);
+
+  /**
+   * @brief Returns the mouse movement sampled during the current host frame.
+   *
+   * The value is the raw raylib mouse delta and remains unchanged for the
+   * duration of the frame.
+   *
+   * @return Mouse movement since the previous host frame.
+   */
+  Vector2 GetMouseDelta() const;
+
+  /**
+   * @brief Returns the mouse wheel movement sampled during the current host
+   * frame.
+   *
+   * Positive and negative values represent scrolling in opposite directions.
+   * The value remains unchanged for the duration of the frame.
+   *
+   * @return Mouse wheel movement for the current frame.
+   */
+  float GetMouseWheel() const;
 
   /**
    * @brief Adds a gamepad button binding to an action.
@@ -81,8 +116,8 @@ class InputMap {
    * @param axis Logical axis name.
    * @param gamepad Gamepad index.
    * @param gamepadAxis Native raylib gamepad axis.
-   * @param deadzone Magnitudes below this threshold are zero, without rescaling.
-   * Clamped to [0, 1]; non-finite values use 0.15.
+   * @param deadzone Magnitudes below this threshold are zero, without
+   * rescaling. Clamped to [0, 1]; non-finite values use 0.15.
    */
   void BindGamepadAxis(const std::string& axis, int gamepad,
                        GamepadAxis gamepadAxis, float deadzone = 0.15f);
@@ -163,6 +198,7 @@ class InputMap {
 
   struct Action {
     std::vector<KeyboardKey> keys;
+    std::vector<MouseButton> mouseButtons;
     std::vector<GamepadButtonBinding> gamepadButtons;
 
     bool down = false;
@@ -174,5 +210,7 @@ class InputMap {
 
   std::unordered_map<std::string, Action> m_Actions;
   std::unordered_map<std::string, Axis> m_Axes;
+  Vector2 m_MouseDelta{};
+  float m_MouseWheel = 0.0f;
 };
 }  // namespace Levye

@@ -91,6 +91,41 @@ class Input {
   }
 
   /**
+   * @brief Returns the mouse movement sampled during the current host frame.
+   *
+   * The value represents the raw raylib mouse delta sampled by the host.
+   * Repeated calls during the same frame return the same value.
+   *
+   * @return Mouse movement since the previous host frame.
+   */
+  static Vector2 GetMouseDelta() {
+    const HostServices* host = Services::Get();
+
+    if (!host || !host->GetMouseDelta) {
+      return {};
+    }
+
+    return host->GetMouseDelta(host->context);
+  }
+
+  /**
+   * @brief Returns mouse wheel movement sampled during the current host frame.
+   *
+   * Repeated calls during the same frame return the same value.
+   *
+   * @return Mouse wheel movement for the current frame.
+   */
+  static float GetMouseWheel() {
+    const HostServices* host = Services::Get();
+
+    if (!host || !host->GetMouseWheel) {
+      return 0.0f;
+    }
+
+    return host->GetMouseWheel(host->context);
+  }
+
+  /**
    * @brief Adds a keyboard key to a named input action.
    *
    * Multiple keys can be bound to the same action.
@@ -104,6 +139,25 @@ class Input {
     if (!host || !host->BindKey || !action) return;
 
     host->BindKey(host->context, action, key);
+  }
+
+  /**
+   * @brief Adds a mouse button to a named action.
+   *
+   * Multiple keyboard keys, mouse buttons, and gamepad buttons can contribute
+   * to the same action.
+   *
+   * @param action Name of the action.
+   * @param button Mouse button to bind.
+   */
+  static void BindMouseButton(const char* action, int button) {
+    const HostServices* host = Services::Get();
+
+    if (!host || !host->BindMouseButton || !action) {
+      return;
+    }
+
+    host->BindMouseButton(host->context, action, button);
   }
 
   /**

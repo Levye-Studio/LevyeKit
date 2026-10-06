@@ -68,6 +68,16 @@ struct HostServices {
   float (*GetAxis)(void* context, const char* axis) = nullptr;
 
   /**
+   * @brief Returns the current value of mouse delta this frame.
+   */
+  Vector2 (*GetMouseDelta)(void* context) = nullptr;
+
+  /**
+   * @brief Returns the current value of mouse wheel this frame.
+   */
+  float (*GetMouseWheel)(void* context) = nullptr;
+
+  /**
    * @brief Associates a keyboard key with an input action.
    *
    * @param context Host-owned service context.
@@ -75,6 +85,16 @@ struct HostServices {
    * @param key raylib keyboard key code.
    */
   void (*BindKey)(void* context, const char* action, int key) = nullptr;
+
+  /**
+   * @brief Associates a mouse button with an input action.
+   *
+   * @param context Host-owned service context.
+   * @param action Name of the action to bind.
+   * @param button raylib mouse button code.
+   */
+  void (*BindMouseButton)(void* context, const char* action,
+                          int button) = nullptr;
 
   /**
    * @brief Associates two keyboard keys with a directional axis.

@@ -19,7 +19,7 @@ namespace Levye {
 /**
  * @brief Version of the binary interface shared by the host and game module.
  */
-inline constexpr std::uint32_t GAME_API_VERSION = 14;
+inline constexpr std::uint32_t GAME_API_VERSION = 15;
 
 /**
  * @brief Function table exposed by every Levye game module.

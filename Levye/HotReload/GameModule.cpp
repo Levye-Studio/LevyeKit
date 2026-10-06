@@ -78,10 +78,37 @@ float HostGetAxis(void* context, const char* axis) {
   return host->input->GetAxis(axis);
 }
 
+Vector2 HostGetMouseDelta(void* context) {
+  if (!context) return {0.0f, 0.0f};
+
+  auto* host = static_cast<HostContext*>(context);
+
+  if (!host->input) return {0.0f, 0.0f};
+
+  return host->input->GetMouseDelta();
+}
+
+float HostGetMouseWheel(void* context) {
+  if (!context) return 0.0f;
+
+  auto* host = static_cast<HostContext*>(context);
+
+  if (!host->input) return 0.0f;
+
+  return host->input->GetMouseWheel();
+}
+
 void HostBindKey(void* context, const char* action, int key) {
   if (!context || !action) return;
   auto* host = static_cast<HostContext*>(context);
   if (host->input) host->input->BindKey(action, static_cast<KeyboardKey>(key));
+}
+
+void HostBindMouseButton(void* context, const char* action, int button) {
+  if (!context || !action) return;
+  auto* host = static_cast<HostContext*>(context);
+  if (host->input)
+    host->input->BindMouseButton(action, static_cast<MouseButton>(button));
 }
 
 void HostBindKeyAxis(void* context, const char* axis, int negativeKey,
@@ -483,6 +510,9 @@ bool GameModule::Load(const std::string& path) {
 
                     .GetAxis = HostGetAxis,
                     .BindKey = HostBindKey,
+                    .BindMouseButton = HostBindMouseButton,
+                    .GetMouseDelta = HostGetMouseDelta,
+                    .GetMouseWheel = HostGetMouseWheel,
                     .BindKeyAxis = HostBindKeyAxis,
                     .BindGamepadButton = HostBindGamepadButton,
                     .BindGamepadAxis = HostBindGamepadAxis,

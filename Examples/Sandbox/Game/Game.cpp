@@ -867,6 +867,9 @@ void OnLoad(void* state) {
 
   Levye::Input::BindKey("Pause", KEY_P);
 
+  Levye::Input::BindKey("TestMouse", KEY_C);
+  Levye::Input::BindMouseButton("TestMouse", MOUSE_BUTTON_LEFT);
+
   game->playerTexture = Levye::Assets::LoadTexture("player.png");
 
   game->clickSound = Levye::Audio::LoadSound("click.wav");
@@ -944,6 +947,28 @@ void OnUpdate(void* state, float deltaTime) {
     }
 
     return;
+  }
+
+  if (Levye::Input::IsPressed("TestMouse")) {
+    Levye::Log::Info("Mouse pressed");
+  }
+
+  if (Levye::Input::IsReleased("TestMouse")) {
+    Levye::Log::Info("Mouse released");
+  }
+
+  const float mouseWheel = Levye::Input::GetMouseWheel();
+  const Vector2 mouseDelta = Levye::Input::GetMouseDelta();
+
+  if (mouseWheel != 0.0f) {
+    std::string wheelMSG = "Wheel: " + std::to_string(mouseWheel);
+    Levye::Log::Info(wheelMSG.c_str());
+  }
+
+  if (mouseDelta.x != 0.0f || mouseDelta.y != 0.0f) {
+    std::string mouseMSG = "Mouse delta: x=" + std::to_string(mouseDelta.x) +
+                           " y=" + std::to_string(mouseDelta.y);
+    Levye::Log::Info(mouseMSG.c_str());
   }
 
   if (Levye::Screen::Is("Game")) {

@@ -4,8 +4,8 @@
 #include <cmath>
 
 namespace Levye {
-void InputMap::BindKey(const std::string &action, KeyboardKey key) {
-  auto &keys = m_Actions[action].keys;
+void InputMap::BindKey(const std::string& action, KeyboardKey key) {
+  auto& keys = m_Actions[action].keys;
 
   /*
    * Avoid duplicate bindings because an action only needs to query a
@@ -16,13 +16,29 @@ void InputMap::BindKey(const std::string &action, KeyboardKey key) {
   }
 }
 
-void InputMap::BindGamepadButton(const std::string &action, int gamepad,
+void InputMap::BindMouseButton(const std::string& action, MouseButton button) {
+  auto& buttons = m_Actions[action].mouseButtons;
+
+  /*
+   * Avoid duplicate bindings because an action only needs to query a
+   * physical mouse button once.
+   */
+  if (std::find(buttons.begin(), buttons.end(), button) == buttons.end()) {
+    buttons.push_back(button);
+  }
+}
+
+Vector2 InputMap::GetMouseDelta() const { return m_MouseDelta; }
+
+float InputMap::GetMouseWheel() const { return m_MouseWheel; }
+
+void InputMap::BindGamepadButton(const std::string& action, int gamepad,
                                  GamepadButton button) {
-  auto &buttons = m_Actions[action].gamepadButtons;
+  auto& buttons = m_Actions[action].gamepadButtons;
 
   const auto existing = std::find_if(
       buttons.begin(), buttons.end(),
-      [gamepad, button](const GamepadButtonBinding &binding) {
+      [gamepad, button](const GamepadButtonBinding& binding) {
         return binding.gamepad == gamepad && binding.button == button;
       });
 
@@ -31,13 +47,13 @@ void InputMap::BindGamepadButton(const std::string &action, int gamepad,
   }
 }
 
-void InputMap::BindKeyAxis(const std::string &axis, KeyboardKey negativeKey,
+void InputMap::BindKeyAxis(const std::string& axis, KeyboardKey negativeKey,
                            KeyboardKey positiveKey) {
-  auto &bindings = m_Axes[axis].keyBindings;
+  auto& bindings = m_Axes[axis].keyBindings;
 
   const auto existing =
       std::find_if(bindings.begin(), bindings.end(),
-                   [negativeKey, positiveKey](const KeyAxisBinding &binding) {
+                   [negativeKey, positiveKey](const KeyAxisBinding& binding) {
                      return binding.negativeKey == negativeKey &&
                             binding.positiveKey == positiveKey;
                    });
@@ -48,14 +64,14 @@ void InputMap::BindKeyAxis(const std::string &axis, KeyboardKey negativeKey,
   }
 }
 
-void InputMap::BindGamepadAxis(const std::string &axis, int gamepad,
+void InputMap::BindGamepadAxis(const std::string& axis, int gamepad,
                                GamepadAxis gamepadAxis, float deadzone) {
   deadzone = std::isfinite(deadzone) ? std::clamp(deadzone, 0.0f, 1.0f) : 0.15f;
-  auto &bindings = m_Axes[axis].gamepadBindings;
+  auto& bindings = m_Axes[axis].gamepadBindings;
 
   const auto existing = std::find_if(
       bindings.begin(), bindings.end(),
-      [gamepad, gamepadAxis](const GamepadAxisBinding &binding) {
+      [gamepad, gamepadAxis](const GamepadAxisBinding& binding) {
         return binding.gamepad == gamepad && binding.axis == gamepadAxis;
       });
 
@@ -73,14 +89,34 @@ void InputMap::BindGamepadAxis(const std::string &axis, int gamepad,
 }
 
 void InputMap::Update() {
-  for (auto &[name, action] : m_Actions) {
+  m_MouseDelta = m_Input.getMouseDelta();
+  m_MouseWheel = m_Input.getMouseWheelMove();
+
+  if (!std::isfinite(m_MouseDelta.x)) {
+    m_MouseDelta.x = 0.0f;
+  }
+
+  if (!std::isfinite(m_MouseDelta.y)) {
+    m_MouseDelta.y = 0.0f;
+  }
+
+  if (!std::isfinite(m_MouseWheel)) {
+    m_MouseWheel = 0.0f;
+  }
+
+  for (auto& [name, action] : m_Actions) {
     bool down = false;
     for (const auto key : action.keys) {
       down = m_Input.isKeyDown(key) || down;
     }
-    for (const auto &binding : action.gamepadButtons) {
-      const bool held = m_Input.isGamepadAvailable(binding.gamepad) &&
-                        m_Input.isGamepadButtonDown(binding.gamepad, binding.button);
+
+    for (const auto button : action.mouseButtons) {
+      down = m_Input.isMouseButtonDown(button) || down;
+    }
+    for (const auto& binding : action.gamepadButtons) {
+      const bool held =
+          m_Input.isGamepadAvailable(binding.gamepad) &&
+          m_Input.isGamepadButtonDown(binding.gamepad, binding.button);
       down = held || down;
     }
     action.pressed = down && !action.down;
@@ -88,56 +124,55 @@ void InputMap::Update() {
     action.down = down;
   }
 
-  for (auto &[name, axis] : m_Axes) {
+  for (auto& [name, axis] : m_Axes) {
     bool negative = false;
     bool positive = false;
-    for (const auto &binding : axis.keyBindings) {
+    for (const auto& binding : axis.keyBindings) {
       negative = m_Input.isKeyDown(binding.negativeKey) || negative;
       positive = m_Input.isKeyDown(binding.positiveKey) || positive;
     }
     float value = static_cast<float>(positive) - static_cast<float>(negative);
-    for (const auto &binding : axis.gamepadBindings) {
-      if (!m_Input.isGamepadAvailable(binding.gamepad))
-        continue;
-      float analog = m_Input.getGamepadAxisMovement(binding.gamepad, binding.axis);
-      if (!std::isfinite(analog))
-        continue;
+    for (const auto& binding : axis.gamepadBindings) {
+      if (!m_Input.isGamepadAvailable(binding.gamepad)) continue;
+      float analog =
+          m_Input.getGamepadAxisMovement(binding.gamepad, binding.axis);
+      if (!std::isfinite(analog)) continue;
       analog = std::clamp(analog, -1.0f, 1.0f);
-      if (std::abs(analog) < binding.deadzone)
-        analog = 0.0f;
-      if (std::abs(analog) > std::abs(value))
-        value = analog;
+      if (std::abs(analog) < binding.deadzone) analog = 0.0f;
+      if (std::abs(analog) > std::abs(value)) value = analog;
     }
     axis.value = value;
   }
 }
 
-float InputMap::GetAxis(const std::string &axis) const {
+float InputMap::GetAxis(const std::string& axis) const {
   const auto iterator = m_Axes.find(axis);
   return iterator != m_Axes.end() ? iterator->second.value : 0.0f;
 }
 
-bool InputMap::IsDown(const std::string &action) const {
+bool InputMap::IsDown(const std::string& action) const {
   const auto iterator = m_Actions.find(action);
   return iterator != m_Actions.end() && iterator->second.down;
 }
 
-bool InputMap::IsPressed(const std::string &action) const {
+bool InputMap::IsPressed(const std::string& action) const {
   const auto iterator = m_Actions.find(action);
   return iterator != m_Actions.end() && iterator->second.pressed;
 }
 
-bool InputMap::IsReleased(const std::string &action) const {
+bool InputMap::IsReleased(const std::string& action) const {
   const auto iterator = m_Actions.find(action);
   return iterator != m_Actions.end() && iterator->second.released;
 }
 
-void InputMap::ClearAction(const std::string &action) {
+void InputMap::ClearAction(const std::string& action) {
   m_Actions.erase(action);
 }
 
 void InputMap::Clear() {
   m_Actions.clear();
   m_Axes.clear();
+  m_MouseDelta = {};
+  m_MouseWheel = 0.0f;
 }
-} // namespace Levye
+}  // namespace Levye
