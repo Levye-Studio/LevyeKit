@@ -46,3 +46,8 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.log
+
+
+array-persistence-test.yaml
+serialization-reload-test.yaml
+serialization-test.yaml
