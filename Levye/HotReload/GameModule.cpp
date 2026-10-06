@@ -509,10 +509,10 @@ bool GameModule::Load(const std::string& path) {
                     .IsActionReleased = HostIsActionReleased,
 
                     .GetAxis = HostGetAxis,
-                    .BindKey = HostBindKey,
-                    .BindMouseButton = HostBindMouseButton,
                     .GetMouseDelta = HostGetMouseDelta,
                     .GetMouseWheel = HostGetMouseWheel,
+                    .BindKey = HostBindKey,
+                    .BindMouseButton = HostBindMouseButton,
                     .BindKeyAxis = HostBindKeyAxis,
                     .BindGamepadButton = HostBindGamepadButton,
                     .BindGamepadAxis = HostBindGamepadAxis,
