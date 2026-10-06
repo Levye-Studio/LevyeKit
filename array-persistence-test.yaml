@@ -1,8 +1,0 @@
-world:
-  regions:
-    - name: Shallow Ocean
-      organisms:
-        - id: 1
-          energy: 80
-        - id: 2
-          energy: 45
