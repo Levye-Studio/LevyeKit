@@ -11,6 +11,15 @@ target_include_directories(LevyeDearImGui
         ${imgui_SOURCE_DIR}
 )
 
+# Export Dear ImGui symbols for Windows DLL consumers.
+# MSVC needs an import library so the host and reloadable Game
+# module can link against the same Dear ImGui implementation.
+if(WIN32)
+    set_target_properties(LevyeDearImGui PROPERTIES
+        WINDOWS_EXPORT_ALL_SYMBOLS ON
+    )
+endif()
+
 target_compile_features(LevyeDearImGui PUBLIC cxx_std_20)
 
 # raylib <-> Dear ImGui integration.
