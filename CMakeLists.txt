@@ -18,6 +18,12 @@ option(
     OFF
 )
 
+option(
+    LEVYE_WITH_IMGUI
+    "Enable the optional Dear ImGui development tools module"
+    OFF
+)
+
 project(
     LevyeKit
     VERSION 0.2.1
@@ -171,6 +177,40 @@ if(LEVYE_WITH_SERIALIZATION)
     )
 endif()
 
+if(LEVYE_WITH_IMGUI)
+    include(FetchContent)
+
+    FetchContent_Declare(
+        imgui
+        GIT_REPOSITORY https://github.com/ocornut/imgui.git
+        GIT_TAG master
+    )
+
+    FetchContent_Declare(
+        rlimgui
+        GIT_REPOSITORY https://github.com/raylib-extras/rlImGui.git
+        GIT_TAG main
+    )
+
+    FetchContent_MakeAvailable(imgui rlimgui)
+
+    add_subdirectory(Levye/Modules/ImGui)
+
+    target_link_libraries(
+        LevyeKit
+
+        PRIVATE
+            LevyeImGui
+    )
+
+    target_compile_definitions(
+        LevyeKit
+
+        PUBLIC
+            LEVYE_WITH_IMGUI=1
+    )
+endif()
+
 if(LEVYE_BUILD_EXAMPLES)
 
 # ---------------------------------------------------------------------------
@@ -196,6 +236,22 @@ target_link_libraries(
     PRIVATE
         raylib
 )
+
+if(LEVYE_WITH_IMGUI)
+    target_link_libraries(
+        Game
+
+        PRIVATE
+            LevyeDearImGui
+    )
+
+    target_compile_definitions(
+        Game
+
+        PRIVATE
+            LEVYE_WITH_IMGUI=1
+    )
+endif()
 
 set_target_properties(
     Game
@@ -265,6 +321,28 @@ if(WIN32)
     )
 endif()
 
+if(WIN32 AND LEVYE_WITH_IMGUI)
+    add_custom_command(
+        TARGET Sandbox
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:LevyeDearImGui>
+            $<TARGET_FILE_DIR:Sandbox>
+        COMMENT "Copying Dear ImGui runtime DLL to Sandbox output directory"
+        VERBATIM
+    )
+
+    add_custom_command(
+        TARGET Game
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:LevyeDearImGui>
+            $<TARGET_FILE_DIR:Game>
+        COMMENT "Copying Dear ImGui runtime DLL to Game output directory"
+        VERBATIM
+    )
+endif()
+
 endif()
 
 if(LEVYE_BUILD_TOOLS)
@@ -306,4 +384,23 @@ target_link_libraries(
         tomlplusplus::tomlplusplus
 )
 
+endif()
+
+option(LEVYE_BUILD_TESTS "Build LevyeKit tests" OFF)
+
+if(LEVYE_BUILD_TESTS)
+    enable_testing()
+
+    add_executable(LevyeInputMapTests
+        Tests/Input/InputMapTests.cpp
+    )
+
+    target_link_libraries(LevyeInputMapTests
+        PRIVATE LevyeKit
+    )
+
+    add_test(
+        NAME InputMap
+        COMMAND LevyeInputMapTests
+    )
 endif()

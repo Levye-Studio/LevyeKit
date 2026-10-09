@@ -448,10 +448,39 @@ const void* HostGetModuleAPI(void* context, ModuleID module,
 #else
       return nullptr;
 #endif
+    case ModuleID::ImGui:
+#ifdef LEVYE_WITH_IMGUI
+      if (version != IMGUI_API_VERSION) return nullptr;
+
+      return host->imguiAPI;
+#else
+      return nullptr;
+#endif
   }
 
   return nullptr;
 }
+
+#ifdef LEVYE_WITH_IMGUI
+
+/**
+ * @brief Checks the availability of the host-owned ImGui service.
+ *
+ * The service belongs to Application and survives game-module reloads.
+ *
+ * @param context Opaque HostContext pointer.
+ * @return true when the host ImGui service is initialized.
+ */
+bool HostImGuiIsAvailable(void* context) {
+  if (!context) return false;
+
+  auto* host = static_cast<HostContext*>(context);
+
+  return host->application && host->application->IsImGuiAvailable();
+}
+
+#endif
+
 bool g_QuitRequested = false;
 
 void HostRequestQuit(void* context) {
@@ -483,6 +512,10 @@ bool GameModule::Load(const std::string& path) {
 #ifdef LEVYE_WITH_SERIALIZATION
   m_SerializationAPI = MakeSerializationAPI(m_SerializationService);
 #endif
+#ifdef LEVYE_WITH_IMGUI
+  m_ImGuiAPI = {.version = IMGUI_API_VERSION,
+                .IsAvailable = HostImGuiIsAvailable};
+#endif
 
   m_HostContext = {.input = &m_InputMap,
                    .screens = &m_ScreenManager,
@@ -493,6 +526,9 @@ bool GameModule::Load(const std::string& path) {
 #ifdef LEVYE_WITH_SERIALIZATION
                    .serialization = &m_SerializationService,
                    .serializationAPI = &m_SerializationAPI,
+#endif
+#ifdef LEVYE_WITH_IMGUI
+                   .imguiAPI = &m_ImGuiAPI,
 #endif
                    .time = &m_Time,
                    .assetRoot = &m_AssetRoot,

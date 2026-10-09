@@ -2,6 +2,9 @@
 
 #include <Levye/Core/ApplicationConfig.hpp>
 #include <Levye/HotReload/GameModule.hpp>
+#ifdef LEVYE_WITH_IMGUI
+#include <Levye/Modules/ImGui/ImGuiService.hpp>
+#endif
 #include <string>
 
 namespace Levye {
@@ -36,9 +39,20 @@ class Application {
    */
   void RequestQuit();
 
+#ifdef LEVYE_WITH_IMGUI
+  [[nodiscard]] bool IsImGuiAvailable() const noexcept {
+    return m_ImGui.IsInitialized();
+  }
+#else
+  [[nodiscard]] bool IsImGuiAvailable() const noexcept { return false; }
+#endif
+
  private:
   ApplicationConfig m_Config;
   GameModule& m_GameModule;
+#ifdef LEVYE_WITH_IMGUI
+  ImGuiService m_ImGui;
+#endif
 
   bool m_QuitRequested = false;
 };

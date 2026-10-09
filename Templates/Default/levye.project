@@ -14,3 +14,4 @@ assets = "Assets"
 
 [modules]
 serialization = false
+imgui = false

@@ -159,6 +159,24 @@ class InputMap {
   bool IsReleased(const std::string& action) const;
 
   /**
+   * @brief Enables or disables gameplay input capture suppression.
+   *
+   * When enabled, keyboard and mouse gameplay input can be blocked
+   * independently by an active UI.
+   */
+  void SetInputCapture(bool keyboard, bool mouse);
+
+  /**
+   * @brief Returns whether keyboard gameplay input is suppressed.
+   */
+  [[nodiscard]] bool IsKeyboardCaptured() const;
+
+  /**
+   * @brief Returns whether mouse gameplay input is suppressed.
+   */
+  [[nodiscard]] bool IsMouseCaptured() const;
+
+  /**
    * @brief Removes an action and its snapshot immediately, without a release.
    *
    * A same-named axis is unaffected. Rebinding starts a fresh action.
@@ -201,9 +219,22 @@ class InputMap {
     std::vector<MouseButton> mouseButtons;
     std::vector<GamepadButtonBinding> gamepadButtons;
 
+    // Physical state, independent of UI capture.
+    bool physicalDown = false;
+
+    // Gameplay-visible state.
     bool down = false;
     bool pressed = false;
     bool released = false;
+
+    // Whether the action's active input is blocked by the UI.
+    bool suppressed = false;
+
+    // Physical input state for each device category.
+    // These remain independent of UI capture.
+    bool keyboardDown = false;
+    bool mouseDown = false;
+    bool gamepadDown = false;
   };
 
   InputState m_Input;
@@ -212,5 +243,7 @@ class InputMap {
   std::unordered_map<std::string, Axis> m_Axes;
   Vector2 m_MouseDelta{};
   float m_MouseWheel = 0.0f;
+  bool m_KeyboardCaptured = false;
+  bool m_MouseCaptured = false;
 };
 }  // namespace Levye

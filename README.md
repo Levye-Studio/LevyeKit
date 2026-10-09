@@ -61,6 +61,7 @@
       <ul>
         <li><a href="#public-api">Public API</a></li>
         <li><a href="#serialization">Serialization</a></li>
+        <li><a href="#dear-imgui">Dear ImGui</a></li>
         <li><a href="#architecture">Architecture</a></li>
         <li><a href="#game-api">Game API</a></li>
         <li><a href="#hot-reloading">Hot Reloading</a></li>
@@ -95,6 +96,7 @@ LevyeKit provides reusable systems for:
 * Persistent game state
 * Optional framework modules
 * YAML game-data serialization
+* Optional Dear ImGui debugging UI
 * Keyboard, mouse, and gamepad input
 * Texture, shader, and font management
 * Asset hot reloading
@@ -108,11 +110,7 @@ LevyeKit provides reusable systems for:
 
 The framework stays intentionally small so games can use raylib directly whenever it already provides the required functionality.
 
-> **Status:** LevyeKit `v0.2.1` expands the optional YAML serialization module
-> with custom game-data serialization, nested types and containers, and common
-> raylib types. It also adds mouse button bindings, frame-sampled mouse movement,
-> and mouse wheel input. The framework is still evolving and APIs may change in
-> future releases.
+> **Status:** LevyeKit `v0.3.0` is in development, introducing optional Dear ImGui integration with hot-reload support, host-owned ImGui context management, and keyboard/mouse input capture. It also expands the Levye CLI module workflow with `levye new --with imgui` and `levye add imgui`. The framework is still evolving, and APIs may change in future releases.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -283,6 +281,7 @@ LevyeKit includes a small command-line tool for the normal game-development work
 
 ```text
 levye new <name> [options]
+levye add <module>
 levye build [options]
 levye run [options]
 levye clean [options]
@@ -304,6 +303,33 @@ Optional Git integration:
 levye new MyGame --git
 levye new MyGame --commit
 ```
+
+### Optional Modules
+
+Enable optional modules when creating a project:
+
+```sh
+levye new MyGame --with imgui
+levye new MyGame --with serialization --with imgui
+```
+
+Or enable a module in an existing project:
+
+```sh
+levye add imgui
+levye add serialization
+```
+
+The CLI records enabled modules in `levye.project`:
+
+```toml
+[modules]
+serialization = false
+imgui = true
+```
+
+The generated project's CMake configuration reads these settings. Modules are
+opt-in; projects without ImGui do not need its API in their game code.
 
 ### Build
 
@@ -369,6 +395,7 @@ Command-specific help is also available:
 
 ```sh
 levye new --help
+levye add --help
 levye build --help
 levye run --help
 levye clean --help
@@ -752,6 +779,54 @@ The current serialization service API uses `SERIALIZATION_API_VERSION` **5**.
 The serialization API version is independent from both the LevyeKit release
 version and `GAME_API_VERSION`.
 
+### Dear ImGui
+
+Dear ImGui is an optional development/debugging UI module built with rlImGui.
+Enable it when creating a game, or add it later:
+
+```sh
+levye new MyGame --with imgui
+# Or, from an existing game project:
+levye add imgui
+levye build
+```
+
+The generated project links the shared `LevyeDearImGui` library when ImGui is
+enabled. The stable application host owns the ImGui frame lifecycle and context,
+so an ImGui window can remain functional while the game module hot reloads.
+
+Game code can include Dear ImGui only when the module is enabled:
+
+```cpp
+#if defined(LEVYE_WITH_IMGUI) && LEVYE_WITH_IMGUI
+#include <imgui.h>
+#endif
+```
+
+Inside the game's existing draw callback, after its normal raylib drawing:
+
+```cpp
+#if defined(LEVYE_WITH_IMGUI) && LEVYE_WITH_IMGUI
+ImGui::Begin("Game Debug");
+ImGui::Text("Hello from LevyeKit!");
+ImGui::End();
+#endif
+```
+
+The host handles `BeginFrame`/`EndFrame`; game code should not create a separate
+ImGui context or begin another ImGui frame.
+
+#### Input Capture
+
+When ImGui requests keyboard or mouse input, LevyeKit suppresses the matching
+gameplay input. For example, typing into an active ImGui text field should not
+trigger a keyboard-bound game action. Mouse movement and wheel queries are also
+suppressed while ImGui captures the mouse. Gamepad bindings remain available.
+
+ImGui window focus alone does not imply keyboard capture: an active text input
+can request keyboard capture even when merely focusing the window does not.
+Capture changes should not create artificial press or release events.
+
 ### Architecture
 
 LevyeKit separates the stable application host from reloadable game-specific code.
@@ -1069,7 +1144,8 @@ LevyeKit/
 │   ├── IO/
 │   ├── Input/
 │   ├── Modules/
-│   │   └── Serialization/
+│   │   ├── Serialization/
+│   │   └── ImGui/
 │   ├── Platform/
 │   ├── Project/
 │   ├── Screen/
@@ -1163,6 +1239,15 @@ Mobile platforms may use a different development workflow because of platform re
 * [x] Frame-sampled mouse movement
 * [x] Frame-sampled mouse wheel input
 
+### Upcoming — Dear ImGui Integration
+
+* [x] Optional Dear ImGui module and shared context
+* [x] ImGui UI survives game-module hot reload
+* [x] Keyboard and mouse capture integration
+* [x] Hardware-independent input-capture tests
+* [x] Gamepad input remains available during ImGui capture
+* [ ] Final documentation and release preparation
+
 ### Planned Modules
 
 * [ ] Entity Component System
@@ -1170,7 +1255,6 @@ Mobile platforms may use a different development workflow because of platform re
   * [ ] Keep the public ECS API reasonably independent from the backend
 * [ ] Extended 3D model loading
   * [ ] Additional formats such as STL
-* [ ] Optional Dear ImGui development/debugging tools
 
 ### Levye CLI
 

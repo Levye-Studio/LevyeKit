@@ -1,6 +1,11 @@
 #include <Levye/LevyeKit.hpp>
 #include <Levye/Modules/Serialization/Serialization.hpp>
 #include <Levye/Modules/Serialization/SerializationAPI.hpp>
+#ifdef LEVYE_WITH_IMGUI
+#include <imgui.h>
+
+#include <Levye/Modules/ImGui/ImGui.hpp>
+#endif
 #include <new>
 
 #include "SerializationReloadCheck.hpp"
@@ -329,6 +334,18 @@ void OnDraw(void* state) {
 
     DrawText(Levye::Time::IsPaused() ? "PAUSED" : "RUNNING", 20, 20, 20, WHITE);
   }
+
+#ifdef LEVYE_WITH_IMGUI
+  if (Levye::ImGuiModule::IsAvailable()) {
+    ImGui::Begin("LevyeKit Debug");
+
+    ImGui::Text("ImGui module registered!");
+    ImGui::Text("Availability: true");
+    ImGui::Text("Hot reload: true");
+
+    ImGui::End();
+  }
+#endif
 }
 
 void OnShutdown(void* state) {

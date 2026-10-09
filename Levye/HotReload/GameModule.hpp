@@ -16,6 +16,9 @@
 #include <Levye/Modules/Serialization/SerializationBridge.hpp>
 #include <Levye/Modules/Serialization/SerializationService.hpp>
 #endif
+#ifdef LEVYE_WITH_IMGUI
+#include <Levye/Modules/ImGui/ImGuiAPI.hpp>
+#endif
 
 #include <chrono>
 #include <cstdint>
@@ -300,6 +303,10 @@ class GameModule {
 #ifdef LEVYE_WITH_SERIALIZATION
   SerializationService m_SerializationService;
   SerializationAPI m_SerializationAPI;
+#endif
+
+#ifdef LEVYE_WITH_IMGUI
+  ImGuiAPI m_ImGuiAPI{};
 #endif
 };
 }  // namespace Levye

@@ -16,7 +16,7 @@ class ModuleRegistry {
    * @return True when the module is registered.
    */
   static constexpr bool Exists(std::string_view name) {
-    return name == "serialization";
+    return name == "serialization" || name == "imgui";
   }
 };
 

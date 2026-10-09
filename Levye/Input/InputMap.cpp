@@ -89,8 +89,9 @@ void InputMap::BindGamepadAxis(const std::string& axis, int gamepad,
 }
 
 void InputMap::Update() {
-  m_MouseDelta = m_Input.getMouseDelta();
-  m_MouseWheel = m_Input.getMouseWheelMove();
+  m_MouseDelta =
+      m_MouseCaptured ? Vector2{0.0f, 0.0f} : m_Input.getMouseDelta();
+  m_MouseWheel = m_MouseCaptured ? 0.0f : m_Input.getMouseWheelMove();
 
   if (!std::isfinite(m_MouseDelta.x)) {
     m_MouseDelta.x = 0.0f;
@@ -105,23 +106,71 @@ void InputMap::Update() {
   }
 
   for (auto& [name, action] : m_Actions) {
-    bool down = false;
+    bool keyboardDown = false;
+    bool mouseDown = false;
+    bool gamepadDown = false;
+
+    // Read physical keyboard state.
     for (const auto key : action.keys) {
-      down = m_Input.isKeyDown(key) || down;
+      keyboardDown |= m_Input.isKeyDown(key);
     }
 
+    // Read physical mouse state.
     for (const auto button : action.mouseButtons) {
-      down = m_Input.isMouseButtonDown(button) || down;
+      mouseDown |= m_Input.isMouseButtonDown(button);
     }
+
+    // Read physical gamepad state.
     for (const auto& binding : action.gamepadButtons) {
-      const bool held =
+      gamepadDown |=
           m_Input.isGamepadAvailable(binding.gamepad) &&
           m_Input.isGamepadButtonDown(binding.gamepad, binding.button);
-      down = held || down;
     }
-    action.pressed = down && !action.down;
-    action.released = !down && action.down;
-    action.down = down;
+
+    // Determine which input sources gameplay can use.
+    const bool keyboardAvailable = !m_KeyboardCaptured;
+    const bool mouseAvailable = !m_MouseCaptured;
+
+    const bool visibleKeyboard = keyboardAvailable && keyboardDown;
+    const bool visibleMouse = mouseAvailable && mouseDown;
+
+    const bool visibleDown = visibleKeyboard || visibleMouse || gamepadDown;
+
+    // Detect physical transitions separately for each device category.
+    const bool keyboardPressed =
+        keyboardAvailable && keyboardDown && !action.keyboardDown;
+
+    const bool mousePressed = mouseAvailable && mouseDown && !action.mouseDown;
+
+    const bool gamepadPressed = gamepadDown && !action.gamepadDown;
+
+    const bool keyboardReleased =
+        keyboardAvailable && !keyboardDown && action.keyboardDown;
+
+    const bool mouseReleased = mouseAvailable && !mouseDown && action.mouseDown;
+
+    const bool gamepadReleased = !gamepadDown && action.gamepadDown;
+
+    // A new physical press should only trigger an action press
+    // if the action was not already visible to gameplay.
+    action.pressed =
+        !action.down && (keyboardPressed || mousePressed || gamepadPressed);
+
+    // A physical release should only trigger an action release
+    // if no available binding is still holding the action.
+    action.released = action.down && !visibleDown &&
+                      (keyboardReleased || mouseReleased || gamepadReleased);
+
+    action.physicalDown = keyboardDown || mouseDown || gamepadDown;
+
+    action.suppressed = action.physicalDown && !visibleDown;
+
+    action.down = visibleDown;
+
+    // Preserve physical state across UI capture transitions.
+    action.keyboardDown = keyboardDown;
+    action.mouseDown = mouseDown;
+    action.gamepadDown = gamepadDown;
   }
 
   for (auto& [name, axis] : m_Axes) {
@@ -164,6 +213,15 @@ bool InputMap::IsReleased(const std::string& action) const {
   const auto iterator = m_Actions.find(action);
   return iterator != m_Actions.end() && iterator->second.released;
 }
+
+void InputMap::SetInputCapture(bool keyboard, bool mouse) {
+  m_KeyboardCaptured = keyboard;
+  m_MouseCaptured = mouse;
+}
+
+bool InputMap::IsKeyboardCaptured() const { return m_KeyboardCaptured; }
+
+bool InputMap::IsMouseCaptured() const { return m_MouseCaptured; }
 
 void InputMap::ClearAction(const std::string& action) {
   m_Actions.erase(action);

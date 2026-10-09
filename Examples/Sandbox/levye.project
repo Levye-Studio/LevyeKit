@@ -11,3 +11,7 @@ vsync = false
 
 [paths]
 assets = "Assets"
+
+[modules]
+serialization = true
+imgui = true

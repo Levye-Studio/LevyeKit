@@ -1,6 +1,9 @@
 #include "Application.hpp"
 
 #include <raylib.h>
+#ifdef LEVYE_WITH_IMGUI
+#include <imgui.h>
+#endif
 
 #include <Levye/Debug/Logger.hpp>
 
@@ -28,6 +31,16 @@ void Application::Run() {
 
   InitWindow(m_Config.width, m_Config.height, m_Config.title.c_str());
 
+#ifdef LEVYE_WITH_IMGUI
+  if (!m_ImGui.Initialize()) {
+    Logger::Error("Failed to initialize ImGui module.");
+    CloseWindow();
+    return;
+  }
+
+  m_ImGui.SetCaptureSettings({.keyboard = true, .mouse = true});
+#endif
+
   SetExitKey(KEY_NULL);
 
   if (m_Config.targetFPS > 0) {
@@ -41,11 +54,26 @@ void Application::Run() {
    * Game OnLoad callbacks may safely create GPU resources from this point.
    */
   if (!m_GameModule.Start()) {
+#ifdef LEVYE_WITH_IMGUI
+    m_ImGui.Shutdown();
+#endif
+
+    CloseAudioDevice();
     CloseWindow();
     return;
   }
 
   while (!WindowShouldClose() && !m_QuitRequested) {
+#ifdef LEVYE_WITH_IMGUI
+    const ImGuiIO& io = ImGui::GetIO();
+
+    const ImGuiCaptureSettings settings = m_ImGui.GetCaptureSettings();
+
+    m_GameModule.GetInputMap().SetInputCapture(
+        settings.keyboard && io.WantCaptureKeyboard,
+        settings.mouse && io.WantCaptureMouse);
+#endif
+
     // raylib polls events at EndDrawing(). Sample once before any callbacks,
     // including reload callbacks, so every callback sees this frame's state.
     m_GameModule.GetInputMap().Update();
@@ -86,7 +114,15 @@ void Application::Run() {
 
     ClearBackground(BLACK);
 
+#ifdef LEVYE_WITH_IMGUI
+    m_ImGui.BeginFrame();
+#endif
+
     m_GameModule.Draw();
+
+#ifdef LEVYE_WITH_IMGUI
+    m_ImGui.EndFrame();
+#endif
 
     EndDrawing();
   }
@@ -96,6 +132,10 @@ void Application::Run() {
    * GPU resources must be released before raylib destroys the graphics context.
    */
   m_GameModule.ReleaseResources();
+
+#ifdef LEVYE_WITH_IMGUI
+  m_ImGui.Shutdown();
+#endif
 
   CloseAudioDevice();
 

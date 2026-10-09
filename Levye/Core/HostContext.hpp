@@ -12,6 +12,7 @@ class TimeSystem;
 class FontManager;
 class SerializationService;
 struct SerializationAPI;
+struct ImGuiAPI;
 class Application;
 
 /**
@@ -29,6 +30,7 @@ struct HostContext {
   FontManager* fonts = nullptr;
   SerializationService* serialization = nullptr;
   SerializationAPI* serializationAPI = nullptr;
+  ImGuiAPI* imguiAPI = nullptr;
 
   TimeSystem* time = nullptr;
 
