@@ -110,7 +110,7 @@ LevyeKit provides reusable systems for:
 
 The framework stays intentionally small so games can use raylib directly whenever it already provides the required functionality.
 
-> **Status:** LevyeKit `v0.3.0` is in development, introducing optional Dear ImGui integration with hot-reload support, host-owned ImGui context management, and keyboard/mouse input capture. It also expands the Levye CLI module workflow with `levye new --with imgui` and `levye add imgui`. The framework is still evolving, and APIs may change in future releases.
+> **Status:** LevyeKit `v0.3.0` introduces optional Dear ImGui integration with hot-reload support, host-owned ImGui context management, and keyboard/mouse input capture. Optional modules can be enabled using `levye new --with` or `levye add`. The framework is still evolving, and APIs may change in future releases.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -775,7 +775,7 @@ Serialization documents are owned by the host and survive compatible game-module
 hot reloads. Store only the document handle in persistent game state and destroy
 it during final shutdown.
 
-The current serialization service API uses `SERIALIZATION_API_VERSION` **5**.
+The current serialization service API uses `SERIALIZATION_API_VERSION` **6**.
 The serialization API version is independent from both the LevyeKit release
 version and `GAME_API_VERSION`.
 
@@ -1239,14 +1239,14 @@ Mobile platforms may use a different development workflow because of platform re
 * [x] Frame-sampled mouse movement
 * [x] Frame-sampled mouse wheel input
 
-### Upcoming — Dear ImGui Integration
+### v0.3.0 — Dear ImGui Integration
 
 * [x] Optional Dear ImGui module and shared context
 * [x] ImGui UI survives game-module hot reload
 * [x] Keyboard and mouse capture integration
 * [x] Hardware-independent input-capture tests
 * [x] Gamepad input remains available during ImGui capture
-* [ ] Final documentation and release preparation
+* [x] Final documentation and release preparation
 
 ### Planned Modules
 
