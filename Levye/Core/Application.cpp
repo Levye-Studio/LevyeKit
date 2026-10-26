@@ -8,8 +8,7 @@
 #include <Levye/Debug/Logger.hpp>
 
 namespace Levye {
-Application::Application(const ApplicationConfig& config,
-                         GameModule& gameModule)
+Application::Application(const ApplicationConfig& config, GameModule& gameModule)
     : m_Config(config), m_GameModule(gameModule) {
   m_GameModule.SetApplication(this);
 }
@@ -69,9 +68,8 @@ void Application::Run() {
 
     const ImGuiCaptureSettings settings = m_ImGui.GetCaptureSettings();
 
-    m_GameModule.GetInputMap().SetInputCapture(
-        settings.keyboard && io.WantCaptureKeyboard,
-        settings.mouse && io.WantCaptureMouse);
+    m_GameModule.GetInputMap().SetInputCapture(settings.keyboard && io.WantCaptureKeyboard,
+                                               settings.mouse && io.WantCaptureMouse);
 #endif
 
     // raylib polls events at EndDrawing(). Sample once before any callbacks,

@@ -107,12 +107,10 @@ void HostBindKey(void* context, const char* action, int key) {
 void HostBindMouseButton(void* context, const char* action, int button) {
   if (!context || !action) return;
   auto* host = static_cast<HostContext*>(context);
-  if (host->input)
-    host->input->BindMouseButton(action, static_cast<MouseButton>(button));
+  if (host->input) host->input->BindMouseButton(action, static_cast<MouseButton>(button));
 }
 
-void HostBindKeyAxis(void* context, const char* axis, int negativeKey,
-                     int positiveKey) {
+void HostBindKeyAxis(void* context, const char* axis, int negativeKey, int positiveKey) {
   if (!context || !axis) return;
   auto* host = static_cast<HostContext*>(context);
   if (host->input)
@@ -120,22 +118,19 @@ void HostBindKeyAxis(void* context, const char* axis, int negativeKey,
                              static_cast<KeyboardKey>(positiveKey));
 }
 
-void HostBindGamepadButton(void* context, const char* action, int gamepad,
-                           int button) {
+void HostBindGamepadButton(void* context, const char* action, int gamepad, int button) {
   if (!context || !action) return;
   auto* host = static_cast<HostContext*>(context);
   if (host->input)
-    host->input->BindGamepadButton(action, gamepad,
-                                   static_cast<GamepadButton>(button));
+    host->input->BindGamepadButton(action, gamepad, static_cast<GamepadButton>(button));
 }
 
-void HostBindGamepadAxis(void* context, const char* axis, int gamepad,
-                         int gamepadAxis, float deadzone) {
+void HostBindGamepadAxis(void* context, const char* axis, int gamepad, int gamepadAxis,
+                         float deadzone) {
   if (!context || !axis) return;
   auto* host = static_cast<HostContext*>(context);
   if (host->input)
-    host->input->BindGamepadAxis(
-        axis, gamepad, static_cast<GamepadAxis>(gamepadAxis), deadzone);
+    host->input->BindGamepadAxis(axis, gamepad, static_cast<GamepadAxis>(gamepadAxis), deadzone);
 }
 
 void HostClearAction(void* context, const char* action) {
@@ -290,8 +285,7 @@ void HostSetMusicVolume(void* context, AssetHandle handle, float volume) {
   }
 }
 
-AssetHandle HostLoadShader(void* context, const char* vertexPath,
-                           const char* fragmentPath) {
+AssetHandle HostLoadShader(void* context, const char* vertexPath, const char* fragmentPath) {
   if (!context) return {};
 
   auto* host = static_cast<HostContext*>(context);
@@ -433,8 +427,7 @@ const Font* HostGetFont(void* context, AssetHandle handle) {
  * Returns nullptr if the module is unavailable or the requested
  * API version is unsupported.
  */
-const void* HostGetModuleAPI(void* context, ModuleID module,
-                             ModuleAPIVersion version) {
+const void* HostGetModuleAPI(void* context, ModuleID module, ModuleAPIVersion version) {
   if (!context) return nullptr;
 
   auto* host = static_cast<HostContext*>(context);
@@ -453,6 +446,14 @@ const void* HostGetModuleAPI(void* context, ModuleID module,
       if (version != IMGUI_API_VERSION) return nullptr;
 
       return host->imguiAPI;
+#else
+      return nullptr;
+#endif
+    case ModuleID::Animation:
+#ifdef LEVYE_WITH_ANIMATION
+      if (version != ANIMATION_API_VERSION) return nullptr;
+
+      return host->animationAPI;
 #else
       return nullptr;
 #endif
@@ -495,7 +496,7 @@ void HostRequestQuit(void* context) {
 
 }  // namespace
 GameModule::~GameModule() {
-  Unload();
+  Shutdown();
   CleanupRuntimeFiles();
 }
 
@@ -513,8 +514,15 @@ bool GameModule::Load(const std::string& path) {
   m_SerializationAPI = MakeSerializationAPI(m_SerializationService);
 #endif
 #ifdef LEVYE_WITH_IMGUI
-  m_ImGuiAPI = {.version = IMGUI_API_VERSION,
-                .IsAvailable = HostImGuiIsAvailable};
+  m_ImGuiAPI = {.version = IMGUI_API_VERSION, .IsAvailable = HostImGuiIsAvailable};
+#endif
+#ifdef LEVYE_WITH_ANIMATION
+  if (!m_AnimationService.Initialize()) {
+    Logger::Error("Failed to initialize Animation module.");
+    return false;
+  }
+
+  m_AnimationAPI = MakeAnimationAPI(m_AnimationService);
 #endif
 
   m_HostContext = {.input = &m_InputMap,
@@ -529,6 +537,10 @@ bool GameModule::Load(const std::string& path) {
 #endif
 #ifdef LEVYE_WITH_IMGUI
                    .imguiAPI = &m_ImGuiAPI,
+#endif
+#ifdef LEVYE_WITH_ANIMATION
+                   .animation = &m_AnimationService,
+                   .animationAPI = &m_AnimationAPI,
 #endif
                    .time = &m_Time,
                    .assetRoot = &m_AssetRoot,
@@ -630,12 +642,10 @@ bool GameModule::Load(const std::string& path) {
 #if defined(_WIN32)
   // Atomically reserve an exclusive session directory. A second host or a
   // previous crashed session must never share our loaded DLL filenames.
-  const auto session =
-      std::chrono::system_clock::now().time_since_epoch().count();
+  const auto session = std::chrono::system_clock::now().time_since_epoch().count();
   for (std::uint64_t suffix = 0;; ++suffix) {
-    m_RuntimeDirectory =
-        runtimeRoot / (sourcePath.stem().string() + "_" +
-                       std::to_string(session) + "_" + std::to_string(suffix));
+    m_RuntimeDirectory = runtimeRoot / (sourcePath.stem().string() + "_" + std::to_string(session) +
+                                        "_" + std::to_string(suffix));
     if (std::filesystem::create_directory(m_RuntimeDirectory, error)) break;
     if (error) {
       Logger::Error("Failed to reserve runtime directory: " + error.message());
@@ -732,24 +742,21 @@ bool GameModule::CheckForReload() {
   if (!m_ReloadPending) return false;
 
   if (now >= m_ReloadDeadline) {
-    Logger::Error(
-        "Hot reload copy timed out after 5 seconds: " + m_LastCopyError +
-        " Keeping current module; rebuild to retry.");
+    Logger::Error("Hot reload copy timed out after 5 seconds: " + m_LastCopyError +
+                  " Keeping current module; rebuild to retry.");
     m_ReloadPending = false;
     return false;
   }
 
-  if (now < m_NextCopyAttempt || !m_ModuleWatcher.IsCurrentStateStable())
-    return false;
+  if (now < m_NextCopyAttempt || !m_ModuleWatcher.IsCurrentStateStable()) return false;
 
   const auto candidatePath = CreateRuntimePath();
 
   const auto copyResult = CopyModule(candidatePath);
   if (copyResult == CopyResult::Retry) {
     if (!m_ReportedCopyRetry) {
-      Logger::Warning(
-          "Game module temporarily unavailable: " + m_LastCopyError +
-          " Retrying across frames; keeping current module.");
+      Logger::Warning("Game module temporarily unavailable: " + m_LastCopyError +
+                      " Retrying across frames; keeping current module.");
       m_ReportedCopyRetry = true;
     }
     m_NextCopyAttempt = now + std::chrono::milliseconds(100);
@@ -837,8 +844,7 @@ bool GameModule::CheckForReload() {
 
   ++m_ReloadCount;
 
-  Logger::Info("Hot reload successful. Reload #" +
-               std::to_string(m_ReloadCount));
+  Logger::Info("Hot reload successful. Reload #" + std::to_string(m_ReloadCount));
 
   return true;
 }
@@ -861,6 +867,10 @@ void GameModule::Update(float deltaTime) {
   if (!m_HasAPI || !m_API.OnUpdate) return;
 
   m_API.OnUpdate(m_State, deltaTime);
+
+#ifdef LEVYE_WITH_ANIMATION
+  m_AnimationService.Update(deltaTime);
+#endif
 }
 
 void GameModule::UpdateTime(float deltaTime) { m_Time.Update(deltaTime); }
@@ -927,6 +937,10 @@ void GameModule::Shutdown() {
     m_API.BindServices(nullptr);
   }
 
+#ifdef LEVYE_WITH_ANIMATION
+  m_AnimationService.Shutdown();
+#endif
+
   Unload();
 }
 
@@ -959,25 +973,21 @@ std::filesystem::path GameModule::CreateRuntimePath() {
   return m_RuntimeDirectory / filename;
 }
 
-GameModule::CopyResult GameModule::CopyModule(
-    const std::filesystem::path& destination) {
+GameModule::CopyResult GameModule::CopyModule(const std::filesystem::path& destination) {
   std::error_code error;
 
 #if defined(_WIN32)
-  std::filesystem::copy_file(m_Path, destination,
-                             std::filesystem::copy_options::none, error);
+  std::filesystem::copy_file(m_Path, destination, std::filesystem::copy_options::none, error);
 
   CopyResult result = CopyResult::Success;
   if (error) {
-    m_LastCopyError =
-        error.message() + " (" + std::to_string(error.value()) + ")";
+    m_LastCopyError = error.message() + " (" + std::to_string(error.value()) + ")";
     result = CopyResult::Failed;
     // Implementations can map native sharing/lock violations (32/33) to
     // permission_denied. Bound retries to also diagnose persistent ACL errors.
     if ((error.category() == std::system_category() &&
          (error.value() == 32 || error.value() == 33)) ||
-        error == std::errc::permission_denied ||
-        error == std::errc::no_such_file_or_directory)
+        error == std::errc::permission_denied || error == std::errc::no_such_file_or_directory)
       result = CopyResult::Retry;
   } else if (!m_ModuleWatcher.IsCurrentStateStable()) {
     m_LastCopyError = "Build output changed during the copy.";
@@ -990,8 +1000,7 @@ GameModule::CopyResult GameModule::CopyModule(
   }
   return result;
 #else
-  std::filesystem::copy_file(m_Path, destination,
-                             std::filesystem::copy_options::overwrite_existing,
+  std::filesystem::copy_file(m_Path, destination, std::filesystem::copy_options::overwrite_existing,
                              error);
   if (error) {
     Logger::Error("Failed to copy game module: " + error.message());
@@ -1001,8 +1010,8 @@ GameModule::CopyResult GameModule::CopyModule(
 #endif
 }
 
-bool GameModule::LoadCandidate(const std::filesystem::path& path,
-                               DynamicLibrary& library, GameAPI& api) {
+bool GameModule::LoadCandidate(const std::filesystem::path& path, DynamicLibrary& library,
+                               GameAPI& api) {
   if (!library.Load(path.string())) return false;
 
   void* symbol = library.GetSymbol("GetGameAPI");
@@ -1047,13 +1056,10 @@ void GameModule::CleanupRuntimeFiles() {
    * Only clean this instance's reserved directory. Other hosts may still be
    * executing their copies. Failed deletions are retried by the next sweep.
    */
-  for (auto entry =
-           std::filesystem::directory_iterator(m_RuntimeDirectory, error);
-       !error && entry != std::filesystem::directory_iterator{};
-       entry.increment(error)) {
+  for (auto entry = std::filesystem::directory_iterator(m_RuntimeDirectory, error);
+       !error && entry != std::filesystem::directory_iterator{}; entry.increment(error)) {
     std::error_code fileError;
-    if (entry->path() == m_RuntimePath || !entry->is_regular_file(fileError))
-      continue;
+    if (entry->path() == m_RuntimePath || !entry->is_regular_file(fileError)) continue;
 
     std::filesystem::remove(entry->path(), fileError);
   }
@@ -1061,8 +1067,7 @@ void GameModule::CleanupRuntimeFiles() {
   if (!m_Library.IsLoaded()) std::filesystem::remove(m_RuntimeDirectory, error);
 #else
   // Preserve the existing macOS/Linux startup and shutdown cleanup policy.
-  for (const auto& entry :
-       std::filesystem::directory_iterator(m_RuntimeDirectory, error)) {
+  for (const auto& entry : std::filesystem::directory_iterator(m_RuntimeDirectory, error)) {
     if (error) break;
     if (!entry.is_regular_file()) continue;
     std::filesystem::remove(entry.path(), error);
@@ -1073,9 +1078,8 @@ void GameModule::CleanupRuntimeFiles() {
 
 bool GameModule::ValidateAPI(const GameAPI& api) const {
   if (api.version != GAME_API_VERSION) {
-    Logger::Error(
-        "Game API version mismatch. Host: " + std::to_string(GAME_API_VERSION) +
-        ", Game: " + std::to_string(api.version));
+    Logger::Error("Game API version mismatch. Host: " + std::to_string(GAME_API_VERSION) +
+                  ", Game: " + std::to_string(api.version));
 
     return false;
   }
@@ -1086,9 +1090,9 @@ bool GameModule::ValidateAPI(const GameAPI& api) const {
     return false;
   }
 
-  if (!api.BindServices || !api.InitializeState || !api.DestroyState ||
-      !api.OnLoad || !api.OnBeforeReload || !api.OnAfterReload ||
-      !api.OnUpdate || !api.OnFixedUpdate || !api.OnDraw || !api.OnShutdown) {
+  if (!api.BindServices || !api.InitializeState || !api.DestroyState || !api.OnLoad ||
+      !api.OnBeforeReload || !api.OnAfterReload || !api.OnUpdate || !api.OnFixedUpdate ||
+      !api.OnDraw || !api.OnShutdown) {
     Logger::Error("Game module is missing required callbacks.");
 
     return false;
@@ -1103,9 +1107,7 @@ InputMap& GameModule::GetInputMap() { return m_InputMap; }
 
 ScreenManager& GameModule::GetScreenManager() { return m_ScreenManager; }
 
-void GameModule::SetAssetRoot(const std::string& path) {
-  m_AssetRoot = AssetPath::Normalize(path);
-}
+void GameModule::SetAssetRoot(const std::string& path) { m_AssetRoot = AssetPath::Normalize(path); }
 
 const std::string& GameModule::GetAssetRoot() const { return m_AssetRoot; }
 

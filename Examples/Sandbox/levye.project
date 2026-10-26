@@ -15,3 +15,4 @@ assets = "Assets"
 [modules]
 serialization = true
 imgui = true
+animation = true

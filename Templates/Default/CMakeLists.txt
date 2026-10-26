@@ -46,54 +46,13 @@ set(
 # Optional LevyeKit modules
 # ---------------------------------------------------------
 
-set(LEVYE_WITH_SERIALIZATION OFF)
-set(LEVYE_WITH_IMGUI OFF)
+# Read [modules] from levye.project into the effective CMake cache.
+# LevyeKit also includes this helper for projects made from older templates.
+include("${LEVYE_ROOT}/cmake/LevyeProjectModules.cmake")
 
-# Reconfigure when levye add changes the project modules.
-set_property(
-    DIRECTORY
-    APPEND
-    PROPERTY CMAKE_CONFIGURE_DEPENDS
-        "${CMAKE_CURRENT_SOURCE_DIR}/levye.project"
-)
-
-# Read the serialization setting from levye.project.
-file(
-    STRINGS
-    "${CMAKE_CURRENT_SOURCE_DIR}/levye.project"
-    LEVYE_SERIALIZATION_SETTING
-    REGEX "^[ \t]*serialization[ \t]*=[ \t]*(true|false)[ \t]*$"
-)
-
-if(LEVYE_SERIALIZATION_SETTING)
-    if(LEVYE_SERIALIZATION_SETTING MATCHES "=[ \t]*true[ \t]*$")
-        set(LEVYE_WITH_SERIALIZATION ON)
-    endif()
-endif()
-
-# Read the ImGui setting from levye.project.
-file(
-    STRINGS
-    "${CMAKE_CURRENT_SOURCE_DIR}/levye.project"
-    LEVYE_IMGUI_SETTING
-    REGEX "^[ \t]*imgui[ \t]*=[ \t]*(true|false)[ \t]*$"
-)
-
-if(LEVYE_IMGUI_SETTING)
-    if(LEVYE_IMGUI_SETTING MATCHES "=[ \t]*true[ \t]*$")
-        set(LEVYE_WITH_IMGUI ON)
-    endif()
-endif()
-
-message(
-    STATUS
-    "LevyeKit serialization: ${LEVYE_WITH_SERIALIZATION}"
-)
-
-message(
-    STATUS
-    "LevyeKit ImGui: ${LEVYE_WITH_IMGUI}"
-)
+message(STATUS "LevyeKit serialization: ${LEVYE_WITH_SERIALIZATION}")
+message(STATUS "LevyeKit ImGui: ${LEVYE_WITH_IMGUI}")
+message(STATUS "LevyeKit Animation: ${LEVYE_WITH_ANIMATION}")
 
 add_subdirectory(
     "${LEVYE_ROOT}"
@@ -136,6 +95,14 @@ if(LEVYE_WITH_IMGUI)
         PRIVATE
             LEVYE_WITH_IMGUI=1
     )
+endif()
+
+if(LEVYE_WITH_SERIALIZATION)
+    target_compile_definitions(Game PRIVATE LEVYE_WITH_SERIALIZATION=1)
+endif()
+
+if(LEVYE_WITH_ANIMATION)
+    target_compile_definitions(Game PRIVATE LEVYE_WITH_ANIMATION=1)
 endif()
 
 # ---------------------------------------------------------

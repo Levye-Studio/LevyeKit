@@ -1,5 +1,20 @@
 cmake_minimum_required(VERSION 3.20)
 
+# Also synchronize projects created with older templates. In a standalone
+# framework build there is no root levye.project, so command-line options win.
+if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR AND
+   EXISTS "${CMAKE_SOURCE_DIR}/levye.project")
+    include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/LevyeProjectModules.cmake")
+    # Older generated CMake files did not give Game every module definition.
+    # Apply selected module guards to parent-directory targets as well.
+    foreach(LEVYE_MODULE IN ITEMS SERIALIZATION IMGUI ANIMATION)
+        if(LEVYE_WITH_${LEVYE_MODULE})
+            set_property(DIRECTORY "${CMAKE_SOURCE_DIR}" APPEND PROPERTY
+                COMPILE_DEFINITIONS "LEVYE_WITH_${LEVYE_MODULE}=1")
+        endif()
+    endforeach()
+endif()
+
 option(
     LEVYE_BUILD_EXAMPLES
     "Build LevyeKit example projects"
@@ -24,9 +39,15 @@ option(
     OFF
 )
 
+option(
+    LEVYE_WITH_ANIMATION
+    "Enable the LevyeKit Animation module"
+    OFF
+)
+
 project(
     LevyeKit
-    VERSION 0.3.0
+    VERSION 0.4.0
     LANGUAGES CXX
 )
 
@@ -58,6 +79,28 @@ endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# ---------------------------------------------------------------------------
+# Build-specific output directories
+# ---------------------------------------------------------------------------
+# -B Build/build-animation -> Targets/build-animation
+# -B Build/build-no-animation -> Targets/build-no-animation
+get_filename_component(LEVYE_BUILD_NAME "${CMAKE_BINARY_DIR}" NAME)
+set(LEVYE_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/Targets/${LEVYE_BUILD_NAME}")
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${LEVYE_OUTPUT_DIR}/bin")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${LEVYE_OUTPUT_DIR}/lib")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${LEVYE_OUTPUT_DIR}/lib")
+
+# Multi-config generators otherwise append /Debug, /Release, etc.
+foreach(LEVYE_CONFIG Debug Release RelWithDebInfo MinSizeRel)
+    string(TOUPPER "${LEVYE_CONFIG}" LEVYE_CONFIG_UPPER)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${LEVYE_CONFIG_UPPER} "${LEVYE_OUTPUT_DIR}/bin")
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${LEVYE_CONFIG_UPPER} "${LEVYE_OUTPUT_DIR}/lib")
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${LEVYE_CONFIG_UPPER} "${LEVYE_OUTPUT_DIR}/lib")
+endforeach()
+
+message(STATUS "LevyeKit output directory: ${LEVYE_OUTPUT_DIR}")
+
 include(FetchContent)
 
 # Build raylib as a shared library.
@@ -72,7 +115,7 @@ set(FETCHCONTENT_QUIET OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
     raylib
     GIT_REPOSITORY https://github.com/raysan5/raylib.git
-    GIT_TAG 5.5
+    GIT_TAG 6.2
 )
 
 FetchContent_MakeAvailable(raylib)
@@ -177,6 +220,26 @@ if(LEVYE_WITH_SERIALIZATION)
     )
 endif()
 
+if(LEVYE_WITH_ANIMATION)
+    add_subdirectory(
+        Levye/Modules/Animation
+    )
+
+    target_link_libraries(
+        LevyeKit
+
+        PRIVATE
+            LevyeAnimation
+    )
+
+    target_compile_definitions(
+        LevyeKit
+
+        PUBLIC
+            LEVYE_WITH_ANIMATION=1
+    )
+endif()
+
 if(LEVYE_WITH_IMGUI)
     include(FetchContent)
 
@@ -253,6 +316,15 @@ if(LEVYE_WITH_IMGUI)
     )
 endif()
 
+if(LEVYE_WITH_ANIMATION)
+    target_sources(Game PRIVATE Examples/Sandbox/Game/AnimationScene.cpp)
+    target_compile_definitions(
+        Game
+        PRIVATE
+            LEVYE_WITH_ANIMATION=1
+    )
+endif()
+
 set_target_properties(
     Game
 
@@ -261,10 +333,18 @@ set_target_properties(
         OUTPUT_NAME "Game"
 
         LIBRARY_OUTPUT_DIRECTORY
-            "${CMAKE_CURRENT_SOURCE_DIR}/Targets/$<CONFIG>/lib"
+            "${LEVYE_OUTPUT_DIR}/lib"
 
         RUNTIME_OUTPUT_DIRECTORY
-            "${CMAKE_CURRENT_SOURCE_DIR}/Targets/$<CONFIG>/lib"
+            "${LEVYE_OUTPUT_DIR}/lib"
+        LIBRARY_OUTPUT_DIRECTORY_DEBUG "${LEVYE_OUTPUT_DIR}/lib"
+        LIBRARY_OUTPUT_DIRECTORY_RELEASE "${LEVYE_OUTPUT_DIR}/lib"
+        LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${LEVYE_OUTPUT_DIR}/lib"
+        LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${LEVYE_OUTPUT_DIR}/lib"
+        RUNTIME_OUTPUT_DIRECTORY_DEBUG "${LEVYE_OUTPUT_DIR}/lib"
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE "${LEVYE_OUTPUT_DIR}/lib"
+        RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${LEVYE_OUTPUT_DIR}/lib"
+        RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${LEVYE_OUTPUT_DIR}/lib"
 )
 
 # ---------------------------------------------------------------------------
@@ -300,7 +380,11 @@ set_target_properties(
 
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY
-            "${CMAKE_CURRENT_SOURCE_DIR}/Targets/$<CONFIG>/bin"
+            "${LEVYE_OUTPUT_DIR}/bin"
+        RUNTIME_OUTPUT_DIRECTORY_DEBUG "${LEVYE_OUTPUT_DIR}/bin"
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE "${LEVYE_OUTPUT_DIR}/bin"
+        RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${LEVYE_OUTPUT_DIR}/bin"
+        RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${LEVYE_OUTPUT_DIR}/bin"
 )
 
 if(LEVYE_WITH_SERIALIZATION)
@@ -369,7 +453,11 @@ set_target_properties(
     levye
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY
-        "${CMAKE_SOURCE_DIR}/Targets/$<CONFIG>/bin"
+        "${LEVYE_OUTPUT_DIR}/bin"
+        RUNTIME_OUTPUT_DIRECTORY_DEBUG "${LEVYE_OUTPUT_DIR}/bin"
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE "${LEVYE_OUTPUT_DIR}/bin"
+        RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${LEVYE_OUTPUT_DIR}/bin"
+        RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${LEVYE_OUTPUT_DIR}/bin"
 )
 
 target_include_directories(
@@ -384,23 +472,4 @@ target_link_libraries(
         tomlplusplus::tomlplusplus
 )
 
-endif()
-
-option(LEVYE_BUILD_TESTS "Build LevyeKit tests" OFF)
-
-if(LEVYE_BUILD_TESTS)
-    enable_testing()
-
-    add_executable(LevyeInputMapTests
-        Tests/Input/InputMapTests.cpp
-    )
-
-    target_link_libraries(LevyeInputMapTests
-        PRIVATE LevyeKit
-    )
-
-    add_test(
-        NAME InputMap
-        COMMAND LevyeInputMapTests
-    )
 endif()

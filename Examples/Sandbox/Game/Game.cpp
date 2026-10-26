@@ -1,13 +1,11 @@
 #include <Levye/LevyeKit.hpp>
-#include <Levye/Modules/Serialization/Serialization.hpp>
-#include <Levye/Modules/Serialization/SerializationAPI.hpp>
-#ifdef LEVYE_WITH_IMGUI
-#include <imgui.h>
-
-#include <Levye/Modules/ImGui/ImGui.hpp>
-#endif
+#include <filesystem>
 #include <new>
 
+#ifdef LEVYE_WITH_ANIMATION
+#include "AnimationScene.hpp"
+#include "AnimationTest.hpp"
+#endif
 #include "SerializationReloadCheck.hpp"
 
 namespace {
@@ -25,8 +23,7 @@ struct PlayerSave {
 
 template <typename Archive>
 bool Serialize(Archive& archive, PlayerSave& player) {
-  return archive.Field("name", player.name) &&
-         archive.Field("score", player.score) &&
+  return archive.Field("name", player.name) && archive.Field("score", player.score) &&
          archive.Field("position", player.position);
 }
 
@@ -77,6 +74,11 @@ struct GameState {
   // Only the numeric handle lives in GameState. The YAML document itself
   // stays in SerializationService, which is not unloaded during hot reload.
   Levye::DocumentHandle persistentDocument = Levye::InvalidDocumentHandle;
+
+#ifdef LEVYE_WITH_ANIMATION
+  Sandbox::AnimationTest animationTest;
+  AnimationScene animationScene;
+#endif
 };
 
 void BindServices(const Levye::HostServices* services) {
@@ -139,8 +141,7 @@ void OnLoad(void* state) {
   Levye::Input::BindGamepadButton("Back", 0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT);
 
   Levye::Input::BindKey("TestSound", KEY_SPACE);
-  Levye::Input::BindGamepadButton("TestSound", 0,
-                                  GAMEPAD_BUTTON_RIGHT_FACE_DOWN);
+  Levye::Input::BindGamepadButton("TestSound", 0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN);
 
   Levye::Input::BindKey("PauseMusic", KEY_M);
 
@@ -153,6 +154,36 @@ void OnLoad(void* state) {
   Levye::Input::BindKey("FastTime", KEY_THREE);
 
   Levye::Input::BindKey("Pause", KEY_P);
+
+#ifdef LEVYE_WITH_ANIMATION
+  Levye::Input::BindKey("ShowAnimation", KEY_T);
+  Levye::Input::BindKey("AnimationScene1", KEY_F1);
+  Levye::Input::BindKey("AnimationScene2", KEY_F2);
+  Levye::Input::BindKey("AnimationScene3", KEY_F3);
+  Levye::Input::BindKey("AnimationScene4", KEY_F4);
+  Levye::Input::BindKey("AnimationScene5", KEY_F5);
+  Levye::Input::BindKey("AnimationScene6", KEY_F6);
+  Levye::Input::BindKey("AnimationScene7", KEY_F7);
+  Levye::Input::BindKey("AnimationNext", KEY_RIGHT);
+  Levye::Input::BindKey("AnimationPrevious", KEY_LEFT);
+  Levye::Input::BindKey("AnimationConfirm", KEY_ENTER);
+  Levye::Input::BindKey("AnimationForce", KEY_F);
+  Levye::Input::BindKey("AnimationPause", KEY_P);
+  Levye::Input::BindKey("AnimationFaster", KEY_UP);
+  Levye::Input::BindKey("AnimationSlower", KEY_DOWN);
+  Levye::Input::BindKey("AnimationMove", KEY_W);
+  Levye::Input::BindKey("AnimationRun", KEY_LEFT_SHIFT);
+  Levye::Input::BindKey("AnimationDance", KEY_C);
+  Levye::Input::BindKey("AnimationPunch", KEY_SPACE);
+  Levye::Input::BindKey("AnimationJump", KEY_J);
+  Levye::Input::BindKey("AnimationRestart", KEY_R);
+  Levye::Input::BindKey("AnimationLeft", KEY_A);
+  Levye::Input::BindKey("AnimationRight", KEY_D);
+  Levye::Input::BindKey("AnimationDeath", KEY_D);
+  Levye::Input::BindKey("AnimationWave", KEY_V);
+  Levye::Input::BindKey("AnimationUnload", KEY_U);
+  Levye::Input::BindKey("AnimationVerify", KEY_V);
+#endif
 
   Levye::Input::BindKey("TestMouse", KEY_C);
   Levye::Input::BindMouseButton("TestMouse", MOUSE_BUTTON_LEFT);
@@ -175,14 +206,26 @@ void OnLoad(void* state) {
 
     // Persist only the handle; the host keeps the document across hot reloads.
     if (SandboxSerialization::Initialize(game->persistentDocument)) {
-      Levye::Log::Info(
-          "Hot-reload test: document created with scalars and arrays.");
+      Levye::Log::Info("Hot-reload test: document created with scalars and arrays.");
     } else {
       Levye::Log::Error("Hot-reload test: failed to initialize document.");
     }
   } else {
     Levye::Log::Warning("Serialization module unavailable.");
   }
+
+#ifdef LEVYE_WITH_ANIMATION
+  const auto robotPath = (std::filesystem::path(GetApplicationDirectory()) /
+                          "../../../Examples/Sandbox/Assets/robot.glb")
+                             .lexically_normal();
+  Sandbox::InitializeAnimationTest(game->animationTest, robotPath.string().c_str());
+  Sandbox::TestAnimationAPI(robotPath.string().c_str());
+  if (!game->animationScene.Initialize(robotPath.string().c_str())) {
+    Levye::Log::Error("Robot animation scenes initialization failed.");
+  } else {
+    Levye::Log::Info("Seven robot animation scenes ready.");
+  }
+#endif
 
   Levye::Log::Info("Sandbox started.");
 }
@@ -193,17 +236,23 @@ void OnAfterReload(void* state) {
   Levye::Log::Info("Sandbox reloaded.");
 
   // Optional modules may be disabled; that is not a reload failure.
-  if (!Levye::Serialization::Available()) return;
-
-  if (SandboxSerialization::AfterReload(game->persistentDocument,
-                                        "serialization-reload-test.yaml")) {
-    Levye::Log::Info(
-        "Hot-reload test passed: same handle, values, arrays, modification and "
-        "save/load.");
-  } else {
-    Levye::Log::Error(
-        "Hot-reload test failed: persistence or save/load check.");
+  // Each optional module must be tested independently.
+  if (Levye::Serialization::Available()) {
+    if (SandboxSerialization::AfterReload(game->persistentDocument,
+                                          "serialization-reload-test.yaml")) {
+      Levye::Log::Info("Hot-reload test passed: serialization state preserved. ");
+    } else {
+      Levye::Log::Error("Hot-reload test failed: serialization.");
+    }
   }
+
+  // Verify the host-owned controller after a successful module swap.
+#ifdef LEVYE_WITH_ANIMATION
+  Sandbox::VerifyAnimationReload(game->animationTest);
+  Levye::Log::Info(game->animationScene.AfterReload()
+                       ? "PASS: seven animation scenes survived hot reload"
+                       : "FAIL: an animation scene lost state on hot reload");
+#endif
 }
 
 void OnBeforeReload(void* state) {
@@ -220,6 +269,38 @@ void OnBeforeReload(void* state) {
 
 void OnUpdate(void* state, float deltaTime) {
   GameState* game = GetState(state);
+
+#ifdef LEVYE_WITH_ANIMATION
+  if (game->animationScene.IsReady()) {
+    constexpr const char* sceneActions[AnimationScene::SceneCount] = {
+        "AnimationScene1", "AnimationScene2", "AnimationScene3", "AnimationScene4",
+        "AnimationScene5", "AnimationScene6", "AnimationScene7"};
+    for (int scene = 0; scene < AnimationScene::SceneCount; ++scene) {
+      if (Levye::Input::IsPressed(sceneActions[scene])) {
+        if (game->animationScene.SelectScene(scene)) Levye::Screen::Set("Animation");
+        return;
+      }
+    }
+    if (Levye::Input::IsPressed("ShowAnimation")) {
+      if (Levye::Screen::Is("Animation")) {
+        (void)game->animationScene.SelectScene((game->animationScene.CurrentScene() + 1) %
+                                               AnimationScene::SceneCount);
+      } else {
+        if (game->animationScene.SelectScene(0)) Levye::Screen::Set("Animation");
+      }
+      return;
+    }
+  }
+
+  if (Levye::Screen::Is("Animation")) {
+    if (Levye::Input::IsPressed("Back")) {
+      Levye::Screen::Set("Menu");
+    } else {
+      game->animationScene.Update(deltaTime);
+    }
+    return;
+  }
+#endif
 
   if (Levye::Screen::Is("Menu")) {
     if (Levye::Input::IsPressed("Confirm")) {
@@ -246,8 +327,8 @@ void OnUpdate(void* state, float deltaTime) {
   }
 
   if (mouseDelta.x != 0.0f || mouseDelta.y != 0.0f) {
-    std::string mouseMSG = "Mouse delta: x=" + std::to_string(mouseDelta.x) +
-                           " y=" + std::to_string(mouseDelta.y);
+    std::string mouseMSG =
+        "Mouse delta: x=" + std::to_string(mouseDelta.x) + " y=" + std::to_string(mouseDelta.y);
     Levye::Log::Info(mouseMSG.c_str());
   }
 
@@ -295,14 +376,20 @@ void OnUpdate(void* state, float deltaTime) {
   }
 }
 
-void OnFixedUpdate(void* state, float fixedDeltaTime) {
-  constexpr float playerSpeed = 300.0f;
-}
+void OnFixedUpdate(void* state, float fixedDeltaTime) { constexpr float playerSpeed = 300.0f; }
 
 void OnDraw(void* state) {
   GameState* game = GetState(state);
-  const Texture2D* playerTexture =
-      Levye::Assets::GetTexture(game->playerTexture);
+
+#ifdef LEVYE_WITH_ANIMATION
+  if (Levye::Screen::Is("Animation")) {
+    ClearBackground(DARKGRAY);
+    game->animationScene.Draw();
+    return;
+  }
+#endif
+
+  const Texture2D* playerTexture = Levye::Assets::GetTexture(game->playerTexture);
 
   const float alpha = Levye::Time::InterpolationAlpha();
 
@@ -312,6 +399,12 @@ void OnDraw(void* state) {
     DrawText("LEVYEKIT", 40, 40, 40, RAYWHITE);
 
     DrawText("Press ENTER / Controller A to play", 40, 100, 24, LIGHTGRAY);
+
+#ifdef LEVYE_WITH_ANIMATION
+    if (game->animationScene.IsReady()) {
+      DrawText("T: Animation scenes | F1-F7: Open a scene", 40, 135, 24, LIGHTGRAY);
+    }
+#endif
 
     return;
   }
@@ -329,8 +422,7 @@ void OnDraw(void* state) {
     DrawText("Move: WASD / Arrows / Controller", 40, 40, 20, RAYWHITE);
 
     DrawText("ESC / Controller B: Menu", 40, 70, 20, LIGHTGRAY);
-    DrawText("P: Pause time | M: Pause music | R: Resume music", 40, 100, 20,
-             LIGHTGRAY);
+    DrawText("P: Pause time | M: Pause music | R: Resume music", 40, 100, 20, LIGHTGRAY);
 
     DrawText(Levye::Time::IsPaused() ? "PAUSED" : "RUNNING", 20, 20, 20, WHITE);
   }
@@ -357,9 +449,13 @@ void OnShutdown(void* state) {
   // This is the appropriate place to release the persistent
   // document created in OnLoad().
   if (!SandboxSerialization::Shutdown(game->persistentDocument)) {
-    Levye::Log::Error(
-        "Hot-reload test: failed to destroy persistent document.");
+    Levye::Log::Error("Hot-reload test: failed to destroy persistent document.");
   }
+
+#ifdef LEVYE_WITH_ANIMATION
+  game->animationScene.Shutdown();
+  Sandbox::ShutdownAnimationTest(game->animationTest);
+#endif
 
   Levye::Log::Info("Sandbox shutting down.");
 }

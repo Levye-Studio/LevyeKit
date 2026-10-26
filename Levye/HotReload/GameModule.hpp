@@ -19,6 +19,10 @@
 #ifdef LEVYE_WITH_IMGUI
 #include <Levye/Modules/ImGui/ImGuiAPI.hpp>
 #endif
+#ifdef LEVYE_WITH_ANIMATION
+#include <Levye/Modules/Animation/AnimationAPI.hpp>
+#include <Levye/Modules/Animation/AnimationService.hpp>
+#endif
 
 #include <chrono>
 #include <cstdint>
@@ -203,8 +207,7 @@ class GameModule {
    * @param api Receives the module's GameAPI.
    * @return true if the module and API are valid.
    */
-  bool LoadCandidate(const std::filesystem::path& path, DynamicLibrary& library,
-                     GameAPI& api);
+  bool LoadCandidate(const std::filesystem::path& path, DynamicLibrary& library, GameAPI& api);
 
   /**
    * @brief Removes runtime module copies that are no longer needed.
@@ -307,6 +310,10 @@ class GameModule {
 
 #ifdef LEVYE_WITH_IMGUI
   ImGuiAPI m_ImGuiAPI{};
+#endif
+#ifdef LEVYE_WITH_ANIMATION
+  AnimationService m_AnimationService;
+  AnimationAPI m_AnimationAPI{};
 #endif
 };
 }  // namespace Levye

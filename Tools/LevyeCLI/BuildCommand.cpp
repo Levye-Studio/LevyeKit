@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 
+#include "ProcessArguments.hpp"
+
 namespace {
 
 /**
@@ -12,26 +14,24 @@ namespace {
  * @param path Filesystem path to quote.
  * @return Quoted path string.
  */
-std::string QuotePath(const std::filesystem::path &path) {
-  return "\"" + path.string() + "\"";
-}
+std::string QuotePath(const std::filesystem::path& path) { return "\"" + path.string() + "\""; }
 
-} // namespace
+}  // namespace
 
 namespace Levye {
 
-bool BuildCommand::Execute(const std::filesystem::path &projectDirectory,
+bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
                            BuildConfiguration configuration) {
   const std::string configurationName{ToString(configuration)};
 
-  const std::filesystem::path buildDirectory =
-      projectDirectory / "Build" / configurationName;
+  const std::filesystem::path buildDirectory = projectDirectory / "Build" / configurationName;
 
   std::cout << "[Levye] Configuring project...\n";
 
   const std::string configureCommand =
-      "cmake -S " + QuotePath(projectDirectory) + " -B " +
-      QuotePath(buildDirectory) + " -DCMAKE_BUILD_TYPE=" + configurationName;
+      "cmake -S " + LevyeCLI::QuoteArgument(projectDirectory.string()) + " -B " +
+      LevyeCLI::QuoteArgument(buildDirectory.string()) +
+      " -DCMAKE_BUILD_TYPE=" + LevyeCLI::QuoteArgument(configurationName);
 
   const int configureResult = std::system(configureCommand.c_str());
 
@@ -44,8 +44,9 @@ bool BuildCommand::Execute(const std::filesystem::path &projectDirectory,
   std::cout << "[Levye] Building project...\n";
 
   // Select the configuration for multi-config generators on every platform.
-  const std::string buildCommand = "cmake --build " + QuotePath(buildDirectory) +
-                                   " --config " + configurationName;
+  const std::string buildCommand = "cmake --build " +
+                                   LevyeCLI::QuoteArgument(buildDirectory.string()) + " --config " +
+                                   LevyeCLI::QuoteArgument(configurationName);
 
   const int buildResult = std::system(buildCommand.c_str());
 
@@ -60,4 +61,4 @@ bool BuildCommand::Execute(const std::filesystem::path &projectDirectory,
   return true;
 }
 
-} // namespace Levye
+}  // namespace Levye

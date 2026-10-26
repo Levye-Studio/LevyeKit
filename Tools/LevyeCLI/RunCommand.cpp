@@ -1,10 +1,11 @@
 #include "RunCommand.hpp"
 
 #include <Levye/Project/ProjectLoader.hpp>
-
 #include <cstdlib>
 #include <iostream>
 #include <string>
+
+#include "ProcessArguments.hpp"
 
 namespace {
 
@@ -14,15 +15,13 @@ namespace {
  * @param path Filesystem path to quote.
  * @return Quoted path string.
  */
-std::string QuotePath(const std::filesystem::path &path) {
-  return "\"" + path.string() + "\"";
-}
+std::string QuotePath(const std::filesystem::path& path) { return "\"" + path.string() + "\""; }
 
-} // namespace
+}  // namespace
 
 namespace Levye {
 
-bool RunCommand::Execute(const std::filesystem::path &projectDirectory,
+bool RunCommand::Execute(const std::filesystem::path& projectDirectory,
                          BuildConfiguration configuration) {
   const std::filesystem::path projectFile = projectDirectory / "levye.project";
 
@@ -34,9 +33,8 @@ bool RunCommand::Execute(const std::filesystem::path &projectDirectory,
     return false;
   }
 
-  std::filesystem::path executablePath = projectDirectory / "Targets" /
-                                         std::string{ToString(configuration)} /
-                                         "bin" / project->target;
+  std::filesystem::path executablePath =
+      projectDirectory / "Targets" / std::string{ToString(configuration)} / "bin" / project->target;
 
 #if defined(_WIN32)
   executablePath += ".exe";
@@ -52,11 +50,7 @@ bool RunCommand::Execute(const std::filesystem::path &projectDirectory,
   std::cout << "[Levye] Running " << project->target << "...\n";
 
   // cmd.exe strips the outer quotes of a command starting with a quoted path.
-#if defined(_WIN32)
-  const std::string command = "\"" + QuotePath(executablePath) + "\"";
-#else
-  const std::string command = QuotePath(executablePath);
-#endif
+  const std::string command = LevyeCLI::QuoteArgument(executablePath.string());
 
   const int result = std::system(command.c_str());
 
@@ -69,4 +63,4 @@ bool RunCommand::Execute(const std::filesystem::path &projectDirectory,
   return true;
 }
 
-} // namespace Levye
+}  // namespace Levye

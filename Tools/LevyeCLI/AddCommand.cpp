@@ -6,14 +6,19 @@
 #include <regex>
 #include <sstream>
 #include <string>
+#include <system_error>
 #include <toml++/toml.hpp>
+
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#endif
 
 #include "ModuleRegistry.hpp"
 
 namespace Levye {
 
-bool AddCommand::Execute(const std::filesystem::path& projectDirectory,
-                         std::string_view module) {
+bool AddCommand::Execute(const std::filesystem::path& projectDirectory, std::string_view module) {
   if (!ModuleRegistry::Exists(module)) {
     std::cerr << "[Levye] Unknown module: " << module << '\n';
     return false;
@@ -38,8 +43,7 @@ bool AddCommand::Execute(const std::filesystem::path& projectDirectory,
         }
 
         if (setting->value<bool>().value_or(false)) {
-          std::cout << "[Levye] Module '" << module
-                    << "' is already enabled.\n";
+          std::cout << "[Levye] Module '" << module << "' is already enabled.\n";
           return true;
         }
       }
@@ -67,8 +71,7 @@ bool AddCommand::Execute(const std::filesystem::path& projectDirectory,
   std::string content = buffer.str();
 
   // Find the [modules] section without changing other sections.
-  const std::regex sectionPattern(
-      R"((^|\n)[ \t]*\[modules\][ \t]*(?:\r?\n|$))");
+  const std::regex sectionPattern(R"((^|\n)[ \t]*\[modules\][ \t]*(?:#.*)?(?:\r?\n|$))");
 
   std::smatch section;
 
@@ -78,24 +81,32 @@ bool AddCommand::Execute(const std::filesystem::path& projectDirectory,
     content += "\n[modules]\n";
     content += std::string(module) + " = true\n";
   } else {
-    const std::size_t sectionEnd =
-        static_cast<std::size_t>(section.position() + section.length());
+    const std::size_t sectionEnd = static_cast<std::size_t>(section.position() + section.length());
 
-    const std::size_t nextSection = content.find("\n[", sectionEnd);
-
-    const std::size_t end =
-        nextSection == std::string::npos ? content.size() : nextSection + 1;
+    // TOML permits leading whitespace before another table header.
+    const std::regex tablePattern(
+        R"(^[ \t]*(?:\[\[[^\]\r\n]+\]\]|\[[^\]\r\n]+\])[ \t]*(?:#.*)?\r?$)");
+    std::size_t end = content.size();
+    for (std::size_t lineStart = sectionEnd; lineStart < content.size();) {
+      const auto lineEnd = content.find('\n', lineStart);
+      const std::string line = content.substr(lineStart, lineEnd - lineStart);
+      if (std::regex_match(line, tablePattern)) {
+        end = lineStart;
+        break;
+      }
+      if (lineEnd == std::string::npos) break;
+      lineStart = lineEnd + 1;
+    }
 
     std::string body = content.substr(sectionEnd, end - sectionEnd);
+    if (sectionEnd > 0 && content[sectionEnd - 1] != '\n') body.insert(body.begin(), '\n');
 
-    const std::regex settingPattern(
-        "(^|\\n)[ \\t]*" + std::string(module) +
-        R"([ \t]*=[ \t]*(true|false)[ \t]*(?=\r?\n|$))");
+    const std::regex settingPattern("(^|\\n)[ \\t]*" + std::string(module) +
+                                    R"([ \t]*=[ \t]*(true|false)[ \t]*(?:#.*)?(?=\r?\n|$))");
 
-    if (std::regex_search(body, settingPattern)) {
-      body = std::regex_replace(body, settingPattern,
-                                "$1" + std::string(module) + " = true",
-                                std::regex_constants::format_first_only);
+    std::smatch setting;
+    if (std::regex_search(body, setting, settingPattern)) {
+      body.replace(static_cast<std::size_t>(setting.position(2)), setting.length(2), "true");
     } else {
       if (!body.empty() && body.back() != '\n') body += '\n';
 
@@ -107,7 +118,7 @@ bool AddCommand::Execute(const std::filesystem::path& projectDirectory,
 
   // Validate the resulting TOML before writing it.
   try {
-    toml::parse(content);
+    (void)toml::parse(content);
   } catch (const toml::parse_error& error) {
     std::cerr << "[Levye] Updated configuration is invalid: " << error << '\n';
     return false;
@@ -134,16 +145,20 @@ bool AddCommand::Execute(const std::filesystem::path& projectDirectory,
   }
 
   // Replace the original only after the new file is complete.
-  // Note: std::filesystem::rename can fail on Windows if the
-  // destination already exists; handle that case in the next pass.
   std::error_code error;
+#if defined(_WIN32)
+  if (!MoveFileExW(temporaryPath.wstring().c_str(), path.wstring().c_str(),
+                   MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+    error = std::error_code(static_cast<int>(GetLastError()), std::system_category());
+  }
+#else
   std::filesystem::rename(temporaryPath, path, error);
+#endif
 
   if (error) {
     std::filesystem::remove(temporaryPath);
 
-    std::cerr << "[Levye] Cannot replace configuration: " << error.message()
-              << '\n';
+    std::cerr << "[Levye] Cannot replace configuration: " << error.message() << '\n';
     return false;
   }
 

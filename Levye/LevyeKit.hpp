@@ -21,6 +21,21 @@
 #include <Levye/Screen/Screen.hpp>
 #include <Levye/Time/Time.hpp>
 
-//
+// Optional game-facing modules
+#if defined(LEVYE_WITH_SERIALIZATION) && LEVYE_WITH_SERIALIZATION
+#include <Levye/Modules/Serialization/Serialization.hpp>
+#endif
+
+#if defined(LEVYE_WITH_IMGUI) && LEVYE_WITH_IMGUI
+#include <imgui.h>
+
+#include <Levye/Modules/ImGui/ImGui.hpp>
+#endif
+
+#if defined(LEVYE_WITH_ANIMATION) && LEVYE_WITH_ANIMATION
+#include <Levye/Modules/Animation/Animation.hpp>
+#endif
+
+// raylib
 #include <raylib.h>
 #include <raymath.h>

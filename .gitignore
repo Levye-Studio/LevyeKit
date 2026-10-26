@@ -54,3 +54,6 @@ serialization-test.yaml
 player.yaml
 imgui.ini
 ImGuiTest/
+.clangd
+.clang-format
+*.backup

@@ -4,11 +4,14 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <regex>
+#include <toml++/toml.hpp>
+
+#include "ModuleRegistry.hpp"
 
 namespace {
 
-void ReplaceAll(std::string& content, const std::string& token,
-                const std::string& value) {
+void ReplaceAll(std::string& content, const std::string& token, const std::string& value) {
   std::size_t position = 0;
 
   while ((position = content.find(token, position)) != std::string::npos) {
@@ -35,6 +38,13 @@ bool ProjectGenerator::Generate(const std::string& name,
 
   const std::string target = CreateTargetName(name);
 
+  for (const auto& module : modules) {
+    if (!ModuleRegistry::Exists(module)) {
+      std::cerr << "[Levye] Unknown module: " << module << '\n';
+      return false;
+    }
+  }
+
   if (target.empty()) {
     std::cerr << "[Levye] Project name does not contain "
               << "a valid target name.\n";
@@ -43,8 +53,7 @@ bool ProjectGenerator::Generate(const std::string& name,
   }
 
   if (!std::filesystem::exists(templateDirectory)) {
-    std::cerr << "[Levye] Project template does not exist: "
-              << templateDirectory << '\n';
+    std::cerr << "[Levye] Project template does not exist: " << templateDirectory << '\n';
 
     return false;
   }
@@ -52,8 +61,7 @@ bool ProjectGenerator::Generate(const std::string& name,
   const std::filesystem::path projectDirectory = outputDirectory / target;
 
   if (std::filesystem::exists(projectDirectory)) {
-    std::cerr << "[Levye] Directory already exists: " << projectDirectory
-              << '\n';
+    std::cerr << "[Levye] Directory already exists: " << projectDirectory << '\n';
 
     return false;
   }
@@ -63,8 +71,7 @@ bool ProjectGenerator::Generate(const std::string& name,
   std::filesystem::create_directories(projectDirectory, error);
 
   if (error) {
-    std::cerr << "[Levye] Failed to create project directory: "
-              << error.message() << '\n';
+    std::cerr << "[Levye] Failed to create project directory: " << error.message() << '\n';
 
     return false;
   }
@@ -73,17 +80,16 @@ bool ProjectGenerator::Generate(const std::string& name,
                         std::filesystem::copy_options::recursive, error);
 
   if (error) {
-    std::cerr << "[Levye] Failed to copy project template: " << error.message()
-              << '\n';
+    std::cerr << "[Levye] Failed to copy project template: " << error.message() << '\n';
 
     std::filesystem::remove_all(projectDirectory);
 
     return false;
   }
 
-  const std::filesystem::path filesToProcess[] = {
-      projectDirectory / "levye.project", projectDirectory / "CMakeLists.txt",
-      projectDirectory / "Source/Game.cpp"};
+  const std::filesystem::path filesToProcess[] = {projectDirectory / "levye.project",
+                                                  projectDirectory / "CMakeLists.txt",
+                                                  projectDirectory / "Source/Game.cpp"};
 
   for (const auto& path : filesToProcess) {
     if (!ProcessTemplateFile(path, name, target, frameworkDirectory)) {
@@ -99,37 +105,139 @@ bool ProjectGenerator::Generate(const std::string& name,
   if (!modules.empty()) {
     const auto configPath = projectDirectory / "levye.project";
 
-    std::ifstream input(configPath);
+    std::ifstream input(configPath, std::ios::binary);
 
     if (!input) {
+      std::cerr << "[Levye] Cannot read project configuration.\n";
       std::filesystem::remove_all(projectDirectory);
       return false;
     }
 
-    std::string content{std::istreambuf_iterator<char>(input),
-                        std::istreambuf_iterator<char>()};
+    std::string content{std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
+
+    if (input.bad()) {
+      std::cerr << "[Levye] Failed reading project configuration.\n";
+      std::filesystem::remove_all(projectDirectory);
+      return false;
+    }
 
     input.close();
 
+    // Validate the original configuration before modifying it.
+    try {
+      const auto config = toml::parse(content);
+
+      const auto* moduleTable = config["modules"].as_table();
+
+      if (!moduleTable) {
+        std::cerr << "[Levye] Missing [modules] section.\n";
+        std::filesystem::remove_all(projectDirectory);
+        return false;
+      }
+
+      for (const auto& module : modules) {
+        const auto* setting = moduleTable->get(module);
+
+        if (!setting || !setting->is_boolean()) {
+          std::cerr << "[Levye] Missing or invalid module setting: " << module << '\n';
+
+          std::filesystem::remove_all(projectDirectory);
+          return false;
+        }
+      }
+    } catch (const toml::parse_error& error) {
+      std::cerr << "[Levye] Invalid project configuration: " << error << '\n';
+
+      std::filesystem::remove_all(projectDirectory);
+      return false;
+    }
+
+    // Locate the [modules] section, including optional inline comments.
+    const std::regex sectionPattern(R"((^|\n)[ \t]*\[modules\][ \t]*(?:#.*)?(?:\r?\n|$))");
+
+    std::smatch section;
+
+    if (!std::regex_search(content, section, sectionPattern)) {
+      std::cerr << "[Levye] Cannot locate [modules] section.\n";
+      std::filesystem::remove_all(projectDirectory);
+      return false;
+    }
+
+    const std::size_t sectionEnd = static_cast<std::size_t>(section.position() + section.length());
+
+    // Find the next TOML section without touching unrelated settings.
+    const std::regex tablePattern(
+        R"(^[ \t]*(?:\[\[[^\]\r\n]+\]\]|\[[^\]\r\n]+\])[ \t]*(?:#.*)?\r?$)");
+
+    std::size_t sectionLimit = content.size();
+
+    for (std::size_t lineStart = sectionEnd; lineStart < content.size();) {
+      const auto lineEnd = content.find('\n', lineStart);
+      const auto line = content.substr(lineStart, lineEnd - lineStart);
+
+      if (std::regex_match(line, tablePattern)) {
+        sectionLimit = lineStart;
+        break;
+      }
+
+      if (lineEnd == std::string::npos) break;
+      lineStart = lineEnd + 1;
+    }
+
+    std::string body = content.substr(sectionEnd, sectionLimit - sectionEnd);
+
     for (const auto& module : modules) {
-      const std::string setting = module + " = false";
-      const std::string replacement = module + " = true";
+      const std::regex settingPattern("(^|\\n)([ \\t]*" + module +
+                                      R"([ \t]*=[ \t]*)(true|false)([ \t]*(?:#.*)?(?=\r?\n|$)))");
 
-      const auto position = content.find(setting);
+      std::smatch setting;
 
-      if (position == std::string::npos) {
-        std::cerr << "[Levye] Module setting not found: " << module << '\n';
+      if (!std::regex_search(body, setting, settingPattern)) {
+        std::cerr << "[Levye] Cannot locate module setting: " << module << '\n';
 
         std::filesystem::remove_all(projectDirectory);
         return false;
       }
 
-      content.replace(position, setting.size(), replacement);
+      // Replace only the boolean value, preserving formatting and comments.
+      body.replace(static_cast<std::size_t>(setting.position(3)),
+                   static_cast<std::size_t>(setting.length(3)), "true");
     }
 
-    std::ofstream output(configPath, std::ios::trunc);
+    content.replace(sectionEnd, sectionLimit - sectionEnd, body);
+
+    // Verify that the resulting TOML enables every requested module.
+    try {
+      const auto config = toml::parse(content);
+      const auto* moduleTable = config["modules"].as_table();
+
+      if (!moduleTable) {
+        std::cerr << "[Levye] Updated module table is missing.\n";
+        std::filesystem::remove_all(projectDirectory);
+        return false;
+      }
+
+      for (const auto& module : modules) {
+        const auto* setting = moduleTable->get(module);
+
+        if (!setting || setting->value<bool>() != true) {
+          std::cerr << "[Levye] Failed to enable module: " << module << '\n';
+
+          std::filesystem::remove_all(projectDirectory);
+          return false;
+        }
+      }
+    } catch (const toml::parse_error& error) {
+      std::cerr << "[Levye] Updated configuration is invalid: " << error << '\n';
+
+      std::filesystem::remove_all(projectDirectory);
+      return false;
+    }
+
+    std::ofstream output(configPath, std::ios::binary | std::ios::trunc);
 
     if (!output) {
+      std::cerr << "[Levye] Cannot write project configuration.\n";
       std::filesystem::remove_all(projectDirectory);
       return false;
     }
@@ -138,13 +246,18 @@ bool ProjectGenerator::Generate(const std::string& name,
     output.close();
 
     if (!output) {
+      std::cerr << "[Levye] Failed writing project configuration.\n";
       std::filesystem::remove_all(projectDirectory);
       return false;
     }
   }
 
-  std::cout << "[Levye] Created project \"" << name << "\" at "
-            << projectDirectory << '\n';
+  std::cout << "[Levye] Created project \"" << name << "\" at " << projectDirectory << '\n';
+
+  std::cout << "\n[Levye] Next steps:\n"
+            << "  cd \"" << projectDirectory.string() << "\"\n"
+            << "  levye build\n"
+            << "  levye run\n";
 
   return true;
 }
@@ -163,16 +276,15 @@ std::string ProjectGenerator::CreateTargetName(const std::string& name) {
   return target;
 }
 
-bool ProjectGenerator::ProcessTemplateFile(
-    const std::filesystem::path& path, const std::string& projectName,
-    const std::string& projectTarget,
-    const std::filesystem::path& frameworkDirectory) {
+bool ProjectGenerator::ProcessTemplateFile(const std::filesystem::path& path,
+                                           const std::string& projectName,
+                                           const std::string& projectTarget,
+                                           const std::filesystem::path& frameworkDirectory) {
   std::ifstream input(path);
 
   if (!input) return false;
 
-  std::string content{std::istreambuf_iterator<char>(input),
-                      std::istreambuf_iterator<char>()};
+  std::string content{std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
 
   input.close();
 

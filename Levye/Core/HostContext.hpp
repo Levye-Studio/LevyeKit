@@ -14,6 +14,8 @@ class SerializationService;
 struct SerializationAPI;
 struct ImGuiAPI;
 class Application;
+class AnimationService;
+struct AnimationAPI;
 
 /**
  * @brief Internal collection of host-owned systems exposed to game services.
@@ -31,6 +33,8 @@ struct HostContext {
   SerializationService* serialization = nullptr;
   SerializationAPI* serializationAPI = nullptr;
   ImGuiAPI* imguiAPI = nullptr;
+  AnimationService* animation = nullptr;
+  AnimationAPI* animationAPI = nullptr;
 
   TimeSystem* time = nullptr;
 

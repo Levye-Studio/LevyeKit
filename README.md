@@ -62,6 +62,7 @@
         <li><a href="#public-api">Public API</a></li>
         <li><a href="#serialization">Serialization</a></li>
         <li><a href="#dear-imgui">Dear ImGui</a></li>
+        <li><a href="#animation">Animation</a></li>
         <li><a href="#architecture">Architecture</a></li>
         <li><a href="#game-api">Game API</a></li>
         <li><a href="#hot-reloading">Hot Reloading</a></li>
@@ -97,6 +98,7 @@ LevyeKit provides reusable systems for:
 * Optional framework modules
 * YAML game-data serialization
 * Optional Dear ImGui debugging UI
+* Optional skeletal animation and animation state machines
 * Keyboard, mouse, and gamepad input
 * Texture, shader, and font management
 * Asset hot reloading
@@ -110,7 +112,7 @@ LevyeKit provides reusable systems for:
 
 The framework stays intentionally small so games can use raylib directly whenever it already provides the required functionality.
 
-> **Status:** LevyeKit `v0.3.0` introduces optional Dear ImGui integration with hot-reload support, host-owned ImGui context management, and keyboard/mouse input capture. Optional modules can be enabled using `levye new --with` or `levye add`. The framework is still evolving, and APIs may change in future releases.
+> **Status:** LevyeKit **v0.4.0** focuses on optional skeletal animation, crossfading, state machines, and Sandbox verification. **v0.4.5** is the next advancement milestone. APIs may change before release.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -311,6 +313,7 @@ Enable optional modules when creating a project:
 ```sh
 levye new MyGame --with imgui
 levye new MyGame --with serialization --with imgui
+levye new MyGame --with animation
 ```
 
 Or enable a module in an existing project:
@@ -318,6 +321,7 @@ Or enable a module in an existing project:
 ```sh
 levye add imgui
 levye add serialization
+levye add animation
 ```
 
 The CLI records enabled modules in `levye.project`:
@@ -326,10 +330,16 @@ The CLI records enabled modules in `levye.project`:
 [modules]
 serialization = false
 imgui = true
+animation = true
 ```
 
 The generated project's CMake configuration reads these settings. Modules are
-opt-in; projects without ImGui do not need its API in their game code.
+opt-in; projects without a module do not need its API in their game code.
+
+> **Animation CLI integration (v0.4.0):** The `animation` examples above describe
+> the intended CLI workflow. Verify that the CLI module registry, project
+> generator, and CMake template support `animation` before publishing them as
+> available commands.
 
 ### Build
 
@@ -426,6 +436,7 @@ Levye::Time
 Levye::Assets
 Levye::Audio
 Levye::Serialization // Optional module
+Levye::Animation     // Optional module
 ```
 Optional modules expose their APIs through their respective module headers.
 
@@ -827,6 +838,103 @@ ImGui window focus alone does not imply keyboard capture: an active text input
 can request keyboard capture even when merely focusing the window does not.
 Capture changes should not create artificial press or release events.
 
+### Animation
+
+Animation is an optional host-owned module for skeletal playback, looping, pause/resume, speed control, crossfading, and named state machines. For projects with Animation CLI support, enable it when creating a game or add it later:
+
+```sh
+levye new MyGame --with animation
+# Or, from an existing game project:
+levye add animation
+levye build
+```
+
+These CLI commands require the v0.4.0 CLI/module-template integration described above.
+For a direct framework build, enable it with `-DLEVYE_WITH_ANIMATION=ON`.
+Game code can include `<Levye/Modules/Animation/Animation.hpp>` or use the
+optional include from `<Levye/LevyeKit.hpp>` when Animation is enabled.
+
+Controllers and animation resources use generation-safe handles. The host retains controllers, clips, playback clocks, parameters, and rules across compatible game-module reloads. Create/load during normal initialization and destroy/unload during final shutdown. The game owns the raylib `Model`; `ApplyBoundAnimation()` only borrows its pointer for the call.
+
+#### Playback and state machines
+
+Use `GetAnimationCount()` and `LoadAnimations()` to load clips, `CreateController()` to create a controller, `BindAnimation()`/`PlayBound()` for initial playback, and `ApplyBoundAnimation()` to update a compatible model. `GetPlaybackState()` reports the source clock, including during crossfades; `GetTransitionState()` reports source and target handles and blend progress. Interrupted crossfades use a cached pose to reduce discontinuities.
+
+Named states configure a clip, transition duration, playback speed, looping, optional return state, and priority. `SetState()` respects priority, `ForceState()` overrides it, and `RestartState()` replays a state. `IsStateFinished()` detects a completed one-shot; non-looping states can automatically return to another registered state. `GetCurrentState()` copies the state name to a caller-owned buffer; `IsTransitionActive()` queries crossfade activity.
+
+```cpp
+#include <Levye/Modules/Animation/Animation.hpp>
+
+// Assume controller, idleClip, and punchClip are valid handles.
+const bool idleAdded =
+    Levye::Animation::AddState(controller, "Idle", idleClip, 0.2f, 1.0f, true);
+const bool punchAdded =
+    Levye::Animation::AddState(controller, "Punch", punchClip, 0.2f, 1.0f,
+                               false, "Idle", 10);
+if (idleAdded && punchAdded) {
+    (void)Levye::Animation::SetState(controller, "Idle");
+    // Later, when gameplay requests an attack:
+    (void)Levye::Animation::SetState(controller, "Punch");
+}
+```
+
+#### Conditional transitions
+
+`AnimationTransitionRule` holds one or more `AnimationCondition` values; all conditions must match. Parameters support Boolean, finite float, integer, and trigger values. Rules are evaluated deterministically by priority, then registration order. Triggers remain armed until a successful transition consumes them or `ResetTrigger()` clears them. State priority still applies to conditional transitions.
+
+```cpp
+// Register the "Run" state before adding this rule.
+Levye::AnimationCondition moving{};
+moving.parameter = "Moving";
+moving.type = Levye::AnimationParameterType::Bool;
+moving.comparison = Levye::AnimationComparison::Equal;
+moving.boolValue = true;
+Levye::AnimationTransitionRule startRun{"Idle", "Run", &moving, 1, 10};
+if (Levye::Animation::AddTransition(controller, startRun)) {
+    (void)Levye::Animation::SetBoolParameter(controller, "Moving", true);
+}
+```
+
+Additional controls include `SetFloatParameter()`, `SetIntParameter()`, `SetTrigger()`, `ResetTrigger()`, and `ClearTransitions()`. Parameters and conditions are copied into host-owned storage rather than retaining game-module pointers.
+
+#### Sandbox animation verification
+
+The Sandbox provides **seven independently selectable animation modes** sharing robot assets while maintaining separate host-owned controllers. Press **F1–F7** (or **Fn+F1–F7** on some Macs), **T** to open/cycle scenes, and **Escape** to return to the menu.
+
+```sh
+cmake -S . -B Build/build-animation -DLEVYE_WITH_ANIMATION=ON -DLEVYE_BUILD_TESTS=ON
+cmake --build Build/build-animation -j 4
+```
+
+| Key | Scene | Manual checks |
+| --- | --- | --- |
+| F1 | Playback | Left/Right cycle; P pause; Up/Down speed; R restart |
+| F2 | Crossfade | Left/Right select; Enter fade; Space interrupt; inspect pose continuity |
+| F3 | State Machine | Enter request; F force; verify priority restrictions |
+| F4 | Conditions | W, Shift+W, C, Space, J exercise typed conditions and triggers |
+| F5 | One-shots | J, Space, D, V trigger actions; verify automatic return |
+| F6 | Gameplay | A/D movement and actions; verify combined animation behavior |
+| F7 | Lifecycle & Reload | R recreate controller; U unload temporary clip; V check handles |
+
+Launch from the repository root:
+
+```sh
+./Targets/build-animation/bin/Sandbox
+```
+
+For the live reload test, leave Sandbox running on F7 and execute in a second terminal:
+
+```sh
+cmake -E touch Examples/Sandbox/Game/Game.cpp
+cmake --build Build/build-animation --target Game -j 4
+```
+
+The reload count should increase and the persistence diagnostic should remain `PASS`. Automated tests do not replace manual graphical verification.
+
+#### ABI and compatibility
+
+The current animation callback ABI is `ANIMATION_API_VERSION` **9**, independent of `GAME_API_VERSION` and the LevyeKit release number. Rebuild host and game modules together after incompatible API changes. Animation service operations and pose application are main-thread operations. raylib 6.2 checks model/clip bone counts but not bone ordering; use clips authored for the same skeleton. The module can be disabled with `-DLEVYE_WITH_ANIMATION=OFF`.
+
 ### Architecture
 
 LevyeKit separates the stable application host from reloadable game-specific code.
@@ -1145,6 +1253,7 @@ LevyeKit/
 │   ├── Input/
 │   ├── Modules/
 │   │   ├── Serialization/
+│   │   ├── Animation/
 │   │   └── ImGui/
 │   ├── Platform/
 │   ├── Project/
@@ -1247,6 +1356,21 @@ Mobile platforms may use a different development workflow because of platform re
 * [x] Hardware-independent input-capture tests
 * [x] Gamepad input remains available during ImGui capture
 * [x] Final documentation and release preparation
+
+### v0.4.0 — Animation
+
+* [x] Host-owned skeletal playback and generation-safe handles
+* [x] Interruptible crossfades and pose snapshots
+* [x] Named states, priorities, and one-shot returns
+* [x] Typed parameters and conditional transitions
+* [x] Seven Sandbox verification modes
+* [x] Animation regression tests and public API documentation
+* [ ] CLI module registry and generated-project integration for `animation`
+* [ ] Cross-platform visual and hot-reload verification
+
+### v0.4.5 — Animation Advancement (Planned)
+
+* [ ] Define and scope the next animation improvements after v0.4.0 verification
 
 ### Planned Modules
 
