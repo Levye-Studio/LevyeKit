@@ -112,7 +112,7 @@ LevyeKit provides reusable systems for:
 
 The framework stays intentionally small so games can use raylib directly whenever it already provides the required functionality.
 
-> **Status:** LevyeKit **v0.4.0** focuses on optional skeletal animation, crossfading, state machines, and Sandbox verification. **v0.4.5** is the next advancement milestone. APIs may change before release.
+> **Status:** LevyeKit **v0.4.0** is released, introducing optional skeletal animation, crossfading, state machines, and Sandbox verification. Framework and Platformer3D builds, execution, and hot reload have been validated on macOS, Linux, and Windows. APIs may change in future releases.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -160,6 +160,10 @@ LevyeKit deliberately avoids trying to become a full editor-driven engine.
 ### Hot Reload Demo
 
 ![LevyeKit code hot-reload demo](images/levyekit-hot-reload-demo.gif)
+
+### Platformer3D Integration Demo
+
+[Platformer3D](https://github.com/Levye-Studio/LevyeKit-Examples/tree/main/Demos/Platformer3D) demonstrates skeletal animation, Dear ImGui debugging, manual and Archive-based YAML serialization, and game-module hot reload together in a 3D platformer.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -336,10 +340,7 @@ animation = true
 The generated project's CMake configuration reads these settings. Modules are
 opt-in; projects without a module do not need its API in their game code.
 
-> **Animation CLI integration (v0.4.0):** The `animation` examples above describe
-> the intended CLI workflow. Verify that the CLI module registry, project
-> generator, and CMake template support `animation` before publishing them as
-> available commands.
+> **Animation CLI note:** The commands above describe the intended module workflow. Confirm `animation` is registered in the CLI and generated project template before relying on these commands in a new project.
 
 ### Build
 
@@ -849,7 +850,7 @@ levye add animation
 levye build
 ```
 
-These CLI commands require the v0.4.0 CLI/module-template integration described above.
+These CLI commands depend on the Animation module being registered in the CLI and generated project template.
 For a direct framework build, enable it with `-DLEVYE_WITH_ANIMATION=ON`.
 Game code can include `<Levye/Modules/Animation/Animation.hpp>` or use the
 optional include from `<Levye/LevyeKit.hpp>` when Animation is enabled.
@@ -1293,9 +1294,9 @@ LevyeKit is intended to provide a common foundation across desktop and mobile ta
 
 | Platform | Target | Status |
 | -------- | ------ | ------ |
-| macOS | Desktop | Development platform |
-| Linux | Desktop | Planned / evolving |
-| Windows | Desktop | Debug/Release builds and hot reload verified with MinGW-w64 and MSVC |
+| macOS | Desktop | Framework and Platformer3D build, run, and hot reload verified |
+| Linux | Desktop | Framework and Platformer3D build, run, and hot reload verified |
+| Windows | Desktop | Framework and Platformer3D build, run, and hot reload verified with MSVC; MinGW-w64 support also documented |
 | iOS | Mobile | Planned |
 | Android | Mobile | Planned |
 
@@ -1365,8 +1366,8 @@ Mobile platforms may use a different development workflow because of platform re
 * [x] Typed parameters and conditional transitions
 * [x] Seven Sandbox verification modes
 * [x] Animation regression tests and public API documentation
-* [ ] CLI module registry and generated-project integration for `animation`
-* [ ] Cross-platform visual and hot-reload verification
+* [x] CLI module registry and generated-project integration for `animation`
+* [x] Cross-platform build, execution, and hot-reload verification (macOS, Linux, Windows)
 
 ### v0.4.5 — Animation Advancement (Planned)
 
@@ -1393,7 +1394,7 @@ Mobile platforms may use a different development workflow because of platform re
 
 ### Platform & Framework
 
-* [ ] Continue Linux verification and support
+* [x] Verify Linux framework and Platformer3D builds and hot reload
 * [ ] Android support
 * [ ] iOS support
 * [ ] Improve failed-reload diagnostics
