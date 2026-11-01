@@ -4,7 +4,11 @@ add_library(LevyeAnimation STATIC
   AnimationService.cpp
   AnimationResource.cpp
   AnimationStateMachine.cpp
+  EditablePose.cpp
     IK/TwoBoneIK.cpp
+    IK/MultiChainIK.cpp
+    IK/EndEffectorOrientation.cpp
+    Stabilization/BodyStabilization.cpp
 )
 
 target_include_directories(LevyeAnimation

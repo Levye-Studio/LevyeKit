@@ -2,6 +2,23 @@
 
 All notable changes to LevyeKit are documented here.
 
+## [0.4.5] - Release candidate (unpublished)
+
+### Added
+- Editable host-owned skeletal poses and local/model bone access.
+- Weighted, constrained, and multi-chain Two-Bone IK with explicit pole continuity and per-chain outcomes.
+- Caller-owned contact targeting, procedural locomotion, end-effector orientation, and kinematic body stabilization.
+- Sandbox animation scenes F8–F11.
+
+### Fixed
+- Game-module loading checks the API version prefix before copying the full callback table.
+- Replacing or unloading an active game module destroys its persistent state while the old code remains loaded.
+- Scene 10 terrain samples match visible geometry, touchdown footprints remain fixed during contact acquisition, and body tilt pivots around the body center.
+
+### Compatibility
+- Game API remains v15; Animation API is v15. Animation remains optional.
+- This candidate has macOS Debug/Release build. Final macOS graphical review remains open. Linux and Windows are unverified for v0.4.5; their support paths remain available. See [known issues](Docs/Known-Issues-v0.4.5.md).
+
 ## [0.4.0] - 2026-10-29
 
 ### Added

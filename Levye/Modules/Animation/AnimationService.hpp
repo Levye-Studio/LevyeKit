@@ -4,6 +4,7 @@
 #include <Levye/Modules/Animation/AnimationAPI.hpp>
 #include <Levye/Modules/Animation/AnimationResource.hpp>
 #include <Levye/Modules/Animation/AnimationStateMachine.hpp>
+#include <Levye/Modules/Animation/EditablePose.hpp>
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -66,6 +67,47 @@ class AnimationService {
 
   /** @brief Applies the current pose to a caller-owned raylib model. */
   [[nodiscard]] bool ApplyBoundAnimation(AnimationControllerHandle controller, Model* model);
+
+  /** @brief Creates an editable host pose from a borrowed model skeleton. */
+  [[nodiscard]] AnimationPoseHandle CreatePose(AnimationControllerHandle controller,
+                                               const Model* model);
+  void DestroyPose(AnimationPoseHandle pose);
+  [[nodiscard]] bool IsPoseValid(AnimationPoseHandle pose) const noexcept;
+  [[nodiscard]] int GetPoseBoneCount(AnimationPoseHandle pose) const noexcept;
+  [[nodiscard]] int FindPoseBone(AnimationPoseHandle pose, const char* name) const noexcept;
+  [[nodiscard]] bool GetPoseBoneName(AnimationPoseHandle pose, int bone, char* output,
+                                     int capacity) const noexcept;
+  [[nodiscard]] int GetPoseBoneParent(AnimationPoseHandle pose, int bone) const noexcept;
+  [[nodiscard]] bool SamplePose(AnimationPoseHandle pose);
+  [[nodiscard]] bool GetPoseBoneTransform(AnimationPoseHandle pose, int bone,
+                                          AnimationBoneSpace space,
+                                          AnimationBoneTransform& output) const;
+  [[nodiscard]] bool SetPoseBoneTransform(AnimationPoseHandle pose, int bone,
+                                          AnimationBoneSpace space,
+                                          const AnimationBoneTransform& value);
+  [[nodiscard]] bool ApplyPose(AnimationPoseHandle pose, Model* model);
+
+  [[nodiscard]] bool SolveTwoBoneIK(AnimationPoseHandle pose, int root, int middle, int end,
+                                    const float target[3], const float pole[3],
+                                    float tolerance = 0.001f);
+  /** @brief Applies weighted IK to a host-owned editable pose. */
+  [[nodiscard]] bool SolveTwoBoneIKWeighted(AnimationPoseHandle pose, int root, int middle, int end,
+                                            const float target[3], const float pole[3],
+                                            float weight, float tolerance = 0.001f);
+  /** @brief Solves constrained IK and reports reachability separately from validity. */
+  [[nodiscard]] bool SolveTwoBoneIKConstrained(AnimationPoseHandle pose, int root, int middle,
+                                               int end, const float target[3], const float pole[3],
+                                               const AnimationIKConstraint& constraint,
+                                               float weight, float tolerance,
+                                               AnimationIKResult& result);
+  /** @brief Solves independent chains on one sampled host-owned pose. */
+  [[nodiscard]] bool SolveIKChains(AnimationPoseHandle pose,
+                                   const AnimationIKChainRequest* requests, int count,
+                                   AnimationIKChainResult* results);
+  /** @brief Applies end rotations after positional IK to one sampled host pose. */
+  [[nodiscard]] bool SolveOrientations(AnimationPoseHandle pose,
+                                       const AnimationOrientationRequest* requests, int count,
+                                       AnimationOrientationResult* results);
 
   /** @brief Starts direct playback and clears any named-state selection. */
   [[nodiscard]] bool Play(AnimationControllerHandle handle, float duration, bool looping);
@@ -164,6 +206,15 @@ class AnimationService {
 
   std::vector<ControllerSlot> m_Controllers;
   std::vector<std::uint32_t> m_FreeSlots;
+
+  struct PoseSlot {
+    std::uint32_t generation = 1;
+    bool active = false;
+    AnimationControllerHandle controller = INVALID_ANIMATION_CONTROLLER;
+    EditablePose pose;
+  };
+  std::vector<PoseSlot> m_Poses;
+  std::vector<std::uint32_t> m_FreePoseSlots;
 
   AnimationResource m_Resources;
   bool m_Initialized = false;

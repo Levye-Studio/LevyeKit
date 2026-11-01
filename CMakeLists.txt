@@ -47,7 +47,7 @@ option(
 
 project(
     LevyeKit
-    VERSION 0.4.0
+    VERSION 0.4.5
     LANGUAGES CXX
 )
 
@@ -317,7 +317,10 @@ if(LEVYE_WITH_IMGUI)
 endif()
 
 if(LEVYE_WITH_ANIMATION)
-    target_sources(Game PRIVATE Examples/Sandbox/Game/AnimationScene.cpp)
+    target_sources(Game PRIVATE Examples/Sandbox/Game/AnimationScene.cpp
+        Examples/Sandbox/Game/LocomotionScene.cpp
+        Examples/Sandbox/Game/OrientationScene.cpp)
+    target_link_libraries(Game PRIVATE LevyeAnimation)
     target_compile_definitions(
         Game
         PRIVATE

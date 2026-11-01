@@ -5,6 +5,8 @@
 #include <Levye/Debug/Logger.hpp>
 #include <Levye/Input/InputMap.hpp>
 #include <Levye/Screen/ScreenManager.hpp>
+#include <cstring>
+#include <type_traits>
 #include <utility>
 
 namespace Levye {
@@ -501,7 +503,12 @@ GameModule::~GameModule() {
 }
 
 bool GameModule::Load(const std::string& path) {
-  Unload();
+  // Replacing a started module must run its state destructor while its code is loaded.
+  if (m_State && !m_Library.IsLoaded()) {
+    Logger::Error("Cannot replace a module whose state outlived its library.");
+    return false;
+  }
+  Shutdown();
 
 #if defined(_WIN32)
   CleanupRuntimeFiles();
@@ -895,6 +902,14 @@ void GameModule::Unload() {
 #endif
   if (!m_Library.IsLoaded()) return;
 
+  if (m_State) {
+    if (m_API.OnShutdown) m_API.OnShutdown(m_State);
+    if (m_API.DestroyState) m_API.DestroyState(m_State);
+    ::operator delete(m_State);
+    m_State = nullptr;
+  }
+  if (m_API.BindServices) m_API.BindServices(nullptr);
+
   m_API = {};
   m_HasAPI = false;
   m_Started = false;
@@ -913,35 +928,11 @@ void GameModule::Unload() {
 }
 
 void GameModule::Shutdown() {
-  if (!m_Library.IsLoaded()) return;
-
-  if (m_State) {
-    if (m_API.OnShutdown) {
-      m_API.OnShutdown(m_State);
-    }
-
-    if (m_API.DestroyState) {
-      m_API.DestroyState(m_State);
-    }
-
-    ::operator delete(m_State);
-
-    m_State = nullptr;
-  }
-
-  /*
-   * The game module no longer needs access to host-owned systems.
-   * Clear its module-local Services binding before unloading the library.
-   */
-  if (m_API.BindServices) {
-    m_API.BindServices(nullptr);
-  }
+  Unload();
 
 #ifdef LEVYE_WITH_ANIMATION
   m_AnimationService.Shutdown();
 #endif
-
-  Unload();
 }
 
 bool GameModule::IsLoaded() const { return m_Library.IsLoaded() && m_HasAPI; }
@@ -1032,7 +1023,17 @@ bool GameModule::LoadCandidate(const std::filesystem::path& path, DynamicLibrary
     return false;
   }
 
-  api = *gameAPI;
+  // The version prefix is the only field safe to read from an older table.
+  // Copying the entire struct first could read beyond an older module's storage.
+  if (gameAPI->version != GAME_API_VERSION) {
+    Logger::Error("Game API version mismatch. Host: " + std::to_string(GAME_API_VERSION) +
+                  ", Game: " + std::to_string(gameAPI->version));
+    library.Unload();
+    return false;
+  }
+
+  static_assert(std::is_trivially_copyable_v<GameAPI>);
+  std::memcpy(&api, gameAPI, sizeof(api));
 
   if (!ValidateAPI(api)) {
     library.Unload();

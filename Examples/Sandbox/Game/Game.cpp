@@ -177,12 +177,79 @@ void OnLoad(void* state) {
   Levye::Input::BindKey("AnimationPunch", KEY_SPACE);
   Levye::Input::BindKey("AnimationJump", KEY_J);
   Levye::Input::BindKey("AnimationRestart", KEY_R);
+  Levye::Input::BindKey("AnimationBoneNext", KEY_RIGHT_BRACKET);
+  Levye::Input::BindKey("AnimationBonePrevious", KEY_LEFT_BRACKET);
+  Levye::Input::BindKey("AnimationBonePositive", KEY_E);
+  Levye::Input::BindKey("AnimationBoneNegative", KEY_Q);
+  Levye::Input::BindKey("AnimationBoneReset", KEY_B);
   Levye::Input::BindKey("AnimationLeft", KEY_A);
   Levye::Input::BindKey("AnimationRight", KEY_D);
   Levye::Input::BindKey("AnimationDeath", KEY_D);
   Levye::Input::BindKey("AnimationWave", KEY_V);
   Levye::Input::BindKey("AnimationUnload", KEY_U);
   Levye::Input::BindKey("AnimationVerify", KEY_V);
+  Levye::Input::BindKey("AnimationScene8", KEY_F8);
+  Levye::Input::BindKey("AnimationScene9", KEY_F9);
+  Levye::Input::BindKey("AnimationScene10", KEY_F10);
+  Levye::Input::BindKey("AnimationScene11", KEY_F11);
+  Levye::Input::BindKey("OrientationFlat", KEY_ONE);
+  Levye::Input::BindKey("OrientationSlope", KEY_TWO);
+  Levye::Input::BindKey("OrientationRotate", KEY_THREE);
+  Levye::Input::BindKey("OrientationWeightDown", KEY_LEFT_BRACKET);
+  Levye::Input::BindKey("OrientationWeightUp", KEY_RIGHT_BRACKET);
+  Levye::Input::BindKey("OrientationWeightZero", KEY_ZERO);
+  Levye::Input::BindKey("OrientationWeightFull", KEY_NINE);
+  Levye::Input::BindKey("OrientationConstraints", KEY_C);
+  Levye::Input::BindKey("OrientationFreeze", KEY_F);
+  Levye::Input::BindKey("LocomotionBiped", KEY_ONE);
+  Levye::Input::BindKey("LocomotionQuadruped", KEY_TWO);
+  Levye::Input::BindKey("LocomotionHexapod", KEY_THREE);
+  Levye::Input::BindKey("LocomotionWalk", KEY_G);
+  Levye::Input::BindKey("LocomotionPause", KEY_P);
+  Levye::Input::BindKey("LocomotionLeft", KEY_A);
+  Levye::Input::BindKey("LocomotionRight", KEY_D);
+  Levye::Input::BindKey("LocomotionForward", KEY_W);
+  Levye::Input::BindKey("LocomotionBack", KEY_S);
+  Levye::Input::BindKey("LocomotionTurnLeft", KEY_Q);
+  Levye::Input::BindKey("LocomotionTurnRight", KEY_E);
+  Levye::Input::BindKey("LocomotionSpeedDown", KEY_MINUS);
+  Levye::Input::BindKey("LocomotionSpeedUp", KEY_EQUAL);
+  Levye::Input::BindKey("LocomotionStrideDown", KEY_COMMA);
+  Levye::Input::BindKey("LocomotionStrideUp", KEY_PERIOD);
+  Levye::Input::BindKey("LocomotionMoveSpeedDown", KEY_SEMICOLON);
+  Levye::Input::BindKey("LocomotionMoveSpeedUp", KEY_APOSTROPHE);
+  Levye::Input::BindKey("LocomotionStabilization", KEY_B);
+  Levye::Input::BindKey("LocomotionStrengthDown", KEY_N);
+  Levye::Input::BindKey("LocomotionStrengthUp", KEY_H);
+  Levye::Input::BindKey("LocomotionSupportDebug", KEY_V);
+  Levye::Input::BindKey("LocomotionMarch", KEY_M);
+  Levye::Input::BindKey("LocomotionHeightDown", KEY_LEFT_BRACKET);
+  Levye::Input::BindKey("LocomotionHeightUp", KEY_RIGHT_BRACKET);
+  Levye::Input::BindKey("ContactSelect", KEY_TAB);
+  Levye::Input::BindKey("ContactToggle", KEY_C);
+  Levye::Input::BindKey("ContactRelease", KEY_SPACE);
+  Levye::Input::BindKey("ContactSurfacePrevious", KEY_LEFT);
+  Levye::Input::BindKey("ContactSurfaceNext", KEY_RIGHT);
+
+  Levye::Input::BindKey("IKToggle", KEY_I);
+  Levye::Input::BindKey("IKTargetLeft", KEY_J);
+  Levye::Input::BindKey("IKTargetRight", KEY_L);
+  Levye::Input::BindKey("IKTargetForward", KEY_U);
+  Levye::Input::BindKey("IKTargetBackward", KEY_O);
+  Levye::Input::BindKey("IKTargetUp", KEY_K);
+  Levye::Input::BindKey("IKTargetDown", KEY_M);
+  Levye::Input::BindKey("IKPoleReverse", KEY_P);
+  Levye::Input::BindKey("IKReset", KEY_R);
+  Levye::Input::BindKey("IKWeightDown", KEY_LEFT_BRACKET);
+  Levye::Input::BindKey("IKWeightUp", KEY_RIGHT_BRACKET);
+  Levye::Input::BindKey("IKResponseDown", KEY_MINUS);
+  Levye::Input::BindKey("IKResponseUp", KEY_EQUAL);
+  Levye::Input::BindKey("IKConstraintToggle", KEY_ONE);
+  Levye::Input::BindKey("IKMinDown", KEY_TWO);
+  Levye::Input::BindKey("IKMinUp", KEY_THREE);
+  Levye::Input::BindKey("IKMaxDown", KEY_FOUR);
+  Levye::Input::BindKey("IKMaxUp", KEY_FIVE);
+  Levye::Input::BindKey("IKSelectChain", KEY_TAB);
 #endif
 
   Levye::Input::BindKey("TestMouse", KEY_C);
@@ -223,7 +290,7 @@ void OnLoad(void* state) {
   if (!game->animationScene.Initialize(robotPath.string().c_str())) {
     Levye::Log::Error("Robot animation scenes initialization failed.");
   } else {
-    Levye::Log::Info("Seven robot animation scenes ready.");
+    Levye::Log::Info("Ten animation scenes ready.");
   }
 #endif
 
@@ -250,7 +317,7 @@ void OnAfterReload(void* state) {
 #ifdef LEVYE_WITH_ANIMATION
   Sandbox::VerifyAnimationReload(game->animationTest);
   Levye::Log::Info(game->animationScene.AfterReload()
-                       ? "PASS: seven animation scenes survived hot reload"
+                       ? "PASS: ten animation scenes survived hot reload"
                        : "FAIL: an animation scene lost state on hot reload");
 #endif
 }
@@ -273,8 +340,10 @@ void OnUpdate(void* state, float deltaTime) {
 #ifdef LEVYE_WITH_ANIMATION
   if (game->animationScene.IsReady()) {
     constexpr const char* sceneActions[AnimationScene::SceneCount] = {
-        "AnimationScene1", "AnimationScene2", "AnimationScene3", "AnimationScene4",
-        "AnimationScene5", "AnimationScene6", "AnimationScene7"};
+        "AnimationScene1", "AnimationScene2",  "AnimationScene3", "AnimationScene4",
+        "AnimationScene5", "AnimationScene6",  "AnimationScene7", "AnimationScene8",
+        "AnimationScene9", "AnimationScene10", "AnimationScene11"};
+
     for (int scene = 0; scene < AnimationScene::SceneCount; ++scene) {
       if (Levye::Input::IsPressed(sceneActions[scene])) {
         if (game->animationScene.SelectScene(scene)) Levye::Screen::Set("Animation");
@@ -402,8 +471,9 @@ void OnDraw(void* state) {
 
 #ifdef LEVYE_WITH_ANIMATION
     if (game->animationScene.IsReady()) {
-      DrawText("T: Animation scenes | F1-F7: Open a scene", 40, 135, 24, LIGHTGRAY);
+      DrawText("T: Animation scenes | F1-F11: Open a scene", 40, 135, 24, LIGHTGRAY);
     }
+
 #endif
 
     return;

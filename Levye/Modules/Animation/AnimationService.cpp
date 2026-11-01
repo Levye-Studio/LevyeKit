@@ -11,6 +11,10 @@
 #include <utility>
 #include <vector>
 
+#include "IK/EndEffectorOrientation.hpp"
+#include "IK/MultiChainIK.hpp"
+#include "IK/TwoBoneIK.hpp"
+
 namespace Levye {
 
 namespace {
@@ -84,6 +88,19 @@ void AnimationService::Shutdown() {
   m_Resources.Clear();
 
   if (!m_Initialized) return;
+
+  m_FreePoseSlots.clear();
+  for (std::size_t i = 0; i < m_Poses.size(); ++i) {
+    auto& pose = m_Poses[i];
+    if (pose.active) {
+      pose.active = false;
+      pose.controller = INVALID_ANIMATION_CONTROLLER;
+      pose.pose = {};
+      if (pose.generation != std::numeric_limits<std::uint32_t>::max()) ++pose.generation;
+    }
+    if (pose.generation != std::numeric_limits<std::uint32_t>::max())
+      m_FreePoseSlots.push_back(static_cast<std::uint32_t>(i));
+  }
 
   // Preserve generations so stale handles never revive.
   m_FreeSlots.clear();
@@ -163,6 +180,10 @@ AnimationControllerHandle AnimationService::CreateController() {
 
 void AnimationService::DestroyController(AnimationControllerHandle handle) {
   if (!IsControllerValid(handle)) return;
+
+  for (std::uint32_t i = 0; i < m_Poses.size(); ++i)
+    if (m_Poses[i].active && m_Poses[i].controller == handle)
+      DestroyPose(MakeHandle(i, m_Poses[i].generation));
 
   const std::uint32_t index = HandleIndex(handle);
   ControllerSlot& slot = m_Controllers[index];
@@ -333,6 +354,183 @@ bool AnimationService::GetAnimationName(AnimationResourceHandle animation, char*
   std::memcpy(output, resource->name, length);
   output[length] = '\0';
   return true;
+}
+
+AnimationPoseHandle AnimationService::CreatePose(AnimationControllerHandle controller,
+                                                 const Model* model) {
+  if (!model || !IsControllerValid(controller)) return INVALID_ANIMATION_POSE;
+  const auto& slot = m_Controllers[HandleIndex(controller)];
+  const ModelAnimation* animation = m_Resources.Get(slot.animation);
+  if (!animation || animation->boneCount != model->skeleton.boneCount)
+    return INVALID_ANIMATION_POSE;
+  EditablePose candidate;
+  if (!candidate.Initialize(model->skeleton)) return INVALID_ANIMATION_POSE;
+  const bool reuse = !m_FreePoseSlots.empty();
+  if (!reuse && m_Poses.size() >= std::numeric_limits<std::uint32_t>::max())
+    return INVALID_ANIMATION_POSE;
+  const auto index = reuse ? m_FreePoseSlots.back() : static_cast<std::uint32_t>(m_Poses.size());
+  if (reuse)
+    m_FreePoseSlots.pop_back();
+  else
+    m_Poses.emplace_back();
+  auto& pose = m_Poses[index];
+  pose.active = true;
+  pose.controller = controller;
+  pose.pose = std::move(candidate);
+  return MakeHandle(index, pose.generation);
+}
+
+void AnimationService::DestroyPose(AnimationPoseHandle handle) {
+  if (!IsPoseValid(handle)) return;
+  const auto index = HandleIndex(handle);
+  auto& pose = m_Poses[index];
+  pose.active = false;
+  pose.controller = INVALID_ANIMATION_CONTROLLER;
+  pose.pose = {};
+  if (pose.generation != std::numeric_limits<std::uint32_t>::max()) {
+    ++pose.generation;
+    m_FreePoseSlots.push_back(index);
+  }
+}
+
+bool AnimationService::IsPoseValid(AnimationPoseHandle handle) const noexcept {
+  if (!m_Initialized || handle == INVALID_ANIMATION_POSE) return false;
+  const auto index = HandleIndex(handle);
+  return index < m_Poses.size() && m_Poses[index].active &&
+         m_Poses[index].generation == HandleGeneration(handle) &&
+         IsControllerValid(m_Poses[index].controller);
+}
+
+int AnimationService::GetPoseBoneCount(AnimationPoseHandle handle) const noexcept {
+  return IsPoseValid(handle) ? m_Poses[HandleIndex(handle)].pose.BoneCount() : 0;
+}
+
+int AnimationService::FindPoseBone(AnimationPoseHandle handle, const char* name) const noexcept {
+  return IsPoseValid(handle) ? m_Poses[HandleIndex(handle)].pose.Find(name) : -1;
+}
+
+bool AnimationService::GetPoseBoneName(AnimationPoseHandle handle, int bone, char* output,
+                                       int capacity) const noexcept {
+  return IsPoseValid(handle) && m_Poses[HandleIndex(handle)].pose.Name(bone, output, capacity);
+}
+
+int AnimationService::GetPoseBoneParent(AnimationPoseHandle handle, int bone) const noexcept {
+  return IsPoseValid(handle) ? m_Poses[HandleIndex(handle)].pose.Parent(bone) : -1;
+}
+
+bool AnimationService::SamplePose(AnimationPoseHandle handle) {
+  if (!IsPoseValid(handle)) return false;
+  auto& poseSlot = m_Poses[HandleIndex(handle)];
+  const auto& controller = m_Controllers[HandleIndex(poseSlot.controller)];
+  const ModelAnimation* source = m_Resources.Get(controller.animation);
+  if (!source || source->keyframeCount <= 0 || !source->keyframePoses ||
+      source->boneCount != static_cast<unsigned int>(poseSlot.pose.BoneCount()))
+    return false;
+
+  std::vector<Transform> sampled;
+  if (!controller.transition.active) {
+    SampleAnimationPose(*source, controller.playback, controller.framesPerSecond, sampled);
+  } else {
+    const ModelAnimation* target = m_Resources.Get(controller.transition.target);
+    if (!target || target->keyframeCount <= 0 || !target->keyframePoses ||
+        target->boneCount != source->boneCount || controller.transition.duration <= 0.0f)
+      return false;
+    if (controller.useSourceSnapshot && controller.transitionSourcePose.size() != source->boneCount)
+      return false;
+    const float alpha =
+        std::clamp(controller.transition.elapsed / controller.transition.duration, 0.0f, 1.0f);
+    sampled.resize(source->boneCount);
+    for (unsigned int bone = 0; bone < source->boneCount; ++bone) {
+      const Transform from = controller.useSourceSnapshot
+                                 ? controller.transitionSourcePose[bone]
+                                 : SampleBone(*source, static_cast<int>(bone),
+                                              controller.playback.time, controller.framesPerSecond);
+      const Transform to = SampleBone(*target, static_cast<int>(bone),
+                                      controller.targetPlayback.time, controller.framesPerSecond);
+      sampled[bone] = BlendTransform(from, to, alpha);
+    }
+  }
+  return poseSlot.pose.SetSample(sampled);
+}
+
+bool AnimationService::GetPoseBoneTransform(AnimationPoseHandle handle, int bone,
+                                            AnimationBoneSpace space,
+                                            AnimationBoneTransform& output) const {
+  return IsPoseValid(handle) && m_Poses[HandleIndex(handle)].pose.Get(bone, space, output);
+}
+
+bool AnimationService::SetPoseBoneTransform(AnimationPoseHandle handle, int bone,
+                                            AnimationBoneSpace space,
+                                            const AnimationBoneTransform& value) {
+  return IsPoseValid(handle) && m_Poses[HandleIndex(handle)].pose.Set(bone, space, value);
+}
+
+bool AnimationService::ApplyPose(AnimationPoseHandle handle, Model* model) {
+  if (!model || !IsPoseValid(handle)) return false;
+  auto& slot = m_Poses[HandleIndex(handle)];
+  if (!slot.pose.IsSampled() || !slot.pose.Matches(model->skeleton) || !IsModelValid(*model))
+    return false;
+  auto modelPose = slot.pose.ModelPose();
+  if (modelPose.size() != static_cast<std::size_t>(slot.pose.BoneCount())) return false;
+  ModelAnimPose frames[] = {modelPose.data()};
+  ModelAnimation animation{};
+  animation.boneCount = static_cast<unsigned int>(modelPose.size());
+  animation.keyframeCount = 1;
+  animation.keyframePoses = frames;
+  if (!IsModelAnimationValid(*model, animation)) return false;
+  UpdateModelAnimation(*model, animation, 0.0f);
+  m_Controllers[HandleIndex(slot.controller)].evaluatedPose = modelPose;
+  return true;
+}
+
+bool AnimationService::SolveTwoBoneIK(AnimationPoseHandle handle, int root, int middle, int end,
+                                      const float target[3], const float pole[3], float tolerance) {
+  if (!target || !pole || !IsPoseValid(handle)) return false;
+
+  EditablePose& pose = m_Poses[HandleIndex(handle)].pose;
+
+  if (!pose.IsSampled()) return false;
+
+  const Vector3 targetPosition{target[0], target[1], target[2]};
+
+  const Vector3 polePosition{pole[0], pole[1], pole[2]};
+
+  return TwoBoneIK::Solve(pose, root, middle, end, targetPosition, polePosition, tolerance);
+}
+
+bool AnimationService::SolveTwoBoneIKWeighted(AnimationPoseHandle handle, int root, int middle,
+                                              int end, const float target[3], const float pole[3],
+                                              float weight, float tolerance) {
+  if (!target || !pole || !IsPoseValid(handle)) return false;
+  EditablePose& pose = m_Poses[HandleIndex(handle)].pose;
+  return TwoBoneIK::SolveWeighted(pose, root, middle, end, {target[0], target[1], target[2]},
+                                  {pole[0], pole[1], pole[2]}, weight, tolerance);
+}
+
+bool AnimationService::SolveTwoBoneIKConstrained(AnimationPoseHandle handle, int root, int middle,
+                                                 int end, const float target[3],
+                                                 const float pole[3],
+                                                 const AnimationIKConstraint& constraint,
+                                                 float weight, float tolerance,
+                                                 AnimationIKResult& result) {
+  if (!target || !pole || !IsPoseValid(handle)) return false;
+  return TwoBoneIK::SolveConstrained(m_Poses[HandleIndex(handle)].pose, root, middle, end,
+                                     {target[0], target[1], target[2]}, {pole[0], pole[1], pole[2]},
+                                     constraint, weight, tolerance, result);
+}
+
+bool AnimationService::SolveIKChains(AnimationPoseHandle handle,
+                                     const AnimationIKChainRequest* requests, int count,
+                                     AnimationIKChainResult* results) {
+  return IsPoseValid(handle) &&
+         MultiChainIK::Solve(m_Poses[HandleIndex(handle)].pose, requests, count, results);
+}
+
+bool AnimationService::SolveOrientations(AnimationPoseHandle handle,
+                                         const AnimationOrientationRequest* requests, int count,
+                                         AnimationOrientationResult* results) {
+  return IsPoseValid(handle) && EndEffectorOrientation::SolveBatch(
+                                    m_Poses[HandleIndex(handle)].pose, requests, count, results);
 }
 
 bool AnimationService::ApplyBoundAnimation(AnimationControllerHandle controller, Model* model) {
@@ -1207,6 +1405,143 @@ bool APIResetTrigger(void* context, AnimationControllerHandle controller, const 
   return host->animation && host->animation->ResetTrigger(controller, name);
 }
 
+AnimationPoseHandle APICreatePose(void* context, AnimationControllerHandle controller,
+                                  const Model* model) {
+  if (!context || !model) return INVALID_ANIMATION_POSE;
+  auto* host = static_cast<HostContext*>(context);
+  return host->animation ? host->animation->CreatePose(controller, model) : INVALID_ANIMATION_POSE;
+}
+
+void APIDestroyPose(void* context, AnimationPoseHandle pose) {
+  if (!context) return;
+  auto* host = static_cast<HostContext*>(context);
+  if (host->animation) host->animation->DestroyPose(pose);
+}
+
+bool APIIsPoseValid(void* context, AnimationPoseHandle pose) {
+  if (!context) return false;
+  auto* host = static_cast<HostContext*>(context);
+  return host->animation && host->animation->IsPoseValid(pose);
+}
+
+int APIGetPoseBoneCount(void* context, AnimationPoseHandle pose) {
+  if (!context) return 0;
+  auto* host = static_cast<HostContext*>(context);
+  return host->animation ? host->animation->GetPoseBoneCount(pose) : 0;
+}
+
+int APIFindPoseBone(void* context, AnimationPoseHandle pose, const char* name) {
+  if (!context || !name) return -1;
+  auto* host = static_cast<HostContext*>(context);
+  return host->animation ? host->animation->FindPoseBone(pose, name) : -1;
+}
+
+bool APIGetPoseBoneName(void* context, AnimationPoseHandle pose, int bone, char* output,
+                        int capacity) {
+  if (!context || !output) return false;
+  auto* host = static_cast<HostContext*>(context);
+  return host->animation && host->animation->GetPoseBoneName(pose, bone, output, capacity);
+}
+
+int APIGetPoseBoneParent(void* context, AnimationPoseHandle pose, int bone) {
+  if (!context) return -1;
+  auto* host = static_cast<HostContext*>(context);
+  return host->animation ? host->animation->GetPoseBoneParent(pose, bone) : -1;
+}
+
+bool APISamplePose(void* context, AnimationPoseHandle pose) {
+  if (!context) return false;
+  auto* host = static_cast<HostContext*>(context);
+  return host->animation && host->animation->SamplePose(pose);
+}
+
+bool APIGetPoseBoneTransform(void* context, AnimationPoseHandle pose, int bone,
+                             AnimationBoneSpace space, AnimationBoneTransform* output) {
+  if (!context || !output) return false;
+  auto* host = static_cast<HostContext*>(context);
+  return host->animation && host->animation->GetPoseBoneTransform(pose, bone, space, *output);
+}
+
+bool APISetPoseBoneTransform(void* context, AnimationPoseHandle pose, int bone,
+                             AnimationBoneSpace space, const AnimationBoneTransform* value) {
+  if (!context || !value) return false;
+  auto* host = static_cast<HostContext*>(context);
+  return host->animation && host->animation->SetPoseBoneTransform(pose, bone, space, *value);
+}
+
+bool APIApplyPose(void* context, AnimationPoseHandle pose, Model* model) {
+  if (!context || !model) return false;
+  auto* host = static_cast<HostContext*>(context);
+  return host->animation && host->animation->ApplyPose(pose, model);
+}
+
+bool APISolveTwoBoneIK(void* context, AnimationPoseHandle pose, int root, int middle, int end,
+                       const float target[3], const float pole[3], float tolerance) {
+  if (!context || !target || !pole) return false;
+
+  auto* host = static_cast<HostContext*>(context);
+
+  return host->animation &&
+         host->animation->SolveTwoBoneIK(pose, root, middle, end, target, pole, tolerance);
+}
+
+bool APISolveTwoBoneIKWeighted(void* context, AnimationPoseHandle pose, int root, int middle,
+                               int end, const float target[3], const float pole[3], float weight,
+                               float tolerance) {
+  if (!context || !target || !pole) return false;
+  auto* host = static_cast<HostContext*>(context);
+  return host->animation && host->animation->SolveTwoBoneIKWeighted(pose, root, middle, end, target,
+                                                                    pole, weight, tolerance);
+}
+
+bool APISolveTwoBoneIKConstrained(void* context, AnimationPoseHandle pose, int root, int middle,
+                                  int end, const float target[3], const float pole[3],
+                                  const AnimationIKConstraint* constraint, float weight,
+                                  float tolerance, AnimationIKResult* result) {
+  if (!context || !target || !pole || !constraint || !result) return false;
+  auto* host = static_cast<HostContext*>(context);
+  return host->animation &&
+         host->animation->SolveTwoBoneIKConstrained(pose, root, middle, end, target, pole,
+                                                    *constraint, weight, tolerance, *result);
+}
+
+bool APISolveIKChains(void* context, AnimationPoseHandle pose,
+                      const AnimationIKChainRequest* requests, int count,
+                      AnimationIKChainResult* results) {
+  if (!context) return false;
+  auto* host = static_cast<HostContext*>(context);
+  return host->animation && host->animation->SolveIKChains(pose, requests, count, results);
+}
+
+bool APISolveOrientations(void* context, AnimationPoseHandle pose,
+                          const AnimationOrientationRequest* requests, int count,
+                          AnimationOrientationResult* results) {
+  if (!context) return false;
+  auto* host = static_cast<HostContext*>(context);
+  return host->animation && host->animation->SolveOrientations(pose, requests, count, results);
+}
+
+bool APISurfaceOrientation(void* context, const float normal[3], const float forward[3],
+                           const float localUp[3], const float localForward[3],
+                           const float previous[4], float output[4]) {
+  if (!context || !normal || !forward || !localUp || !localForward || !output) return false;
+  auto* host = static_cast<HostContext*>(context);
+  if (!host->animation || !host->animation->IsInitialized()) return false;
+  Quaternion result{};
+  const Quaternion prior = previous ? Quaternion{previous[0], previous[1], previous[2], previous[3]}
+                                    : QuaternionIdentity();
+  if (!EndEffectorOrientation::SurfaceOrientation(
+          {normal[0], normal[1], normal[2]}, {forward[0], forward[1], forward[2]},
+          {localUp[0], localUp[1], localUp[2]}, {localForward[0], localForward[1], localForward[2]},
+          result, previous ? &prior : nullptr))
+    return false;
+  output[0] = result.x;
+  output[1] = result.y;
+  output[2] = result.z;
+  output[3] = result.w;
+  return true;
+}
+
 }  // namespace
 
 AnimationAPI MakeAnimationAPI(AnimationService& service) {
@@ -1245,7 +1580,24 @@ AnimationAPI MakeAnimationAPI(AnimationService& service) {
           .SetFloatParameter = APISetFloatParameter,
           .SetIntParameter = APISetIntParameter,
           .SetTrigger = APISetTrigger,
-          .ResetTrigger = APIResetTrigger};
+          .ResetTrigger = APIResetTrigger,
+          .CreatePose = APICreatePose,
+          .DestroyPose = APIDestroyPose,
+          .IsPoseValid = APIIsPoseValid,
+          .GetPoseBoneCount = APIGetPoseBoneCount,
+          .FindPoseBone = APIFindPoseBone,
+          .GetPoseBoneName = APIGetPoseBoneName,
+          .GetPoseBoneParent = APIGetPoseBoneParent,
+          .SamplePose = APISamplePose,
+          .GetPoseBoneTransform = APIGetPoseBoneTransform,
+          .SetPoseBoneTransform = APISetPoseBoneTransform,
+          .ApplyPose = APIApplyPose,
+          .SolveTwoBoneIK = APISolveTwoBoneIK,
+          .SolveTwoBoneIKWeighted = APISolveTwoBoneIKWeighted,
+          .SolveTwoBoneIKConstrained = APISolveTwoBoneIKConstrained,
+          .SolveIKChains = APISolveIKChains,
+          .SolveOrientations = APISolveOrientations,
+          .SurfaceOrientation = APISurfaceOrientation};
 }
 
 }  // namespace Levye

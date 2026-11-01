@@ -112,7 +112,7 @@ LevyeKit provides reusable systems for:
 
 The framework stays intentionally small so games can use raylib directly whenever it already provides the required functionality.
 
-> **Status:** LevyeKit **v0.4.0** is released, introducing optional skeletal animation, crossfading, state machines, and Sandbox verification. Framework and Platformer3D builds, execution, and hot reload have been validated on macOS, Linux, and Windows. APIs may change in future releases.
+> **Status:** LevyeKit **v0.4.5** is a release candidate undergoing final macOS graphical review. Animation API v15 adds editable poses, IK, procedural contacts and locomotion, end-effector orientation, and kinematic body stabilization. Debug/Release builds and private headless checks passed on macOS. Linux and Windows support remains in the project, but those platforms are unverified for v0.4.5. See the [known issues](Docs/Known-Issues-v0.4.5.md).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -340,7 +340,7 @@ animation = true
 The generated project's CMake configuration reads these settings. Modules are
 opt-in; projects without a module do not need its API in their game code.
 
-> **Animation CLI note:** The commands above describe the intended module workflow. Confirm `animation` is registered in the CLI and generated project template before relying on these commands in a new project.
+The CLI records module choices in `levye.project`, and CMake reads them during configuration. Reconfigure after changing modules in an existing build directory.
 
 ### Build
 
@@ -850,12 +850,38 @@ levye add animation
 levye build
 ```
 
-These CLI commands depend on the Animation module being registered in the CLI and generated project template.
+The CLI and generated template register Animation as an optional module.
 For a direct framework build, enable it with `-DLEVYE_WITH_ANIMATION=ON`.
 Game code can include `<Levye/Modules/Animation/Animation.hpp>` or use the
 optional include from `<Levye/LevyeKit.hpp>` when Animation is enabled.
 
 Controllers and animation resources use generation-safe handles. The host retains controllers, clips, playback clocks, parameters, and rules across compatible game-module reloads. Create/load during normal initialization and destroy/unload during final shutdown. The game owns the raylib `Model`; `ApplyBoundAnimation()` only borrows its pointer for the call.
+
+#### Editable skeletal poses (Animation API v10)
+
+For procedural bone edits, create a pose from a controller and compatible model after binding a clip. The host copies bone names and parent indices; it never retains the model pointer. Each frame, call `SamplePose()` to replace previous edits with the controller's current pose, then read or set individual bones in `AnimationBoneSpace::Local` or `AnimationBoneSpace::Model`, and call `ApplyPose()` on the same skeleton. Local edits propagate to descendants in model space. Model-space writes are converted to a local transform relative to the current parent; a zero-scale parent cannot be inverted, so such writes are rejected. Transform values are plain floats, independent of raylib's animation storage.
+
+```cpp
+auto pose = Levye::Animation::CreatePose(controller, &model);
+if (Levye::Animation::SamplePose(pose)) {
+    const int bone = Levye::Animation::FindPoseBone(pose, "Arm");
+    Levye::AnimationBoneTransform transform{};
+    if (bone >= 0 && Levye::Animation::GetPoseBoneTransform(
+            pose, bone, Levye::AnimationBoneSpace::Local, transform)) {
+        transform.translation[1] += 0.1f;
+        (void)Levye::Animation::SetPoseBoneTransform(
+            pose, bone, Levye::AnimationBoneSpace::Local, transform);
+    }
+    (void)Levye::Animation::ApplyPose(pose, &model);
+}
+// During final shutdown: Levye::Animation::DestroyPose(pose);
+```
+
+Poses are host-owned generation-safe handles that survive compatible game-module hot reload. Destroying the controller also invalidates its poses; explicitly destroy poses before controllers during normal shutdown. `ApplyPose()` requires a live model with matching bone count, names, and parent indices. The older `ApplyBoundAnimation()` path remains available and unchanged. In Sandbox scene F1, `[` and `]` select a bone, `Q` and `E` rotate it, and `B` resets the procedural rotation.
+
+Two-bone IK accepts a model-space target and pole. `SolveTwoBoneIKConstrained()` takes bend limits in **radians**, where zero is a straight chain and π is fully folded. The target is clamped to the nearest radius allowed by the two segment lengths and bend limits; a valid clamped solve returns `true` with `AnimationIKResult::reachable == 0`. `endError` measures the final endpoint against the original target, including any partial IK weight. Supply the previous result's model-space `bendDirection` on the next call (`hasPreviousDirection = 1`) to prevent pole flips near collinear configurations. Without it, the solver uses the preferred direction, then the pole, sampled bend, and finally a deterministic least-aligned coordinate axis. The caller owns this continuity state; the host does not retain it. Weighted solves preserve local bone translations and scales and blend only root and middle rotations.
+
+`SolveIKChains(pose, requests, count, results)` applies multiple model-space two-bone requests to one already sampled pose. Call `SamplePose()` once, submit the batch, then `ApplyPose()` once. Active request IDs must be unique; accepted chains run by ascending ID, and results retain input order. Every pair of chains whose root or middle controls the same bone or an ancestor of another chain's bones is marked `Conflict`. Independent limbs may share an uncontrolled torso ancestor. The batch permits partial success: disabled, invalid, conflicting, or failed chains leave their part of the pose untouched while independent chains can still solve. Check each result's status; a `Solved` result may still report an unreachable clamped target. The caller owns request arrays and previous bend directions; the host retains no pointers from the batch.
 
 #### Playback and state machines
 
@@ -900,10 +926,10 @@ Additional controls include `SetFloatParameter()`, `SetIntParameter()`, `SetTrig
 
 #### Sandbox animation verification
 
-The Sandbox provides **seven independently selectable animation modes** sharing robot assets while maintaining separate host-owned controllers. Press **F1–F7** (or **Fn+F1–F7** on some Macs), **T** to open/cycle scenes, and **Escape** to return to the menu.
+The Sandbox provides **eleven independently selectable animation modes**. Scenes 1–9 share robot assets and host-owned controllers; Scenes 10–11 use caller-owned procedural rigs. Press **F1–F11** (or **Fn+F1–F11** on some Macs), **T** to open/cycle scenes, and **Escape** to return to the menu.
 
 ```sh
-cmake -S . -B Build/build-animation -DLEVYE_WITH_ANIMATION=ON -DLEVYE_BUILD_TESTS=ON
+cmake -S . -B Build/build-animation -DLEVYE_WITH_ANIMATION=ON
 cmake --build Build/build-animation -j 4
 ```
 
@@ -916,6 +942,22 @@ cmake --build Build/build-animation -j 4
 | F5 | One-shots | J, Space, D, V trigger actions; verify automatic return |
 | F6 | Gameplay | A/D movement and actions; verify combined animation behavior |
 | F7 | Lifecycle & Reload | R recreate controller; U unload temporary clip; V check handles |
+| F8 | Inverse Kinematics | Tab selects an arm; both solve together. I toggles IK; J/L moves selected target X; U/O moves Z; K/M moves Y; P reverses selected pole; R resets selected target and pole; [/] weight; -/= smoothing; 1 limits; 2/3 minimum bend; 4/5 maximum bend |
+| F9 | Procedural Contacts | Tab selects an arm; C enables/disables surface queries; Left/Right chooses flat, raised, or sloped surfaces; A/D moves the robot root; Space releases the selected contact; R resets contacts and root. The HUD shows each arm's contact state, hit filter, IK result, weight, and endpoint error. |
+| F10 | Procedural Locomotion | 1/2/3 selects alternating biped, diagonal quadruped, or tripod hexapod; G starts/stops the gait; M enables marching in place; P pauses it; WASD moves the root; Q/E turns; -/= changes cadence; ,/. changes stride; ;/' changes root speed; [/] changes step height; B enables/disables body stabilization, N/H changes its strength, and V shows/hides the support region. The HUD shows phase, root velocity, per-limb IK/reachability, support count and margin, height, tilt, and reach feasibility. |
+| F11 | End-Effector Orientation | 1 selects flat surfaces, 2 slopes, and 3 rotating surfaces; [/] changes orientation weight, 0/9 jumps to zero/full weight, F freezes the contact target position, and C toggles angular/twist limits. Solid rectangular pads and RGB axes show actual end-bone rotation; yellow wire pads and RGB axes show desired rotation. The HUD reports angular error in degrees and per-target status. On a slope, compare 0 and 9 while F keeps the target still. |
+
+`Locomotion.hpp` supplies caller-owned `GaitScheduler` and `LocomotionTarget` state. Each limb has a stable limb and IK-chain ID, phase offset, duty factor, nominal root-local contact, stride reach, lift height, and enabled flag. Global phase is cycles in `[0,1)`; stance occupies `[0,dutyFactor)` and swing occupies the remainder. `Advance()` reports the number of step-start (stance-to-swing) and step-end (swing-to-stance) boundaries crossed, including large frame deltas. `SampleSwing()` uses smoothstep travel with configurable landing easing and a zero-slope lift curve along the supplied world-up vector. The swing start, landing, lift height, and easing are captured at liftoff; changing the planner during swing does not move that landing. `PlanLanding()` transforms the nominal point by the caller's current root transform, predicts displacement from world-space desired velocity and step duration, applies an externally supplied surface hit, and limits the displacement to maximum stride reach. A missing hit yields `NoSurface`; a malformed hit yields `Invalid`. Both use a bounded predicted target and create no contact.
+
+During stance, `LocomotionTarget` uses `ContactController` to acquire and hold a world-space anchor while the caller moves the root. At step start it releases that contact and follows the generated swing trajectory. At touchdown it starts acquisition from the previous trajectory position, avoiding an immediate target jump. The caller supplies terrain queries and root displacement; the locomotion utilities do not move the character or perform raycasts. Scene 10 builds a small procedural skeleton, solves all active limbs in one `MultiChainIK` batch, applies end-effector orientations, and renders the solved segments. Its hip attachments sit within the rotated body, and the body shifts slightly toward planted supports. Root speed ramps with input; cadence and stride are separate controls. Gait phase pauses when stationary unless marching in place is enabled, and stopping lets active swings finish. `EvaluateLimbReach()` clamps the IK request to a practical two-segment radius while retaining the original world contact anchor; the HUD marks unreachable targets separately from solver failure. The terrain and up vector in that scene use Y-up; the reusable utilities accept arbitrary up vectors. Locked contacts retain their surface orientation; a matching moving-surface transform rotates it. During swing, the end orientation blends between captured liftoff and landing orientations.
+
+`EndEffectorOrientation::SolveBatch()` runs after positional IK and before applying the pose. Requests use xyzw quaternions mapping local axes into model or parent-local space. World-space requests provide a `worldFromModel` rotation and are converted to model space; model targets are then converted through the current parent rotation. Quaternion multiplication composes parent then local rotation. Weight zero preserves the post-IK rotation, weight one reaches an unconstrained target, and intermediate weights use shortest-path slerp. Optional reference-relative limits cap total angular deviation and twist around a chosen reference-local axis, in radians. Duplicate IDs and ancestor/descendant end-bone requests conflict symmetrically; independent requests solve by ascending ID with partial success. The solver preserves the end bone origin, not an offset contact point. `SurfaceOrientation()` accepts arbitrary normal, reference forward, and local contact axes in one consistent space; an optional previous orientation resolves degenerate forward directions.
+
+`Stabilization/BodyStabilization.hpp` provides caller-owned `BodyStabilizer` state and world-space support contacts. `AnalyzeSupport()` projects active, valid contacts onto the plane perpendicular to a caller-provided up vector and builds a deterministic counterclockwise convex hull. Zero contacts yield no support; one and two contacts yield point and segment regions classified by a configurable distance tolerance. A polygon uses a signed margin: positive inside, negative outside, zero on the boundary. The analysis also returns the weighted support centroid, projected body reference, nearest-boundary distance, and horizontal correction direction. Geometric support is a kinematic diagnostic, not proof of dynamic physical balance.
+
+`SuggestBodyHeight()` chooses a bounded height above the weighted support centroid. Optional limb reach intervals limit the suggestion; conflicting intervals produce an explicit infeasible result and a deterministic bounded best effort without moving contacts. `BodyStabilizer::Update()` smooths a capped horizontal correction and height shift using frame-rate-independent exponential responses, and blends an optional capped tilt from coherent support normals while retaining the caller's heading. Opposing normals are reported as conflicting. The controller returns suggestions and never changes the caller's movement root or anchors. Scene 10 updates contacts first, then analyzes support, corrects its procedural body transform, solves one positional IK batch, and finally applies end-effector orientations. Its purple support outline and centroid, yellow body projection, and orange correction line can be toggled with V.
+
+`ContactTargets.hpp` provides caller-owned `ContactController` state and caller-supplied `ContactSurfaceHit` queries. Hits, normals, anchors, and animation-driven endpoints are in **world space**; `ContactToIKRequest()` converts the weighted target to the existing **model-space** `AnimationIKChainRequest` before one batch solve and one pose application. A configurable up vector defines the slope test. Accepted hits acquire exponentially, then lock to a world anchor that ignores query jitter and character-root movement. Explicit release or a missed query returns control to the sampled animation. A locked anchor follows a moving surface only when `followSurface` is enabled and the caller supplies a matching `ContactSurfaceTransform`; otherwise it remains fixed in world space. The surface normal and optional orientation are metadata: positional two-bone IK does not align the end effector's orientation. Scene 9 uses the robot's two discovered arm chains because the model does not provide suitable foot chains.
 
 Launch from the repository root:
 
@@ -930,11 +972,17 @@ cmake -E touch Examples/Sandbox/Game/Game.cpp
 cmake --build Build/build-animation --target Game -j 4
 ```
 
-The reload count should increase and the persistence diagnostic should remain `PASS`. Automated tests do not replace manual graphical verification.
+The reload count should increase and the persistence diagnostic should remain `PASS`. On F8, both arms should keep following their targets after reload. On F9, acquire both contacts, move the root with A/D, then reload the game module; both contact anchors should stay fixed and the HUD should retain the contact states. On F10, start a gait and verify that phase and planted anchors persist through reload. Automated tests do not replace manual graphical verification. Because Scene 10 enlarges the Sandbox game state, start a fresh Sandbox process before this live reload check.
 
 #### ABI and compatibility
 
-The current animation callback ABI is `ANIMATION_API_VERSION` **9**, independent of `GAME_API_VERSION` and the LevyeKit release number. Rebuild host and game modules together after incompatible API changes. Animation service operations and pose application are main-thread operations. raylib 6.2 checks model/clip bone counts but not bone ordering; use clips authored for the same skeleton. The module can be disabled with `-DLEVYE_WITH_ANIMATION=OFF`.
+The current animation callback ABI is `ANIMATION_API_VERSION` **15**, independent of `GAME_API_VERSION` and the LevyeKit release number. Rebuild host and game modules together after incompatible API changes. Animation service operations and pose application are main-thread operations. raylib 6.2 checks model/clip bone counts but not bone ordering; use clips authored for the same skeleton. The module can be disabled with `-DLEVYE_WITH_ANIMATION=OFF`.
+
+For focused public examples of playback, single and multi-chain IK, locked contacts, end orientation, locomotion, and stabilization, see the [Animation v0.4.5 guide](Docs/Animation-v0.4.5.md). See the [release-candidate verification and packaging procedure](Docs/Release-v0.4.5.md) and [known issues](Docs/Known-Issues-v0.4.5.md).
+
+#### Troubleshooting
+
+If Animation is unavailable in a generated project, inspect `[modules]` in `levye.project` and `LEVYE_WITH_ANIMATION` in its CMake cache, then reconfigure the build. If a reload rejects a state-size change, restart the application; changes to a persistent C++ state layout also require a restart even when its size stays equal. If a model does not animate, verify that the clip and model use the same skeleton and bone order.
 
 ### Architecture
 
@@ -1294,9 +1342,9 @@ LevyeKit is intended to provide a common foundation across desktop and mobile ta
 
 | Platform | Target | Status |
 | -------- | ------ | ------ |
-| macOS | Desktop | Framework and Platformer3D build, run, and hot reload verified |
-| Linux | Desktop | Framework and Platformer3D build, run, and hot reload verified |
-| Windows | Desktop | Framework and Platformer3D build, run, and hot reload verified with MSVC; MinGW-w64 support also documented |
+| macOS | Desktop | v0.4.5 candidate Debug/Release builds verified; graphical review pending |
+| Linux | Desktop | Supported build path retained; v0.4.5 unverified |
+| Windows | Desktop | MSVC/MinGW build paths retained; v0.4.5 unverified |
 | iOS | Mobile | Planned |
 | Android | Mobile | Planned |
 
@@ -1369,9 +1417,10 @@ Mobile platforms may use a different development workflow because of platform re
 * [x] CLI module registry and generated-project integration for `animation`
 * [x] Cross-platform build, execution, and hot-reload verification (macOS, Linux, Windows)
 
-### v0.4.5 — Animation Advancement (Planned)
+### v0.4.5 — Animation Advancement (Release candidate)
 
-* [ ] Define and scope the next animation improvements after v0.4.0 verification
+* [x] Editable poses, IK, contacts, locomotion, orientation, and kinematic stabilization implemented
+* [ ] Complete macOS graphical review and live hot-reload check; Linux and Windows remain unverified for v0.4.5
 
 ### Planned Modules
 
