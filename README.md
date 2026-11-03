@@ -112,7 +112,7 @@ LevyeKit provides reusable systems for:
 
 The framework stays intentionally small so games can use raylib directly whenever it already provides the required functionality.
 
-> **Status:** LevyeKit **v0.4.5** is a release candidate undergoing final macOS graphical review. Animation API v15 adds editable poses, IK, procedural contacts and locomotion, end-effector orientation, and kinematic body stabilization. Debug/Release builds and private headless checks passed on macOS. Linux and Windows support remains in the project, but those platforms are unverified for v0.4.5. See the [known issues](Docs/Known-Issues-v0.4.5.md).
+> **Status:** LevyeKit **v0.4.6** is in release preparation. This update adds CLI C++ code generation, automatic CMake source registration, and rollback for recoverable generation failures. Generator regression and transaction tests, plus a generated-game build and run, passed on macOS. Linux and Windows have not yet been verified for v0.4.6. The animation system introduced in v0.4.5 remains documented below; see its [Animation Docs](Docs/Animation-v0.4.5.md).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -268,6 +268,7 @@ A generated project contains the basic structure required to immediately start w
 MyGame/
 ├── Assets/
 ├── Source/
+│   ├── CMakeLists.txt
 │   ├── Game.cpp
 │   └── Main.cpp
 ├── .gitignore
@@ -288,6 +289,8 @@ LevyeKit includes a small command-line tool for the normal game-development work
 ```text
 levye new <name> [options]
 levye add <module>
+levye generate <type> <name> [options]
+levye g <type> <name> [options]
 levye build [options]
 levye run [options]
 levye clean [options]
@@ -407,17 +410,19 @@ Command-specific help is also available:
 ```sh
 levye new --help
 levye add --help
+levye generate --help
+levye g --help
 levye build --help
 levye run --help
 levye clean --help
 levye project --help
 ```
 
-## Code Generation
+### Code Generation
 
 LevyeKit includes a built-in C++ code generator for creating classes, source files, headers, and folders directly inside a game project.
 
-### Generate a class
+#### Generate a class
 
 ```bash
 levye generate class Player
@@ -439,7 +444,7 @@ levye generate class Systems/Physics
 
 Creates `Source/Systems/Physics.hpp` and `Source/Systems/Physics.cpp`.
 
-### Other generation commands
+#### Other generation commands
 
 ```bash
 levye generate source Gameplay/Combat
@@ -453,16 +458,16 @@ The shorter `g` alias is also supported:
 levye g class Player
 ```
 
-### Options
+#### Generator options
 
 | Option | Description |
 |---|---|
 | `--force` | Overwrite existing generated files |
 | `--no-cmake` | Skip CMake source registration |
 
-Generated `.cpp` files are automatically registered in `Source/CMakeLists.txt`, allowing them to be included in the game's next build.
+Generated `.cpp` files are automatically registered in `Source/CMakeLists.txt`, allowing them to be included in the game's next build. This manifest is included by the generated project's root `CMakeLists.txt`.
 
-Existing files are protected by default. The generator also supports older LevyeKit project CMake layouts.
+Existing files are protected by default. The generator also supports migration of compatible older LevyeKit project CMake layouts. File generation is staged and can roll back recoverable errors; it does not guarantee recovery from a process crash or power loss, and concurrent generation is not supported.
 
 For the full command reference:
 
@@ -1035,7 +1040,7 @@ The reload count should increase and the persistence diagnostic should remain `P
 
 The current animation callback ABI is `ANIMATION_API_VERSION` **15**, independent of `GAME_API_VERSION` and the LevyeKit release number. Rebuild host and game modules together after incompatible API changes. Animation service operations and pose application are main-thread operations. raylib 6.2 checks model/clip bone counts but not bone ordering; use clips authored for the same skeleton. The module can be disabled with `-DLEVYE_WITH_ANIMATION=OFF`.
 
-For focused public examples of playback, single and multi-chain IK, locked contacts, end orientation, locomotion, and stabilization, see the [Animation v0.4.5 guide](Docs/Animation-v0.4.5.md). See the [release-candidate verification and packaging procedure](Docs/Release-v0.4.5.md) and [known issues](Docs/Known-Issues-v0.4.5.md).
+For focused public examples of playback, single and multi-chain IK, locked contacts, end orientation, locomotion, and stabilization, see the [Animation v0.4.5 guide](Docs/Animation-v0.4.5.md).
 
 #### Troubleshooting
 
@@ -1399,9 +1404,9 @@ LevyeKit is intended to provide a common foundation across desktop and mobile ta
 
 | Platform | Target | Status |
 | -------- | ------ | ------ |
-| macOS | Desktop | v0.4.5 candidate Debug/Release builds verified; graphical review pending |
-| Linux | Desktop | Supported build path retained; v0.4.5 unverified |
-| Windows | Desktop | MSVC/MinGW build paths retained; v0.4.5 unverified |
+| macOS | Desktop | v0.4.6 CLI generator and generated-game build/run verified; v0.4.5 animation graphical review still pending |
+| Linux | Desktop | Supported build path retained; v0.4.6 unverified |
+| Windows | Desktop | MSVC/MinGW build paths retained; v0.4.6 unverified |
 | iOS | Mobile | Planned |
 | Android | Mobile | Planned |
 
@@ -1479,6 +1484,17 @@ Mobile platforms may use a different development workflow because of platform re
 * [x] Editable poses, IK, contacts, locomotion, orientation, and kinematic stabilization implemented
 * [ ] Complete macOS graphical review and live hot-reload check; Linux and Windows remain unverified for v0.4.5
 
+### v0.4.6 — CLI Code Generation (Release preparation)
+
+* [x] `levye generate` and `levye g` commands for classes, sources, headers, and folders
+* [x] Nested paths under `Source/` and automatic `.cpp` registration in CMake
+* [x] `--force` and `--no-cmake` options; validation of unsafe paths and existing files
+* [x] Compatible legacy CMake project migration
+* [x] Staged file transactions with rollback for recoverable failures
+* [x] Private generator and transaction regression tests passed on macOS
+* [x] New project generation, build, and runtime verification passed on macOS
+* [ ] Linux and Windows verification and final release publication
+
 ### Planned Modules
 
 * [ ] Entity Component System
@@ -1486,6 +1502,8 @@ Mobile platforms may use a different development workflow because of platform re
   * [ ] Keep the public ECS API reasonably independent from the backend
 * [ ] Extended 3D model loading
   * [ ] Additional formats such as STL
+* [ ] Physics Module
+  * [ ] Jolt backend
 
 ### Levye CLI
 
