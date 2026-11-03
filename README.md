@@ -413,6 +413,63 @@ levye clean --help
 levye project --help
 ```
 
+## Code Generation
+
+LevyeKit includes a built-in C++ code generator for creating classes, source files, headers, and folders directly inside a game project.
+
+### Generate a class
+
+```bash
+levye generate class Player
+```
+
+Creates:
+
+```text
+Source/
+├── Player.hpp
+└── Player.cpp
+```
+
+Nested paths are supported:
+
+```bash
+levye generate class Systems/Physics
+```
+
+Creates `Source/Systems/Physics.hpp` and `Source/Systems/Physics.cpp`.
+
+### Other generation commands
+
+```bash
+levye generate source Gameplay/Combat
+levye generate header Core/Constants
+levye generate folder Levels
+```
+
+The shorter `g` alias is also supported:
+
+```bash
+levye g class Player
+```
+
+### Options
+
+| Option | Description |
+|---|---|
+| `--force` | Overwrite existing generated files |
+| `--no-cmake` | Skip CMake source registration |
+
+Generated `.cpp` files are automatically registered in `Source/CMakeLists.txt`, allowing them to be included in the game's next build.
+
+Existing files are protected by default. The generator also supports older LevyeKit project CMake layouts.
+
+For the full command reference:
+
+```bash
+levye generate --help
+```
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- USAGE API -->

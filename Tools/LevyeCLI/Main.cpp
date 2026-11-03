@@ -11,6 +11,7 @@
 #include "AddCommand.hpp"
 #include "BuildCommand.hpp"
 #include "CleanCommand.hpp"
+#include "GenerateCommand.hpp"
 #include "ModuleRegistry.hpp"
 #include "ProjectGenerator.hpp"
 #include "ProjectLocator.hpp"
@@ -34,6 +35,8 @@ void PrintHelp() {
             << "  run              Run the current project\n"
             << "  clean            Remove generated build files\n"
             << "  project          Show information about the current project\n"
+            << "  generate <type> <name>  Generate C++ files\n"
+            << "  g <type> <name>         Alias for generate\n"
             << "\n"
             << "Options:\n"
             << "  -h, --help       Show this help message\n"
@@ -127,6 +130,47 @@ void PrintProjectHelp() {
             << "\n"
             << "Options:\n"
             << "  -h, --help        Show this help message\n";
+}
+
+void PrintGenerateHelp() {
+  std::cout << R"(
+LevyeKit CLI — Code Generator
+
+Usage:
+  levye generate <type> <name> [options]
+  levye g <type> <name> [options]
+
+Types:
+  class       Generate a C++ class (.hpp and .cpp)
+  source      Generate a C++ source file (.cpp)
+  header      Generate a C++ header file (.hpp)
+  folder      Create a directory under Source/
+
+Options:
+  --force     Overwrite existing generated files
+  --no-cmake  Do not update CMake source registration
+  -h, --help  Display this help message
+
+Examples:
+  levye generate class Player
+  levye generate class Systems/Physics
+  levye generate source Gameplay/Combat
+  levye generate header Core/Constants
+  levye generate folder Levels
+
+  levye g class Player
+  levye g class Player --force
+  levye g source Gameplay/Combat --no-cmake
+
+Generated files:
+  All paths are relative to the project's Source/ directory.
+  Generated .cpp files are registered in Source/CMakeLists.txt
+  unless --no-cmake is specified.
+
+Notes:
+  Run this command from inside a LevyeKit project.
+  Existing files are protected unless --force is specified.
+)";
 }
 
 /**
@@ -426,6 +470,41 @@ int main(int argc, char** argv) {
     }
 
     return 0;
+  }
+
+  else if (command == "generate" || command == "g") {
+    if (argc == 3 && IsHelpArgument(argv[2])) {
+      PrintGenerateHelp();
+      return 0;
+    }
+
+    if (argc < 4) {
+      PrintGenerateHelp();
+      return 1;
+    }
+
+    Levye::GenerateOptions options;
+
+    for (int i = 4; i < argc; ++i) {
+      const std::string_view flag(argv[i]);
+
+      if (flag == "--force") {
+        options.force = true;
+      } else if (flag == "--no-cmake") {
+        options.noCMake = true;
+      } else {
+        std::cerr << "[Levye] Unknown generate option: " << flag << '\n';
+        return 1;
+      }
+    }
+
+    const auto projectDirectory = FindCurrentProject();
+
+    if (!projectDirectory) {
+      return 1;
+    }
+
+    return Levye::GenerateCommand::Execute(*projectDirectory, argv[2], argv[3], options) ? 0 : 1;
   }
 
   else if (command == "clean") {

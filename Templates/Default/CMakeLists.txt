@@ -63,10 +63,21 @@ add_subdirectory(
 # Reloadable game module
 # ---------------------------------------------------------
 
+# Core game module source.
+set(LEVYE_GAME_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/Source/Game.cpp"
+)
+
+# Additional sources managed by levye generate.
+include(
+    "${CMAKE_CURRENT_SOURCE_DIR}/Source/CMakeLists.txt"
+    OPTIONAL
+)
+
 add_library(
     Game
     SHARED
-    Source/Game.cpp
+    ${LEVYE_GAME_SOURCES}
 )
 
 target_include_directories(

@@ -2,6 +2,39 @@
 
 All notable changes to LevyeKit are documented here.
 
+
+## [0.4.6] — CLI Code Generation
+
+### Added
+- `levye generate` command with `levye g` shorthand.
+- C++ class generation with `.hpp` and `.cpp` files.
+- Standalone source and header generation.
+- Directory generation under `Source/`.
+- Nested paths for organizing generated code.
+- Automatic CMake registration for generated source files.
+- `--force` option for overwriting existing files.
+- `--no-cmake` option for skipping CMake registration.
+- Transaction-based file generation with rollback on recoverable failures.
+- Dedicated generator help documentation.
+
+### Improved
+- Automatic migration of supported legacy project CMake layouts.
+- Deterministic, duplicate-free generated source registration.
+- Validation of generated file paths and existing destinations.
+- Protection against generation through symbolic links.
+- Compatibility with existing LevyeKit game projects.
+
+### Validation
+- Generator regression tests passed.
+- Transaction failure-injection tests passed.
+- End-to-end project creation, generation, build, and runtime verification passed on macOS.
+
+### Known Limitations
+- Transaction recovery is not guaranteed after a process crash or power loss.
+- Concurrent generation operations are not supported.
+- Linux and Windows verification remains pending.
+
+
 ## [0.4.5] - Release candidate (unpublished)
 
 ### Added

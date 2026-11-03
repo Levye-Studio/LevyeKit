@@ -446,6 +446,9 @@ add_executable(
     Tools/LevyeCLI/RunCommand.cpp
     Tools/LevyeCLI/CleanCommand.cpp
     Tools/LevyeCLI/AddCommand.cpp
+    Tools/LevyeCLI/GenerateCommand.cpp
+    Tools/LevyeCLI/ProjectCMakeMigration.cpp
+    Tools/LevyeCLI/FileTransaction.cpp
 
     Levye/Project/ProjectConfig.cpp
     Levye/Project/ProjectLoader.cpp

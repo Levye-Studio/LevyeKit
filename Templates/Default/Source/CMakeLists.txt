@@ -1,0 +1,6 @@
+# Additional game sources managed by Levye CLI.
+
+# LEVYE_GENERATED_SOURCES_BEGIN
+list(APPEND LEVYE_GAME_SOURCES
+)
+# LEVYE_GENERATED_SOURCES_END
