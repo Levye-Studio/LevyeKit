@@ -11,6 +11,8 @@
 #include <cmath>
 #include <cstdio>
 
+namespace Sandbox {
+
 namespace {
 constexpr float kPlatformMinX = 1.5f;
 constexpr float kPlatformMaxX = 2.9f;
@@ -535,3 +537,5 @@ void LocomotionScene::Draw() const {
   DrawText("Purple: support | Yellow: intent | Cyan: corrected body", panelX + 12, panelY + 133, 14,
            LIGHTGRAY);
 }
+
+}  // namespace Sandbox

@@ -10,6 +10,8 @@
 #include "LocomotionScene.hpp"
 #include "OrientationScene.hpp"
 
+namespace Sandbox {
+
 /** @brief Eleven independent Sandbox views of animation and procedural motion. */
 class AnimationScene {
  public:
@@ -126,3 +128,5 @@ class AnimationScene {
   Levye::AnimationIKChainStatus m_IK2Status = Levye::AnimationIKChainStatus::Disabled;
   float m_IK2EndError = -1.0f;
 };
+
+}  // namespace Sandbox

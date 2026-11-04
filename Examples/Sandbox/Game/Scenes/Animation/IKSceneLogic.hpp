@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace IKSceneLogic {
+namespace Sandbox::IKSceneLogic {
 
 struct Bone {
   std::string name;
@@ -129,4 +129,4 @@ bool SolveIfEnabled(bool enabled, Chain chain, Solver&& solve) {
   return enabled && chain.Valid() && solve();
 }
 
-}  // namespace IKSceneLogic
+}  // namespace Sandbox::IKSceneLogic

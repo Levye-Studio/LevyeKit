@@ -4,6 +4,8 @@
 #include <Levye/Modules/Animation/Contact/ContactTargets.hpp>
 #include <array>
 
+namespace Sandbox {
+
 /** @brief Two independent procedural end effectors; all persistent data is plain caller-owned
  * state. */
 class OrientationScene {
@@ -36,3 +38,5 @@ class OrientationScene {
   bool m_FreezePosition = false;
   bool m_Ready = false;
 };
+
+}  // namespace Sandbox

@@ -7,7 +7,7 @@ if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR AND
     include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/LevyeProjectModules.cmake")
     # Older generated CMake files did not give Game every module definition.
     # Apply selected module guards to parent-directory targets as well.
-    foreach(LEVYE_MODULE IN ITEMS SERIALIZATION IMGUI ANIMATION)
+    foreach(LEVYE_MODULE IN ITEMS SERIALIZATION IMGUI ANIMATION PHYSICS)
         if(LEVYE_WITH_${LEVYE_MODULE})
             set_property(DIRECTORY "${CMAKE_SOURCE_DIR}" APPEND PROPERTY
                 COMPILE_DEFINITIONS "LEVYE_WITH_${LEVYE_MODULE}=1")
@@ -43,6 +43,23 @@ option(
     LEVYE_WITH_ANIMATION
     "Enable the LevyeKit Animation module"
     OFF
+)
+
+option(
+    LEVYE_WITH_PHYSICS
+    "Enable the LevyeKit Physics module"
+    OFF
+)
+
+set(
+    LEVYE_PHYSICS_BACKEND
+    "JOLT"
+    CACHE STRING "Physics backend"
+)
+
+set_property(
+    CACHE LEVYE_PHYSICS_BACKEND
+    PROPERTY STRINGS JOLT
 )
 
 project(
@@ -274,6 +291,28 @@ if(LEVYE_WITH_IMGUI)
     )
 endif()
 
+if(LEVYE_WITH_PHYSICS)
+    add_subdirectory(
+        Levye/Modules/Physics
+    )
+
+    target_link_libraries(
+        LevyeKit
+
+        PRIVATE
+            LevyePhysics
+    )
+
+    target_compile_definitions(
+        LevyeKit
+
+        PUBLIC
+            LEVYE_WITH_PHYSICS=1
+    )
+endif()
+
+
+
 if(LEVYE_BUILD_EXAMPLES)
 
 # ---------------------------------------------------------------------------
@@ -284,6 +323,11 @@ add_library(
     Game SHARED
 
     Examples/Sandbox/Game/Game.cpp
+    Examples/Sandbox/Game/Scenes/Audio/AudioScene.cpp
+    Examples/Sandbox/Game/Scenes/Core/CoreScene.cpp
+    Examples/Sandbox/Game/Scenes/Input/InputScene.cpp
+    Examples/Sandbox/Game/Scenes/Menu/MenuScene.cpp
+    Examples/Sandbox/Game/Scenes/Serialization/SerializationScene.cpp
 )
 
 target_include_directories(
@@ -301,6 +345,7 @@ target_link_libraries(
 )
 
 if(LEVYE_WITH_IMGUI)
+    target_sources(Game PRIVATE Examples/Sandbox/Game/Scenes/ImGui/ImGuiScene.cpp)
     target_link_libraries(
         Game
 
@@ -316,10 +361,26 @@ if(LEVYE_WITH_IMGUI)
     )
 endif()
 
+if(LEVYE_WITH_PHYSICS)
+    target_sources(
+        Game
+
+        PRIVATE
+            Examples/Sandbox/Game/Scenes/Physics/PhysicsScene.cpp
+    )
+
+    target_compile_definitions(
+        Game
+
+        PRIVATE
+            LEVYE_WITH_PHYSICS=1
+    )
+endif()
+
 if(LEVYE_WITH_ANIMATION)
-    target_sources(Game PRIVATE Examples/Sandbox/Game/AnimationScene.cpp
-        Examples/Sandbox/Game/LocomotionScene.cpp
-        Examples/Sandbox/Game/OrientationScene.cpp)
+    target_sources(Game PRIVATE Examples/Sandbox/Game/Scenes/Animation/AnimationScene.cpp
+        Examples/Sandbox/Game/Scenes/Animation/LocomotionScene.cpp
+        Examples/Sandbox/Game/Scenes/Animation/OrientationScene.cpp)
     target_link_libraries(Game PRIVATE LevyeAnimation)
     target_compile_definitions(
         Game

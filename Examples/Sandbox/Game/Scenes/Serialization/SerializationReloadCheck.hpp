@@ -4,7 +4,8 @@
 #include <string>
 
 /** @brief Sandbox checks using only the game-facing serialization facade. */
-namespace SandboxSerialization {
+namespace Sandbox {
+namespace SerializationReloadCheck {
 using Levye::DocumentHandle;
 using Levye::Serialization;
 
@@ -94,4 +95,5 @@ inline bool Shutdown(DocumentHandle& document) {
   document = Levye::InvalidDocumentHandle;
   return !Serialization::Contains(old);
 }
-}  // namespace SandboxSerialization
+}  // namespace SerializationReloadCheck
+}  // namespace Sandbox

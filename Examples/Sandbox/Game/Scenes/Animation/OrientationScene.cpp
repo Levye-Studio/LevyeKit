@@ -12,6 +12,8 @@
 #include <cstdio>
 #include <vector>
 
+namespace Sandbox {
+
 namespace {
 Transform At(Vector3 position) { return {position, QuaternionIdentity(), {1, 1, 1}}; }
 void Copy(Quaternion q, float out[4]) {
@@ -224,3 +226,5 @@ void OrientationScene::Draw() const {
   DrawText("Solid pad + axes: actual   |   Yellow wire pad + axes: desired   |   RGB = XYZ", 24,
            171, 14, LIGHTGRAY);
 }
+
+}  // namespace Sandbox

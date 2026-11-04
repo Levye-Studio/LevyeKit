@@ -13,6 +13,8 @@
 
 #include "IKSceneLogic.hpp"
 
+namespace Sandbox {
+
 namespace {
 constexpr const char* SceneNames[AnimationScene::SceneCount] = {
     "Animation Playback",      "Crossfade Laboratory",    "State Machine",
@@ -1303,3 +1305,5 @@ void AnimationScene::Shutdown() {
   m_IKConstraint.hasPreviousDirection = 0;
   m_IK2Constraint.hasPreviousDirection = 0;
 }
+
+}  // namespace Sandbox

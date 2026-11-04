@@ -5,6 +5,8 @@
 #include <array>
 #include <vector>
 
+namespace Sandbox {
+
 /** @brief Caller-owned procedural rig demonstrating the shared multi-chain IK solver. */
 class LocomotionScene {
  public:
@@ -78,3 +80,5 @@ class LocomotionScene {
   bool m_MarchInPlace = false;
   bool m_Ready = false;
 };
+
+}  // namespace Sandbox

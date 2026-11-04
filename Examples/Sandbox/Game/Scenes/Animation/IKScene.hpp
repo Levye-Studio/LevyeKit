@@ -2,7 +2,7 @@
 
 #include <raylib.h>
 
-namespace IKScene {
+namespace Sandbox::IKScene {
 
 void Initialize();
 void Update(float deltaTime);
@@ -10,4 +10,4 @@ void Draw3D();
 void DrawUI();
 void Shutdown();
 
-}  // namespace IKScene
+}  // namespace Sandbox::IKScene
