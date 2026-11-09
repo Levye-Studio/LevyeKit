@@ -7,7 +7,7 @@ if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR AND
     include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/LevyeProjectModules.cmake")
     # Older generated CMake files did not give Game every module definition.
     # Apply selected module guards to parent-directory targets as well.
-    foreach(LEVYE_MODULE IN ITEMS SERIALIZATION IMGUI ANIMATION PHYSICS)
+    foreach(LEVYE_MODULE IN ITEMS SERIALIZATION IMGUI ANIMATION)
         if(LEVYE_WITH_${LEVYE_MODULE})
             set_property(DIRECTORY "${CMAKE_SOURCE_DIR}" APPEND PROPERTY
                 COMPILE_DEFINITIONS "LEVYE_WITH_${LEVYE_MODULE}=1")
@@ -45,26 +45,9 @@ option(
     OFF
 )
 
-option(
-    LEVYE_WITH_PHYSICS
-    "Enable the LevyeKit Physics module"
-    OFF
-)
-
-set(
-    LEVYE_PHYSICS_BACKEND
-    "JOLT"
-    CACHE STRING "Physics backend"
-)
-
-set_property(
-    CACHE LEVYE_PHYSICS_BACKEND
-    PROPERTY STRINGS JOLT
-)
-
 project(
     LevyeKit
-    VERSION 0.4.6
+    VERSION 0.4.7
     LANGUAGES CXX
 )
 
@@ -291,28 +274,6 @@ if(LEVYE_WITH_IMGUI)
     )
 endif()
 
-if(LEVYE_WITH_PHYSICS)
-    add_subdirectory(
-        Levye/Modules/Physics
-    )
-
-    target_link_libraries(
-        LevyeKit
-
-        PRIVATE
-            LevyePhysics
-    )
-
-    target_compile_definitions(
-        LevyeKit
-
-        PUBLIC
-            LEVYE_WITH_PHYSICS=1
-    )
-endif()
-
-
-
 if(LEVYE_BUILD_EXAMPLES)
 
 # ---------------------------------------------------------------------------
@@ -358,22 +319,6 @@ if(LEVYE_WITH_IMGUI)
 
         PRIVATE
             LEVYE_WITH_IMGUI=1
-    )
-endif()
-
-if(LEVYE_WITH_PHYSICS)
-    target_sources(
-        Game
-
-        PRIVATE
-            Examples/Sandbox/Game/Scenes/Physics/PhysicsScene.cpp
-    )
-
-    target_compile_definitions(
-        Game
-
-        PRIVATE
-            LEVYE_WITH_PHYSICS=1
     )
 endif()
 
@@ -510,6 +455,11 @@ add_executable(
     Tools/LevyeCLI/GenerateCommand.cpp
     Tools/LevyeCLI/ProjectCMakeMigration.cpp
     Tools/LevyeCLI/FileTransaction.cpp
+    Tools/LevyeCLI/ProjectIDE.cpp
+    Tools/LevyeCLI/UpgradeCommand.cpp
+    Tools/LevyeCLI/ProjectModuleMigration.cpp
+    Tools/LevyeCLI/ConvertCommand.cpp
+    Tools/LevyeCLI/ProjectAnalyzer.cpp
 
     Levye/Project/ProjectConfig.cpp
     Levye/Project/ProjectLoader.cpp

@@ -2,6 +2,19 @@
 
 All notable changes to LevyeKit are documented here.
 
+## [0.4.7] — CLI Project Migration (Release candidate)
+
+### Added
+- `levye upgrade` for supported older LevyeKit project layouts.
+- `levye convert` for a constrained subset of CMake C++ projects.
+- Local regression coverage for migration, conversion, and transaction recovery.
+
+### Validation
+- Debug and Release CLI builds and local CLI test suites passed on macOS.
+- Disposable generated, upgraded, and converted projects built on macOS.
+- Disposable generated and converted raylib projects rendered changing frames, hot reloaded game code with persistent state, and exited cleanly on macOS.
+- Linux and Windows remain unverified for v0.4.7.
+
 
 ## [0.4.6] — CLI Code Generation
 

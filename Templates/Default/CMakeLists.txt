@@ -8,6 +8,9 @@ project(
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Generate compiler commands for clangd and other language servers.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Single-configuration generators need a default; VS chooses at build time.
 if(WIN32 AND NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)

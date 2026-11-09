@@ -157,12 +157,6 @@ void InputScene::Bind() {
   Levye::Input::BindKey("IKMaxUp", KEY_FIVE);
   Levye::Input::BindKey("IKSelectChain", KEY_TAB);
 #endif
-#ifdef LEVYE_WITH_PHYSICS
-  Levye::Input::BindKey("ShowPhysics", KEY_F12);
-  Levye::Input::BindKey("PhysicsImpulse", KEY_SPACE);
-  Levye::Input::BindKey("PhysicsReset", KEY_R);
-
-#endif
 
   Levye::Input::BindKey("TestMouse", KEY_C);
   Levye::Input::BindMouseButton("TestMouse", MOUSE_BUTTON_LEFT);

@@ -23,9 +23,6 @@ void DestroyState(void* state) { GetState(state)->~GameState(); }
 void OnLoad(void* state) {
   auto* game = GetState(state);
   Sandbox::InputScene::Bind();
-#ifdef LEVYE_WITH_PHYSICS
-  if (!game->physicsScene.Initialize()) Levye::Log::Error("Sandbox physics initialization failed.");
-#endif
   game->core.Initialize();
   Sandbox::SerializationScene::Initialize(game->persistentDocument);
 #ifdef LEVYE_WITH_ANIMATION
@@ -42,9 +39,6 @@ void OnLoad(void* state) {
   Levye::Log::Info("Sandbox started.");
 }
 void OnBeforeReload(void* state) {
-#ifdef LEVYE_WITH_PHYSICS
-  GetState(state)->physicsScene.BeforeReload();
-#endif
   Levye::Log::Info("Sandbox preparing for reload.");
 }
 void OnAfterReload(void* state) {
@@ -57,26 +51,9 @@ void OnAfterReload(void* state) {
                        ? "PASS: ten animation scenes survived hot reload"
                        : "FAIL: an animation scene lost state on hot reload");
 #endif
-#ifdef LEVYE_WITH_PHYSICS
-  Levye::Log::Info(game->physicsScene.AfterReload() ? "PASS: Physics state survived hot reload"
-                                                    : "FAIL: Physics state was not preserved");
-#endif
 }
 void OnUpdate(void* state, float deltaTime) {
   auto* game = GetState(state);
-#ifdef LEVYE_WITH_PHYSICS
-  if (Levye::Input::IsPressed("ShowPhysics")) {
-    Levye::Screen::Set("Physics");
-    return;
-  }
-  if (Levye::Screen::Is("Physics")) {
-    if (Levye::Input::IsPressed("Back"))
-      Levye::Screen::Set("Menu");
-    else
-      game->physicsScene.Update();
-    return;
-  }
-#endif
 #ifdef LEVYE_WITH_ANIMATION
   if (game->animationScene.IsReady()) {
     constexpr const char* sceneActions[Sandbox::AnimationScene::SceneCount] = {
@@ -115,12 +92,6 @@ void OnUpdate(void* state, float deltaTime) {
 void OnFixedUpdate(void*, float) {}
 void OnDraw(void* state) {
   auto* game = GetState(state);
-#ifdef LEVYE_WITH_PHYSICS
-  if (Levye::Screen::Is("Physics")) {
-    game->physicsScene.Draw();
-    return;
-  }
-#endif
 #ifdef LEVYE_WITH_ANIMATION
   if (Levye::Screen::Is("Animation")) {
     ClearBackground(DARKGRAY);
@@ -147,9 +118,6 @@ void OnShutdown(void* state) {
 #ifdef LEVYE_WITH_ANIMATION
   game->animationScene.Shutdown();
   Sandbox::ShutdownAnimationTest(game->animationTest);
-#endif
-#ifdef LEVYE_WITH_PHYSICS
-  game->physicsScene.Shutdown();
 #endif
   Levye::Log::Info("Sandbox shutting downs.");
 }

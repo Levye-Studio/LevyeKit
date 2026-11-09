@@ -7,9 +7,6 @@
 #include "Scenes/Animation/AnimationScene.hpp"
 #include "Scenes/Animation/AnimationTest.hpp"
 #endif
-#ifdef LEVYE_WITH_PHYSICS
-#include "Scenes/Physics/PhysicsScene.hpp"
-#endif
 namespace Sandbox {
 /** @brief Host-allocated state retained across reloadable Game library swaps. */
 struct GameState {
@@ -18,9 +15,6 @@ struct GameState {
 #ifdef LEVYE_WITH_ANIMATION
   AnimationTest animationTest;
   AnimationScene animationScene;
-#endif
-#ifdef LEVYE_WITH_PHYSICS
-  PhysicsScene physicsScene;
 #endif
 };
 }  // namespace Sandbox

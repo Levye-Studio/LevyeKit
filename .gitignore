@@ -55,5 +55,6 @@ player.yaml
 imgui.ini
 ImGuiTest/
 .clangd
+!Templates/Default/.clangd
 .clang-format
 *.backup

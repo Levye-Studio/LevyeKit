@@ -6,6 +6,7 @@
 #include <iterator>
 #include <regex>
 #include <toml++/toml.hpp>
+#include <utility>
 
 #include "ModuleRegistry.hpp"
 
@@ -276,6 +277,15 @@ std::string ProjectGenerator::CreateTargetName(const std::string& name) {
   return target;
 }
 
+std::string ProjectGenerator::RenderText(std::string content, const std::string& projectName,
+                                         const std::string& projectTarget,
+                                         const std::filesystem::path& frameworkDirectory) {
+  ReplaceAll(content, "{{PROJECT_NAME}}", projectName);
+  ReplaceAll(content, "{{PROJECT_TARGET}}", projectTarget);
+  ReplaceAll(content, "{{LEVYE_ROOT}}", frameworkDirectory.generic_string());
+  return content;
+}
+
 bool ProjectGenerator::ProcessTemplateFile(const std::filesystem::path& path,
                                            const std::string& projectName,
                                            const std::string& projectTarget,
@@ -292,11 +302,7 @@ bool ProjectGenerator::ProcessTemplateFile(const std::filesystem::path& path,
    * Template values are replaced only in files explicitly processed by the
    * generator. Binary assets copied from the template are never modified.
    */
-  ReplaceAll(content, "{{PROJECT_NAME}}", projectName);
-
-  ReplaceAll(content, "{{PROJECT_TARGET}}", projectTarget);
-
-  ReplaceAll(content, "{{LEVYE_ROOT}}", frameworkDirectory.generic_string());
+  content = RenderText(std::move(content), projectName, projectTarget, frameworkDirectory);
 
   std::ofstream output(path, std::ios::trunc);
 

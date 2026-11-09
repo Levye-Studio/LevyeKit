@@ -112,7 +112,7 @@ LevyeKit provides reusable systems for:
 
 The framework stays intentionally small so games can use raylib directly whenever it already provides the required functionality.
 
-> **Status:** LevyeKit **v0.4.6** is in release preparation. This update adds CLI C++ code generation, automatic CMake source registration, and rollback for recoverable generation failures. Generator regression and transaction tests, plus a generated-game build and run, passed on macOS. Linux and Windows have not yet been verified for v0.4.6. The animation system introduced in v0.4.5 remains documented below; see its [Animation Docs](Docs/Animation-v0.4.5.md).
+> **Status:** LevyeKit **v0.4.7** is a release candidate. The CLI adds supported project upgrade and constrained CMake conversion workflows. Debug and Release CLI tests and disposable project builds passed on macOS. Disposable generated and converted raylib projects also passed graphical rendering, live hot reload, persistent-state, and clean-shutdown checks on macOS. Linux and Windows have not been verified for v0.4.7. The animation system introduced in v0.4.5 remains documented below; see its [Animation Docs](Docs/Animation-v0.4.5.md).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -295,6 +295,7 @@ levye build [options]
 levye run [options]
 levye clean [options]
 levye project
+levye upgrade [--dry-run|--check]
 
 levye --help
 levye --version
@@ -405,6 +406,49 @@ levye project
 
 The CLI searches parent directories for `levye.project`, allowing commands to be used from directories inside a game project.
 
+### Upgrade an existing project
+
+Run `levye upgrade --dry-run` to inspect proposed file changes, then `levye upgrade`
+to apply them. `levye upgrade --check` is read-only and returns 0 when current,
+2 when an upgrade is needed, or 1 for an unsupported project or error.
+
+The upgrader recognizes the current source manifest and older literal
+`add_library(Game SHARED Source/...)` source lists. It preserves source order,
+custom CMake settings, game code, assets, project settings, and existing IDE
+files. It adds the shared module configuration, generator markers, compile
+commands export, missing IDE files, and a `project.template_version` schema
+marker. This schema version is separate from the LevyeKit release version.
+
+Projects with computed or ambiguous Game source lists, unrecognized custom
+module configuration, missing ImGui linkage, different host or output layouts, or newer template
+schema versions require manual migration. The command performs structural
+validation and rolls back on a
+validation failure; it does not run a full build.
+
+### Convert a CMake C++ project
+
+Run `levye convert [path] --dry-run` to review the conversion plan. `levye convert
+[path] --check` makes no changes and exits 0 for an existing LevyeKit project, 2
+when conversion is available, or 1 for an unsupported project or error. Run
+`levye convert [path]` to apply the plan. The path defaults to the current
+directory.
+
+Automatic conversion supports a single C++20 CMake target: a static/shared
+library with literal source files, or a simple one-file raylib executable with
+literal window settings and static drawing calls. The raylib converter moves
+validated drawing calls into `GameAPI.OnDraw`; the host takes over the window
+and frame loop. It leaves the original source untouched. For libraries, it
+keeps the original library as a separate build target and creates a starter
+game module. Assets and existing `.gitignore` contents are preserved. The
+original CMake file is saved as `CMakeLists.levye-original.txt`.
+
+Complex game loops, extra source files, external dependencies, and computed
+CMake expressions require manual adaptation. The CLI explains why it declined
+conversion. Generated CMake uses `LEVYE_ROOT` from `levye build`, or from a
+user-supplied CMake variable/environment variable when invoking CMake directly.
+Conversion validates generated structure and rolls back failed writes; build
+and runtime behavior still require project-specific verification.
+
 Command-specific help is also available:
 
 ```sh
@@ -416,6 +460,8 @@ levye build --help
 levye run --help
 levye clean --help
 levye project --help
+levye upgrade --help
+levye convert --help
 ```
 
 ### Code Generation
@@ -1404,9 +1450,9 @@ LevyeKit is intended to provide a common foundation across desktop and mobile ta
 
 | Platform | Target | Status |
 | -------- | ------ | ------ |
-| macOS | Desktop | v0.4.6 CLI generator and generated-game build/run verified; v0.4.5 animation graphical review still pending |
-| Linux | Desktop | Supported build path retained; v0.4.6 unverified |
-| Windows | Desktop | MSVC/MinGW build paths retained; v0.4.6 unverified |
+| macOS | Desktop | v0.4.7 CLI builds and local tests passed; generated and converted raylib graphical runtime and live hot reload verified |
+| Linux | Desktop | Supported build path retained; v0.4.7 unverified |
+| Windows | Desktop | MSVC/MinGW build paths retained; v0.4.7 unverified |
 | iOS | Mobile | Planned |
 | Android | Mobile | Planned |
 

@@ -16,4 +16,3 @@ assets = "Assets"
 serialization = true
 imgui = true
 animation = true
-physics = true

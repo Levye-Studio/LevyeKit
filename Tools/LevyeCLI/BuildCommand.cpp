@@ -1,5 +1,6 @@
 #include "BuildCommand.hpp"
 
+#include <Levye/Platform/ExecutablePath.hpp>
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -25,13 +26,17 @@ bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
   const std::string configurationName{ToString(configuration)};
 
   const std::filesystem::path buildDirectory = projectDirectory / "Build" / configurationName;
+  const std::filesystem::path frameworkRoot =
+      ExecutablePath::GetDirectory().parent_path().parent_path().parent_path();
 
   std::cout << "[Levye] Configuring project...\n";
 
   const std::string configureCommand =
       "cmake -S " + LevyeCLI::QuoteArgument(projectDirectory.string()) + " -B " +
       LevyeCLI::QuoteArgument(buildDirectory.string()) +
-      " -DCMAKE_BUILD_TYPE=" + LevyeCLI::QuoteArgument(configurationName);
+      " -DCMAKE_BUILD_TYPE=" + LevyeCLI::QuoteArgument(configurationName) +
+      " -DCMAKE_EXPORT_COMPILE_COMMANDS=ON" +
+      " -DLEVYE_ROOT=" + LevyeCLI::QuoteArgument(frameworkRoot.string());
 
   const int configureResult = std::system(configureCommand.c_str());
 

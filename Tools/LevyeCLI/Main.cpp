@@ -11,11 +11,13 @@
 #include "AddCommand.hpp"
 #include "BuildCommand.hpp"
 #include "CleanCommand.hpp"
+#include "ConvertCommand.hpp"
 #include "GenerateCommand.hpp"
 #include "ModuleRegistry.hpp"
 #include "ProjectGenerator.hpp"
 #include "ProjectLocator.hpp"
 #include "RunCommand.hpp"
+#include "UpgradeCommand.hpp"
 
 namespace {
 
@@ -37,6 +39,8 @@ void PrintHelp() {
             << "  project          Show information about the current project\n"
             << "  generate <type> <name>  Generate C++ files\n"
             << "  g <type> <name>         Alias for generate\n"
+            << "  upgrade          Upgrade an existing LevyeKit project\n"
+            << "  convert          Convert a supported CMake C++ project\n"
             << "\n"
             << "Options:\n"
             << "  -h, --help       Show this help message\n"
@@ -132,6 +136,9 @@ void PrintProjectHelp() {
             << "  -h, --help        Show this help message\n";
 }
 
+/**
+ * @brief Prints help for the generate command.
+ */
 void PrintGenerateHelp() {
   std::cout << R"(
 LevyeKit CLI — Code Generator
@@ -171,6 +178,36 @@ Notes:
   Run this command from inside a LevyeKit project.
   Existing files are protected unless --force is specified.
 )";
+}
+
+/**
+ * @brief Prints help for the upgrade command.
+ */
+void PrintUpgradeHelp() {
+  std::cout << "Upgrade an existing LevyeKit project to the current template version.\n"
+            << "\n"
+            << "Usage:\n"
+            << "  levye upgrade [options]\n"
+            << "\n"
+            << "Options:\n"
+            << "  --dry-run         Show planned changes without applying them\n"
+            << "  --check           Validate that the project is current\n"
+            << "  -h, --help        Show this help message\n";
+}
+
+/**
+ * @brief Prints help for the convert command.
+ */
+void PrintConvertHelp() {
+  std::cout << "Convert a supported CMake C++ project to LevyeKit.\n"
+            << "\n"
+            << "Usage:\n"
+            << "  levye convert [path] [--dry-run|--check]\n"
+            << "\n"
+            << "Options:\n"
+            << "  --dry-run         Show the complete plan without modifying files\n"
+            << "  --check           Return 2 if conversion is applicable and pending\n"
+            << "  -h, --help        Show this help message\n";
 }
 
 /**
@@ -346,7 +383,7 @@ int main(int argc, char** argv) {
 
     return 0;
   } else if (command == "project") {
-    if (argc >= 3 && IsHelpArgument(argv[2])) {
+    if (argc == 3 && IsHelpArgument(argv[2])) {
       PrintProjectHelp();
       return 0;
     }
@@ -505,6 +542,84 @@ int main(int argc, char** argv) {
     }
 
     return Levye::GenerateCommand::Execute(*projectDirectory, argv[2], argv[3], options) ? 0 : 1;
+  }
+
+  else if (command == "upgrade") {
+    if (argc == 3 && IsHelpArgument(argv[2])) {
+      PrintUpgradeHelp();
+      return 0;
+    }
+
+    if (argc > 3 || (argc == 3 && std::string_view(argv[2]) != "--dry-run" &&
+                     std::string_view(argv[2]) != "--check")) {
+      std::cerr << "[Levye] Usage: levye upgrade [--dry-run|--check]\n";
+      return 1;
+    }
+
+    const bool dryRun = argc == 3 && std::string_view(argv[2]) == "--dry-run";
+    const bool check = argc == 3 && std::string_view(argv[2]) == "--check";
+
+    const auto projectDirectory = FindCurrentProject();
+    if (!projectDirectory) return 1;
+
+    const auto executableDirectory = Levye::ExecutablePath::GetDirectory();
+
+    const auto frameworkRoot = executableDirectory.parent_path().parent_path().parent_path();
+
+    const auto result =
+        Levye::UpgradeCommand::Execute(*projectDirectory, frameworkRoot, dryRun, check);
+    return static_cast<int>(result);
+  }
+
+  else if (command == "convert") {
+    if (argc >= 3 && IsHelpArgument(argv[2])) {
+      PrintConvertHelp();
+      return 0;
+    }
+
+    std::filesystem::path projectDirectory = std::filesystem::current_path();
+
+    bool dryRun = false;
+    bool check = false;
+    bool pathProvided = false;
+
+    for (int i = 2; i < argc; ++i) {
+      const std::string_view argument = argv[i];
+
+      if (argument == "--dry-run") {
+        if (dryRun) {
+          std::cerr << "[Levye] Duplicate --dry-run option.\n";
+          return 1;
+        }
+
+        dryRun = true;
+      } else if (argument == "--check") {
+        if (check) {
+          std::cerr << "[Levye] Duplicate --check option.\n";
+          return 1;
+        }
+        check = true;
+      } else if (!argument.empty() && argument.front() == '-') {
+        std::cerr << "[Levye] Unknown option: " << argument << '\n';
+        return 1;
+      } else {
+        if (pathProvided) {
+          std::cerr << "[Levye] Only one project path is allowed.\n";
+          return 1;
+        }
+
+        projectDirectory = std::filesystem::path(argv[i]);
+        pathProvided = true;
+      }
+    }
+
+    if (dryRun && check) {
+      std::cerr << "[Levye] Choose either --dry-run or --check.\n";
+      return 1;
+    }
+    const auto frameworkRoot =
+        Levye::ExecutablePath::GetDirectory().parent_path().parent_path().parent_path();
+    return Levye::ConvertCommand::Execute(projectDirectory, frameworkRoot, dryRun, check);
   }
 
   else if (command == "clean") {
