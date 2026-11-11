@@ -63,6 +63,7 @@
         <li><a href="#serialization">Serialization</a></li>
         <li><a href="#dear-imgui">Dear ImGui</a></li>
         <li><a href="#animation">Animation</a></li>
+        <li><a href="#physics">Physics</a></li>
         <li><a href="#architecture">Architecture</a></li>
         <li><a href="#game-api">Game API</a></li>
         <li><a href="#hot-reloading">Hot Reloading</a></li>
@@ -99,6 +100,7 @@ LevyeKit provides reusable systems for:
 * YAML game-data serialization
 * Optional Dear ImGui debugging UI
 * Optional skeletal animation and animation state machines
+* Optional Jolt Physics: rigid bodies, collision queries, constraints, and virtual characters
 * Keyboard, mouse, and gamepad input
 * Texture, shader, and font management
 * Asset hot reloading
@@ -112,7 +114,7 @@ LevyeKit provides reusable systems for:
 
 The framework stays intentionally small so games can use raylib directly whenever it already provides the required functionality.
 
-> **Status:** LevyeKit **v0.4.6** is in release preparation. This update adds CLI C++ code generation, automatic CMake source registration, and rollback for recoverable generation failures. Generator regression and transaction tests, plus a generated-game build and run, passed on macOS. Linux and Windows have not yet been verified for v0.4.6. The animation system introduced in v0.4.5 remains documented below; see its [Animation Docs](Docs/Animation-v0.4.5.md).
+> **Status:** LevyeKit **v0.5.0** introduces an optional Jolt Physics module with rigid bodies, collision queries, virtual character controllers, constraints, and runtime diagnostics. Linux and Windows validation remain outstanding. Physics API v7 requires rebuilding modules compiled against v6. See the [Physics guide](Docs/Physics-v0.5.0.md) and [Animation guide](Docs/Animation-v0.4.5.md).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -295,6 +297,8 @@ levye build [options]
 levye run [options]
 levye clean [options]
 levye project
+levye upgrade [--dry-run|--check]
+levye convert [path] [--dry-run|--check]
 
 levye --help
 levye --version
@@ -321,6 +325,7 @@ Enable optional modules when creating a project:
 levye new MyGame --with imgui
 levye new MyGame --with serialization --with imgui
 levye new MyGame --with animation
+levye new MyGame --with physics
 ```
 
 Or enable a module in an existing project:
@@ -329,6 +334,7 @@ Or enable a module in an existing project:
 levye add imgui
 levye add serialization
 levye add animation
+levye add physics
 ```
 
 The CLI records enabled modules in `levye.project`:
@@ -338,6 +344,7 @@ The CLI records enabled modules in `levye.project`:
 serialization = false
 imgui = true
 animation = true
+physics = true
 ```
 
 The generated project's CMake configuration reads these settings. Modules are
@@ -405,6 +412,49 @@ levye project
 
 The CLI searches parent directories for `levye.project`, allowing commands to be used from directories inside a game project.
 
+### Upgrade an existing project
+
+Run `levye upgrade --dry-run` to inspect proposed file changes, then `levye upgrade`
+to apply them. `levye upgrade --check` is read-only and returns 0 when current,
+2 when an upgrade is needed, or 1 for an unsupported project or error.
+
+The upgrader recognizes the current source manifest and older literal
+`add_library(Game SHARED Source/...)` source lists. It preserves source order,
+custom CMake settings, game code, assets, project settings, and existing IDE
+files. It adds the shared module configuration, generator markers, compile
+commands export, missing IDE files, and a `project.template_version` schema
+marker. This schema version is separate from the LevyeKit release version.
+
+Projects with computed or ambiguous Game source lists, unrecognized custom
+module configuration, missing ImGui linkage, different host or output layouts, or newer template
+schema versions require manual migration. The command performs structural
+validation and rolls back on a
+validation failure; it does not run a full build.
+
+### Convert a CMake C++ project
+
+Run `levye convert [path] --dry-run` to review the conversion plan. `levye convert
+[path] --check` makes no changes and exits 0 for an existing LevyeKit project, 2
+when conversion is available, or 1 for an unsupported project or error. Run
+`levye convert [path]` to apply the plan. The path defaults to the current
+directory.
+
+Automatic conversion supports a single C++20 CMake target: a static/shared
+library with literal source files, or a simple one-file raylib executable with
+literal window settings and static drawing calls. The raylib converter moves
+validated drawing calls into `GameAPI.OnDraw`; the host takes over the window
+and frame loop. It leaves the original source untouched. For libraries, it
+keeps the original library as a separate build target and creates a starter
+game module. Assets and existing `.gitignore` contents are preserved. The
+original CMake file is saved as `CMakeLists.levye-original.txt`.
+
+Complex game loops, extra source files, external dependencies, and computed
+CMake expressions require manual adaptation. The CLI explains why it declined
+conversion. Generated CMake uses `LEVYE_ROOT` from `levye build`, or from a
+user-supplied CMake variable/environment variable when invoking CMake directly.
+Conversion validates generated structure and rolls back failed writes; build
+and runtime behavior still require project-specific verification.
+
 Command-specific help is also available:
 
 ```sh
@@ -416,6 +466,8 @@ levye build --help
 levye run --help
 levye clean --help
 levye project --help
+levye upgrade --help
+levye convert --help
 ```
 
 ### Code Generation
@@ -500,6 +552,7 @@ Levye::Assets
 Levye::Audio
 Levye::Serialization // Optional module
 Levye::Animation     // Optional module
+Levye::Physics       // Optional module
 ```
 Optional modules expose their APIs through their respective module headers.
 
@@ -1046,6 +1099,102 @@ For focused public examples of playback, single and multi-chain IK, locked conta
 
 If Animation is unavailable in a generated project, inspect `[modules]` in `levye.project` and `LEVYE_WITH_ANIMATION` in its CMake cache, then reconfigure the build. If a reload rejects a state-size change, restart the application; changes to a persistent C++ state layout also require a restart even when its size stays equal. If a model does not animate, verify that the clip and model use the same skeleton and bone order.
 
+### Physics
+
+Physics is an optional host-owned module powered by Jolt. Enable it with `levye new MyGame --with physics`, `levye add physics`, or `-DLEVYE_WITH_PHYSICS=ON` for a direct framework build. Include `<Levye/Modules/Physics/Physics.hpp>` in game code when the module is enabled. The Physics callback API is **v7**; rebuild game modules compiled against v6.
+
+The module provides static, dynamic, and kinematic rigid bodies; primitive, convex hull, triangle mesh, and compound shapes; contact events; raycasts, shape casts, and overlap queries; virtual character controllers; and fixed, point, hinge, and slider constraints. Worlds and handles are owned by the host and persist across compatible game-module hot reloads. See the [Physics v0.5.0 guide](Docs/Physics-v0.5.0.md) for usage, lifecycle, limitations, and Sandbox controls.
+
+#### Physics API details and Sandbox verification
+
+With `LEVYE_WITH_PHYSICS=ON`, the host owns Jolt worlds, bodies, contact events,
+and virtual characters. Game modules use `Levye::Physics` through Physics API v7.
+Game modules built against Physics API v6 must be rebuilt with the v7 headers;
+the host rejects the old callback version because the public world and shape
+descriptors have grown.
+Handles survive game DLL hot reload; destroy characters and worlds during normal
+shutdown. Calls, fixed stepping, and event polling must run on the host update
+thread, outside concurrent physics steps.
+`PhysicsWorldDesc` configures gravity and Jolt body, body-pair, and contact
+capacities. The host `TimeSystem` sets the fixed update rate shared by all
+worlds. `PhysicsBodyDesc` configures motion type, mass, friction, restitution,
+layers, masks, and sensors. Invalid values are rejected. Each world can be
+paused with `SetWorldPaused()` and advanced once on the next host fixed tick
+with `StepWorldOnce()`. `GetWorldDiagnostics()` reports active bodies,
+characters, contact pairs, queued events, rejected creations, completed steps,
+and the last step duration. Step timings are diagnostic wall-clock measurements.
+
+`Physics::ShapeCast()` sweeps a sphere, box, or capsule from a unit-scale
+`Transform` along a normalized direction for `maxDistance`. It returns the
+closest accepted body. The hit point is on the body's surface, the normal points
+away from that body toward the query shape, and the fraction is travel divided
+by `maxDistance` (zero for initial penetration). `Physics::OverlapShape()` finds
+unique bodies and writes them in ascending public-handle order. On success,
+`count` is the **total** number of hits; only `min(count, capacity)` handles are
+written. A null result pointer is valid with zero capacity. `PhysicsQueryFilter`
+selects body layers, excludes sensors if requested, and can ignore one live body
+from the same world. Queries do not change simulation state or contact events.
+
+Body shapes also support convex hulls (4–256 finite vertices), triangle meshes
+(indexed triangles on static bodies only), and compounds of up to 32 transformed
+children. Dynamic and kinematic compounds require convex children; static
+compounds may contain meshes. Shape arrays and compound child descriptors are
+read during the API call and copied into host-owned Jolt shapes, so module data
+is not retained across hot reload. Body and child transforms must use unit scale.
+Raycasts can hit all body shapes; hulls can be used as shape-cast inputs, and
+hulls or compounds can be used as overlap inputs. Meshes and compounds cannot
+be shape-cast inputs, and mesh overlap inputs are unsupported. Invalid indices,
+nonfinite vertices, unsupported motion/shape combinations, and nested compounds
+deeper than four levels are rejected.
+
+`Physics::CreateConstraint()` joins two live bodies in one world using a fixed,
+point, hinge, or slider constraint. Fixed joints preserve the current relative
+transform. Other joints use a world-space anchor; hinge and slider use a
+world-space axis, and hinge uses a perpendicular normal to define zero angle.
+Optional hinge limits are radians and slider limits are metres, both bracketing
+zero. Hinge and slider motors support velocity and position targets with a
+force/torque limit; `SetConstraintMotor()` can change them at runtime. Connected
+bodies do not collide by default; set `collideConnected` to permit contacts.
+Constraints are host-owned and survive game-module reload, and destroying a
+connected body or world removes them. Destroyed constraint handles remain stale.
+
+`Physics::CreateCharacter()` creates a Y-up capsule. `height` includes both
+hemispheres, and `position` is its center. Supply horizontal world velocity with
+`SetCharacterVelocity()` (the Y component must be zero); gravity and collisions
+are resolved during the host's fixed Physics step. `GetCharacterVelocity()`
+returns measured movement, including vertical motion. `JumpCharacter()` starts
+an upward jump only from walkable ground. `SetCharacterPosition()` teleports for
+explicit resets. Ground states are `Grounded`, `Sliding` on a slope beyond the
+configured limit, and `Airborne`. The controller uses Jolt's virtual character
+collision solver, stair walking, ground snap, and dynamic-body interaction. It
+ignores sensors and applies the existing mutual layer/mask rule to rigid bodies.
+Virtual characters do not create rigid bodies and do not collide with each other.
+Character movement currently uses Y-up gravity; world gravity's X and Z
+components do not accelerate characters.
+
+Kinematic platforms advance before the virtual character's fixed step. A grounded
+character inherits the support body's current velocity, including a direction
+change, and a jump retains that horizontal support velocity until landing.
+`SetCharacterVelocity()` remains the player's horizontal world-space intent.
+Ground support and movement are evaluated at the configured fixed timestep;
+results can differ if a game changes a platform's velocity between steps.
+
+In Sandbox's Physics scene, **G** runs a sphere cast and **O** runs an overlap
+query. **F** still toggles the ball's sensor interaction. **TAB** switches to the
+character course; **WASD** moves, **Shift** sprints, **Space** jumps, and **R**
+resets. The course shows a wall, low step, steep slope, and raised platform.
+**P** pauses or resumes the Physics world, **.** advances one step while paused,
+and **B** toggles optional debug markers for the latest contact and support
+normal. The HUD shows world counters and step timing. Debug drawing happens in
+Sandbox and does not run inside Jolt's simulation callbacks.
+To check the platform, switch to character mode, press **R**, release movement
+keys, and wait for the character to land. Leave it idle through at least ten
+platform reversals (about one minute at the default speed). The HUD's idle drift
+measurement begins only while the character is grounded on the platform and
+resets after player movement, loss of support, or a character reset. The displayed
+X/Z offset is the current character position relative to the platform center.
+
+
 ### Architecture
 
 LevyeKit separates the stable application host from reloadable game-specific code.
@@ -1365,7 +1514,8 @@ LevyeKit/
 │   ├── Modules/
 │   │   ├── Serialization/
 │   │   ├── Animation/
-│   │   └── ImGui/
+│   │   ├── ImGui/
+│   │   └── Physics/
 │   ├── Platform/
 │   ├── Project/
 │   ├── Screen/
@@ -1404,9 +1554,9 @@ LevyeKit is intended to provide a common foundation across desktop and mobile ta
 
 | Platform | Target | Status |
 | -------- | ------ | ------ |
-| macOS | Desktop | v0.4.6 CLI generator and generated-game build/run verified; v0.4.5 animation graphical review still pending |
-| Linux | Desktop | Supported build path retained; v0.4.6 unverified |
-| Windows | Desktop | MSVC/MinGW build paths retained; v0.4.6 unverified |
+| macOS | Desktop | v0.5.0 Physics Debug/Release tests passed (15/15 each); Physics Sandbox runtime inspected |
+| Linux | Desktop | Supported build path retained; v0.5.0 unverified |
+| Windows | Desktop | MSVC/MinGW build paths retained; v0.5.0 unverified |
 | iOS | Mobile | Planned |
 | Android | Mobile | Planned |
 
@@ -1495,6 +1645,26 @@ Mobile platforms may use a different development workflow because of platform re
 * [x] New project generation, build, and runtime verification passed on macOS
 * [ ] Linux and Windows verification and final release publication
 
+### v0.4.7 — CLI Project Migration
+
+* [x] `levye upgrade` for supported older project layouts
+* [x] `levye convert` for constrained CMake C++ projects
+* [x] macOS CLI regression and disposable project validation
+* [ ] Linux and Windows verification
+
+### v0.5.0 — Physics Module
+
+* [x] Optional Jolt backend and host-owned Physics worlds
+* [x] Static, dynamic, and kinematic rigid bodies
+* [x] Primitive, convex hull, static triangle mesh, and compound shapes
+* [x] Collision filters, sensors, contact events, and spatial queries
+* [x] Virtual characters with slopes, stairs, jumping, and moving platforms
+* [x] Fixed, point, hinge, and slider constraints with supported limits and motors
+* [x] Pause, single-step, and diagnostics
+* [x] Debug and Release Physics tests (15/15 each) on macOS arm64
+* [x] Graphical Physics Sandbox inspection on macOS
+* [ ] Linux and Windows verification
+
 ### Planned Modules
 
 * [ ] Entity Component System
@@ -1502,8 +1672,6 @@ Mobile platforms may use a different development workflow because of platform re
   * [ ] Keep the public ECS API reasonably independent from the backend
 * [ ] Extended 3D model loading
   * [ ] Additional formats such as STL
-* [ ] Physics Module
-  * [ ] Jolt backend
 
 ### Levye CLI
 

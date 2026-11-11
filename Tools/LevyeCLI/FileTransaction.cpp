@@ -56,11 +56,17 @@ bool ShouldFail(const TransactionFailureInjection* injection, TransactionFailure
 }  // namespace
 
 bool CommitFiles(const fs::path& projectRoot, const std::vector<PendingFile>& files,
-                 std::string& error, const TransactionFailureInjection* injection) {
+                 std::string& error, const TransactionFailureInjection* injection,
+                 const std::function<bool(std::string&)>& validate) {
   error.clear();
   if (files.empty()) return true;
 
   std::error_code ec;
+  const auto rootStatus = fs::symlink_status(projectRoot, ec);
+  if (ec || !fs::is_directory(rootStatus)) {
+    error = "Project root is missing or unsafe.";
+    return false;
+  }
   std::mt19937_64 rng(std::random_device{}());
 
   fs::path work;
@@ -90,6 +96,7 @@ bool CommitFiles(const fs::path& projectRoot, const std::vector<PendingFile>& fi
 
   std::vector<Entry> entries;
   entries.reserve(files.size());
+  std::vector<fs::path> createdDirectories;
 
   std::unordered_set<std::string> destinations;
   bool success = true;
@@ -104,6 +111,35 @@ bool CommitFiles(const fs::path& projectRoot, const std::vector<PendingFile>& fi
     entry.backup = work / (std::to_string(i) + ".backup");
 
     const auto normalized = entry.destination.lexically_normal().string();
+
+    const auto relative = entry.destination.lexically_normal().lexically_relative(
+        fs::absolute(projectRoot).lexically_normal());
+    if (relative.empty() || relative == "." || relative.is_absolute() ||
+        *relative.begin() == "..") {
+      error = "Destination escapes project: " + normalized;
+      success = false;
+      break;
+    }
+
+    // Never follow an existing symlink, including one in a parent directory.
+    fs::path component = fs::absolute(projectRoot).lexically_normal();
+    for (const auto& part : relative.parent_path()) {
+      component /= part;
+      std::error_code pathError;
+      const auto status = fs::symlink_status(component, pathError);
+      if (pathError && pathError != std::errc::no_such_file_or_directory) {
+        success = false;
+        break;
+      }
+      if (!pathError && !fs::is_directory(status)) {
+        success = false;
+        break;
+      }
+    }
+    if (!success) {
+      error = "Unsafe destination parent: " + normalized;
+      break;
+    }
 
     if (!destinations.insert(normalized).second) {
       error = "Duplicate transaction destination: " + normalized;
@@ -132,6 +168,23 @@ bool CommitFiles(const fs::path& projectRoot, const std::vector<PendingFile>& fi
   if (success) {
     for (std::size_t i = 0; i < entries.size(); ++i) {
       auto& entry = entries[i];
+
+      std::vector<fs::path> missing;
+      for (auto parent = entry.destination.parent_path();
+           parent != projectRoot && !parent.empty() && !fs::exists(parent);
+           parent = parent.parent_path()) {
+        missing.push_back(parent);
+      }
+      for (auto it = missing.rbegin(); it != missing.rend(); ++it) {
+        ec.clear();
+        if (!fs::create_directory(*it, ec) || ec) {
+          error = "Cannot create directory: " + it->string() + ": " + ec.message();
+          success = false;
+          break;
+        }
+        createdDirectories.push_back(*it);
+      }
+      if (!success) break;
 
       if (ShouldFail(injection, TransactionFailurePoint::BeforeBackup, i)) {
         error = "Injected failure before backup.";
@@ -185,6 +238,11 @@ bool CommitFiles(const fs::path& projectRoot, const std::vector<PendingFile>& fi
     }
   }
 
+  if (success && validate && !validate(error)) {
+    if (error.empty()) error = "Post-install validation failed.";
+    success = false;
+  }
+
   // Phase 3: Roll back in reverse order on failure.
   if (!success) {
     bool rollbackOk = true;
@@ -212,6 +270,15 @@ bool CommitFiles(const fs::path& projectRoot, const std::vector<PendingFile>& fi
       }
     }
 
+    if (!rollbackOk) {
+      error += "; rollback incomplete; backups retained at " + work.string();
+      return false;
+    }
+    for (auto it = createdDirectories.rbegin(); it != createdDirectories.rend(); ++it) {
+      ec.clear();
+      fs::remove(*it, ec);
+      if (ec) rollbackOk = false;
+    }
     if (!rollbackOk) {
       error += "; rollback incomplete; backups retained at " + work.string();
       return false;

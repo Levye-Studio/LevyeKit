@@ -5,6 +5,9 @@
 #include <Levye/Debug/Logger.hpp>
 #include <Levye/Input/InputMap.hpp>
 #include <Levye/Screen/ScreenManager.hpp>
+#ifdef LEVYE_WITH_PHYSICS
+#include <Levye/Modules/Physics/PhysicsBridge.hpp>
+#endif
 #include <cstring>
 #include <type_traits>
 #include <utility>
@@ -459,6 +462,16 @@ const void* HostGetModuleAPI(void* context, ModuleID module, ModuleAPIVersion ve
 #else
       return nullptr;
 #endif
+    case ModuleID::Physics:
+#ifdef LEVYE_WITH_PHYSICS
+      if (version != PHYSICS_API_VERSION) {
+        return nullptr;
+      }
+
+      return host->physicsAPI;
+#else
+      return nullptr;
+#endif
   }
 
   return nullptr;
@@ -531,6 +544,9 @@ bool GameModule::Load(const std::string& path) {
 
   m_AnimationAPI = MakeAnimationAPI(m_AnimationService);
 #endif
+#ifdef LEVYE_WITH_PHYSICS
+  m_PhysicsAPI = MakePhysicsAPI();
+#endif
 
   m_HostContext = {.input = &m_InputMap,
                    .screens = &m_ScreenManager,
@@ -548,6 +564,10 @@ bool GameModule::Load(const std::string& path) {
 #ifdef LEVYE_WITH_ANIMATION
                    .animation = &m_AnimationService,
                    .animationAPI = &m_AnimationAPI,
+#endif
+#ifdef LEVYE_WITH_PHYSICS
+                   .physics = &m_PhysicsService,
+                   .physicsAPI = &m_PhysicsAPI,
 #endif
                    .time = &m_Time,
                    .assetRoot = &m_AssetRoot,
@@ -883,11 +903,19 @@ void GameModule::Update(float deltaTime) {
 void GameModule::UpdateTime(float deltaTime) { m_Time.Update(deltaTime); }
 
 void GameModule::FixedUpdate(float fixedDeltaTime) {
-  if (!m_HasAPI || !m_API.OnFixedUpdate) {
-    return;
+  if (!m_Started || !m_HasAPI) return;
+
+  // Game logic runs first, allowing forces and impulses
+  // to be applied before the physics simulation advances.
+  if (m_API.OnFixedUpdate) {
+    m_API.OnFixedUpdate(m_State, fixedDeltaTime);
   }
 
-  m_API.OnFixedUpdate(m_State, fixedDeltaTime);
+#ifdef LEVYE_WITH_PHYSICS
+  // Physics is owned and advanced by the persistent host.
+  // It must not be stepped by the reloadable game module.
+  m_PhysicsService.Step(fixedDeltaTime);
+#endif
 }
 
 void GameModule::Draw() {
@@ -932,6 +960,9 @@ void GameModule::Shutdown() {
 
 #ifdef LEVYE_WITH_ANIMATION
   m_AnimationService.Shutdown();
+#endif
+#ifdef LEVYE_WITH_PHYSICS
+  m_PhysicsService.Shutdown();
 #endif
 }
 

@@ -35,6 +35,9 @@
 #if defined(LEVYE_WITH_ANIMATION) && LEVYE_WITH_ANIMATION
 #include <Levye/Modules/Animation/Animation.hpp>
 #endif
+#if defined(LEVYE_WITH_PHYSICS) && LEVYE_WITH_PHYSICS
+#include <Levye/Modules/Physics/Physics.hpp>
+#endif
 
 // raylib
 #include <raylib.h>

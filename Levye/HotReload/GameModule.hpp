@@ -23,6 +23,10 @@
 #include <Levye/Modules/Animation/AnimationAPI.hpp>
 #include <Levye/Modules/Animation/AnimationService.hpp>
 #endif
+#ifdef LEVYE_WITH_PHYSICS
+#include <Levye/Modules/Physics/PhysicsAPI.hpp>
+#include <Levye/Modules/Physics/PhysicsService.hpp>
+#endif
 
 #include <chrono>
 #include <cstdint>
@@ -314,6 +318,10 @@ class GameModule {
 #ifdef LEVYE_WITH_ANIMATION
   AnimationService m_AnimationService;
   AnimationAPI m_AnimationAPI{};
+#endif
+#ifdef LEVYE_WITH_PHYSICS
+  PhysicsService m_PhysicsService;
+  PhysicsAPI m_PhysicsAPI{};
 #endif
 };
 }  // namespace Levye

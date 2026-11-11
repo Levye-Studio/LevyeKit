@@ -8,6 +8,9 @@ project(
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Generate compiler commands for clangd and other language servers.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Single-configuration generators need a default; VS chooses at build time.
 if(WIN32 AND NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
@@ -53,6 +56,7 @@ include("${LEVYE_ROOT}/cmake/LevyeProjectModules.cmake")
 message(STATUS "LevyeKit serialization: ${LEVYE_WITH_SERIALIZATION}")
 message(STATUS "LevyeKit ImGui: ${LEVYE_WITH_IMGUI}")
 message(STATUS "LevyeKit Animation: ${LEVYE_WITH_ANIMATION}")
+message(STATUS "LevyeKit Physics: ${LEVYE_WITH_PHYSICS}")
 
 add_subdirectory(
     "${LEVYE_ROOT}"
@@ -114,6 +118,10 @@ endif()
 
 if(LEVYE_WITH_ANIMATION)
     target_compile_definitions(Game PRIVATE LEVYE_WITH_ANIMATION=1)
+endif()
+
+if(LEVYE_WITH_PHYSICS)
+    target_compile_definitions(Game PRIVATE LEVYE_WITH_PHYSICS=1)
 endif()
 
 # ---------------------------------------------------------

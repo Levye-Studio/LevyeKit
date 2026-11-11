@@ -1,6 +1,7 @@
 [project]
 name = "{{PROJECT_NAME}}"
 target = "{{PROJECT_TARGET}}"
+template_version = 1
 
 [window]
 width = 1280
@@ -16,3 +17,4 @@ assets = "Assets"
 serialization = false
 imgui = false
 animation = false
+physics = false

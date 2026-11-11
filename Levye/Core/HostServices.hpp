@@ -93,8 +93,7 @@ struct HostServices {
    * @param action Name of the action to bind.
    * @param button raylib mouse button code.
    */
-  void (*BindMouseButton)(void* context, const char* action,
-                          int button) = nullptr;
+  void (*BindMouseButton)(void* context, const char* action, int button) = nullptr;
 
   /**
    * @brief Associates two keyboard keys with a directional axis.
@@ -108,12 +107,11 @@ struct HostServices {
                       int positiveKey) = nullptr;
 
   /** @brief Associates a gamepad button with a logical action. */
-  void (*BindGamepadButton)(void* context, const char* action, int gamepad,
-                            int button) = nullptr;
+  void (*BindGamepadButton)(void* context, const char* action, int gamepad, int button) = nullptr;
 
   /** @brief Associates an analog axis and deadzone with a logical axis. */
-  void (*BindGamepadAxis)(void* context, const char* axis, int gamepad,
-                          int gamepadAxis, float deadzone) = nullptr;
+  void (*BindGamepadAxis)(void* context, const char* axis, int gamepad, int gamepadAxis,
+                          float deadzone) = nullptr;
 
   /** @brief Removes an action and its state; leaves axes unchanged. */
   void (*ClearAction)(void* context, const char* action) = nullptr;
@@ -165,8 +163,7 @@ struct HostServices {
   void (*StopSound)(void* context, AssetHandle handle) = nullptr;
 
   /** @brief Changes the playback volume of a loaded sound. */
-  void (*SetSoundVolume)(void* context, AssetHandle handle,
-                         float volume) = nullptr;
+  void (*SetSoundVolume)(void* context, AssetHandle handle, float volume) = nullptr;
 
   // ---------------------------------------------------------------------
   // Music
@@ -190,8 +187,7 @@ struct HostServices {
   void (*StopMusic)(void* context, AssetHandle handle) = nullptr;
 
   /** @brief Changes the playback volume of a music stream. */
-  void (*SetMusicVolume)(void* context, AssetHandle handle,
-                         float volume) = nullptr;
+  void (*SetMusicVolume)(void* context, AssetHandle handle, float volume) = nullptr;
 
   // ---------------------------------------------------------------------
   // Shaders
@@ -217,8 +213,7 @@ struct HostServices {
   /**
    * @brief Loads or retrieves a font managed by the host.
    */
-  AssetHandle (*LoadFont)(void* context, const char* path,
-                          int fontSize) = nullptr;
+  AssetHandle (*LoadFont)(void* context, const char* path, int fontSize) = nullptr;
 
   /**
    * @brief Returns the raylib font represented by a font handle.
@@ -279,8 +274,7 @@ struct HostServices {
    * @warning The returned pointer is owned by the host. Game modules
    *          must not modify or destroy it.
    */
-  const void* (*GetModuleAPI)(void* context, ModuleID module,
-                              ModuleAPIVersion version) = nullptr;
+  const void* (*GetModuleAPI)(void* context, ModuleID module, ModuleAPIVersion version) = nullptr;
 
   /**
    * @brief Requests a clean shutdown of the host application.

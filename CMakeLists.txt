@@ -64,7 +64,7 @@ set_property(
 
 project(
     LevyeKit
-    VERSION 0.4.6
+    VERSION 0.5.0
     LANGUAGES CXX
 )
 
@@ -311,8 +311,6 @@ if(LEVYE_WITH_PHYSICS)
     )
 endif()
 
-
-
 if(LEVYE_BUILD_EXAMPLES)
 
 # ---------------------------------------------------------------------------
@@ -510,6 +508,11 @@ add_executable(
     Tools/LevyeCLI/GenerateCommand.cpp
     Tools/LevyeCLI/ProjectCMakeMigration.cpp
     Tools/LevyeCLI/FileTransaction.cpp
+    Tools/LevyeCLI/ProjectIDE.cpp
+    Tools/LevyeCLI/UpgradeCommand.cpp
+    Tools/LevyeCLI/ProjectModuleMigration.cpp
+    Tools/LevyeCLI/ConvertCommand.cpp
+    Tools/LevyeCLI/ProjectAnalyzer.cpp
 
     Levye/Project/ProjectConfig.cpp
     Levye/Project/ProjectLoader.cpp

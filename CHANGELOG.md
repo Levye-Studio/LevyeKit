@@ -2,6 +2,53 @@
 
 All notable changes to LevyeKit are documented here.
 
+## [0.5.0] — Physics Module
+
+### Added
+- Optional Jolt Physics backend with host-owned simulation worlds.
+- Rigid bodies supporting static, dynamic, and kinematic motion.
+- Box, sphere, capsule, convex hull, static triangle mesh, and compound collision shapes.
+- Collision layers, masks, sensors, contact events, and collision queries.
+- Virtual character controllers supporting movement, jumping, slopes, stairs, ground snapping, and moving platforms.
+- Fixed, point-to-point, hinge, and slider constraints, including supported limits and motors.
+- Physics configuration, pause and single-step controls, and runtime diagnostics.
+- Physics Sandbox demonstrations and debugging controls.
+
+### Improved
+- Fixed-step simulation integration and physics lifecycle management.
+- Moving-platform stability and character momentum inheritance.
+- Physics-enabled and Physics-disabled build compatibility.
+- CLI project migration support for the Physics module.
+
+### Compatibility
+- Physics API v7 introduces descriptor layout changes. Existing Physics v6 game modules must be rebuilt.
+- The host rejects incompatible Physics API versions.
+- Game API and HostServices interfaces remain unchanged by the Steps 21–24 changes.
+
+### Validation
+- Debug and Release Physics regression suites passed (15/15 each) on macOS arm64.
+- Physics-enabled and Physics-disabled CLI, Game, and Sandbox builds passed.
+- Release benchmarks completed for 100, 500, and 1,000 rigid bodies.
+- Linux x86_64 and Windows validation remain outstanding.
+- Graphical Sandbox inspection remains outstanding.
+
+### Known Limitations
+- Triangle mesh collision shapes support static bodies only.
+- Virtual characters do not collide with other virtual characters.
+
+## [0.4.7] — CLI Project Migration (Release candidate)
+
+### Added
+- `levye upgrade` for supported older LevyeKit project layouts.
+- `levye convert` for a constrained subset of CMake C++ projects.
+- Local regression coverage for migration, conversion, and transaction recovery.
+
+### Validation
+- Debug and Release CLI builds and local CLI test suites passed on macOS.
+- Disposable generated, upgraded, and converted projects built on macOS.
+- Disposable generated and converted raylib projects rendered changing frames, hot reloaded game code with persistent state, and exited cleanly on macOS.
+- Linux and Windows remain unverified for v0.4.7.
+
 
 ## [0.4.6] — CLI Code Generation
 

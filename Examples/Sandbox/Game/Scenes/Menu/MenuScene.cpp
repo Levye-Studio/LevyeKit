@@ -19,7 +19,7 @@ void MenuScene::Draw(bool animationReady) {
 
 #endif
 #ifdef LEVYE_WITH_PHYSICS
-  DrawText("F12: Physics test scene", 40, 170, 24, LIGHTGRAY);
+  DrawText("`: Physics test scene", 40, 170, 24, LIGHTGRAY);
 #endif
 }
 }  // namespace Sandbox

@@ -158,9 +158,24 @@ void InputScene::Bind() {
   Levye::Input::BindKey("IKSelectChain", KEY_TAB);
 #endif
 #ifdef LEVYE_WITH_PHYSICS
-  Levye::Input::BindKey("ShowPhysics", KEY_F12);
+  Levye::Input::BindKey("ShowPhysics", KEY_GRAVE);
   Levye::Input::BindKey("PhysicsImpulse", KEY_SPACE);
   Levye::Input::BindKey("PhysicsReset", KEY_R);
+  Levye::Input::BindKeyAxis("PhysicsCameraHorizontal", KEY_LEFT, KEY_RIGHT);
+  Levye::Input::BindKeyAxis("PhysicsCameraVertical", KEY_DOWN, KEY_UP);
+  Levye::Input::BindKey("PhysicsCameraReset", KEY_C);
+  Levye::Input::BindKey("PhysicsToggleHUD", KEY_H);
+  Levye::Input::BindKey("PhysicsPause", KEY_P);
+  Levye::Input::BindKey("PhysicsStep", KEY_PERIOD);
+  Levye::Input::BindKey("PhysicsDebugDraw", KEY_B);
+  Levye::Input::BindKey("PhysicsToggleSensor", KEY_F);
+  Levye::Input::BindKey("PhysicsShapeCast", KEY_G);
+  Levye::Input::BindKey("PhysicsOverlap", KEY_O);
+  Levye::Input::BindKey("PhysicsCharacterMode", KEY_TAB);
+  Levye::Input::BindKeyAxis("PhysicsCharacterX", KEY_A, KEY_D);
+  Levye::Input::BindKeyAxis("PhysicsCharacterZ", KEY_W, KEY_S);
+  Levye::Input::BindKey("PhysicsCharacterJump", KEY_SPACE);
+  Levye::Input::BindKey("PhysicsCharacterSprint", KEY_LEFT_SHIFT);
 
 #endif
 

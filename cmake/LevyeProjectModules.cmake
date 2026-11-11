@@ -14,6 +14,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
 set(_levye_serialization OFF)
 set(_levye_imgui OFF)
 set(_levye_animation OFF)
+set(_levye_physics OFF)
 set(_levye_in_modules OFF)
 file(STRINGS "${_levye_project_manifest}" _levye_project_lines)
 foreach(_levye_line IN LISTS _levye_project_lines)
@@ -24,7 +25,7 @@ foreach(_levye_line IN LISTS _levye_project_lines)
             set(_levye_in_modules OFF)
         endif()
     elseif(_levye_in_modules AND
-           _levye_line MATCHES "^[ \t]*(serialization|imgui|animation)[ \t]*=[ \t]*(true|false)[ \t]*(#.*)?$")
+           _levye_line MATCHES "^[ \t]*(serialization|imgui|animation|physics)[ \t]*=[ \t]*(true|false)[ \t]*(#.*)?$")
         if(CMAKE_MATCH_2 STREQUAL "true")
             set(_levye_${CMAKE_MATCH_1} ON)
         else()
@@ -39,3 +40,5 @@ set(LEVYE_WITH_IMGUI "${_levye_imgui}" CACHE BOOL
     "Enable LevyeKit ImGui from levye.project" FORCE)
 set(LEVYE_WITH_ANIMATION "${_levye_animation}" CACHE BOOL
     "Enable LevyeKit animation from levye.project" FORCE)
+set(LEVYE_WITH_PHYSICS "${_levye_physics}" CACHE BOOL
+    "Enable LevyeKit physics from levye.project" FORCE)

@@ -12,16 +12,16 @@ inline constexpr std::uint32_t VERSION_MAJOR = 0;
 /**
  * @brief LevyeKit minor version number.
  */
-inline constexpr std::uint32_t VERSION_MINOR = 4;
+inline constexpr std::uint32_t VERSION_MINOR = 5;
 
 /**
  * @brief LevyeKit patch version number.
  */
-inline constexpr std::uint32_t VERSION_PATCH = 6;
+inline constexpr std::uint32_t VERSION_PATCH = 0;
 
 /**
  * @brief Human-readable LevyeKit version string.
  */
-inline constexpr const char* VERSION = "0.4.6";
+inline constexpr const char* VERSION = "0.5.0";
 
 }  // namespace Levye

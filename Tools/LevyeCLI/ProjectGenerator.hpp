@@ -24,8 +24,7 @@ class ProjectGenerator {
    * @param frameworkDirectory Root directory of the LevyeKit checkout.
    * @return True when the complete project was generated successfully.
    */
-  static bool Generate(const std::string& name,
-                       const std::filesystem::path& outputDirectory,
+  static bool Generate(const std::string& name, const std::filesystem::path& outputDirectory,
                        const std::filesystem::path& templateDirectory,
                        const std::filesystem::path& frameworkDirectory,
                        const std::vector<std::string>& modules = {});
@@ -42,6 +41,11 @@ class ProjectGenerator {
    */
   static std::string CreateTargetName(const std::string& name);
 
+  // Renders the same tokens used by levye new without writing a file.
+  static std::string RenderText(std::string content, const std::string& projectName,
+                                const std::string& projectTarget,
+                                const std::filesystem::path& frameworkDirectory);
+
  private:
   /**
    * @brief Replaces supported tokens inside a generated text file.
@@ -51,10 +55,9 @@ class ProjectGenerator {
    * @param frameworkDirectory Root directory of the LevyeKit checkout.
    * @return True when the file was processed successfully.
    */
-  static bool ProcessTemplateFile(
-      const std::filesystem::path& path, const std::string& projectName,
-      const std::string& projectTarget,
-      const std::filesystem::path& frameworkDirectory);
+  static bool ProcessTemplateFile(const std::filesystem::path& path, const std::string& projectName,
+                                  const std::string& projectTarget,
+                                  const std::filesystem::path& frameworkDirectory);
 };
 
 }  // namespace Levye

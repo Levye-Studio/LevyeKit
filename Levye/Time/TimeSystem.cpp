@@ -1,6 +1,7 @@
 #include "TimeSystem.hpp"
 
 #include <algorithm>
+#include <cmath>
 
 namespace Levye {
 void TimeSystem::Update(float deltaTime) {
@@ -8,7 +9,7 @@ void TimeSystem::Update(float deltaTime) {
    * Frame duration should never move backward. Protect the rest of the
    * framework if an invalid negative value is supplied.
    */
-  m_UnscaledDeltaTime = std::max(deltaTime, 0.0f);
+  m_UnscaledDeltaTime = std::isfinite(deltaTime) ? std::max(deltaTime, 0.0f) : 0.0f;
 
   m_UnscaledTime += static_cast<double>(m_UnscaledDeltaTime);
 
@@ -17,7 +18,8 @@ void TimeSystem::Update(float deltaTime) {
     return;
   }
 
-  m_DeltaTime = m_UnscaledDeltaTime * m_TimeScale;
+  const float scaled = m_UnscaledDeltaTime * m_TimeScale;
+  m_DeltaTime = std::isfinite(scaled) ? scaled : 0.0f;
 
   m_Time += static_cast<double>(m_DeltaTime);
 }
@@ -31,6 +33,7 @@ double TimeSystem::GetTimeSystem() const { return m_Time; }
 double TimeSystem::GetUnscaledTime() const { return m_UnscaledTime; }
 
 void TimeSystem::SetTimeScale(float scale) {
+  if (!std::isfinite(scale)) return;
   m_TimeScale = std::max(scale, 0.0f);
 }
 
@@ -42,13 +45,10 @@ bool TimeSystem::IsPaused() const { return m_Paused; }
 
 float TimeSystem::GetFixedDeltaTime() const { return m_UnscaledFixedDeltaTime; }
 
-float TimeSystem::GetUnscaledFixedDeltaTime() const {
-  return m_UnscaledFixedDeltaTime;
-}
+float TimeSystem::GetUnscaledFixedDeltaTime() const { return m_UnscaledFixedDeltaTime; }
 
 void TimeSystem::SetFixedUpdateRate(float updatesPerSecond) {
-  if (updatesPerSecond <= 0.0f)
-    return;
+  if (!std::isfinite(updatesPerSecond) || updatesPerSecond <= 0.0f) return;
 
   m_FixedUpdateRate = updatesPerSecond;
 
@@ -64,8 +64,7 @@ void TimeSystem::SetFixedUpdateRate(float updatesPerSecond) {
 float TimeSystem::GetFixedUpdateRate() const { return m_FixedUpdateRate; }
 
 int TimeSystem::ConsumeFixedSteps() {
-  if (m_Paused)
-    return 0;
+  if (m_Paused) return 0;
 
   /*
    * Accumulate scaled game time so slow motion and fast-forward affect the
@@ -75,8 +74,7 @@ int TimeSystem::ConsumeFixedSteps() {
 
   const double fixedStep = static_cast<double>(GetFixedDeltaTime());
 
-  if (fixedStep <= 0.0)
-    return 0;
+  if (fixedStep <= 0.0) return 0;
 
   int steps = 0;
 
@@ -99,8 +97,7 @@ int TimeSystem::ConsumeFixedSteps() {
 float TimeSystem::GetInterpolationAlpha() const {
   const double fixedStep = static_cast<double>(GetFixedDeltaTime());
 
-  if (fixedStep <= 0.0)
-    return 0.0f;
+  if (fixedStep <= 0.0) return 0.0f;
 
   return static_cast<float>(m_FixedAccumulator / fixedStep);
 }
@@ -110,4 +107,4 @@ float TimeSystem::Interpolate(float previous, float current) const {
 
   return previous + (current - previous) * alpha;
 }
-} // namespace Levye
+}  // namespace Levye

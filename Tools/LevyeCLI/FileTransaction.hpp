@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -26,6 +27,7 @@ struct TransactionFailureInjection {
 // Stages all outputs, installs them and rolls back on failure.
 // Not crash-atomic. Concurrent writers are unsupported.
 bool CommitFiles(const std::filesystem::path& projectRoot, const std::vector<PendingFile>& files,
-                 std::string& error, const TransactionFailureInjection* injection = nullptr);
+                 std::string& error, const TransactionFailureInjection* injection = nullptr,
+                 const std::function<bool(std::string&)>& validate = {});
 
 }  // namespace Levye

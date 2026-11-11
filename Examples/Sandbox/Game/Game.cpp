@@ -10,22 +10,31 @@
 #include "Scenes/ImGui/ImGuiScene.hpp"
 #endif
 namespace {
+
 using Sandbox::GameState;
+
 void BindServices(const Levye::HostServices* services) {
   if (services)
     Levye::Services::Bind(services);
   else
     Levye::Services::Unbind();
 }
+
 GameState* GetState(void* state) { return static_cast<GameState*>(state); }
+
 void InitializeState(void* state) { new (state) GameState{}; }
+
 void DestroyState(void* state) { GetState(state)->~GameState(); }
+
 void OnLoad(void* state) {
   auto* game = GetState(state);
+
   Sandbox::InputScene::Bind();
+
 #ifdef LEVYE_WITH_PHYSICS
   if (!game->physicsScene.Initialize()) Levye::Log::Error("Sandbox physics initialization failed.");
 #endif
+
   game->core.Initialize();
   Sandbox::SerializationScene::Initialize(game->persistentDocument);
 #ifdef LEVYE_WITH_ANIMATION
@@ -39,6 +48,7 @@ void OnLoad(void* state) {
   else
     Levye::Log::Info("Ten animation scenes ready.");
 #endif
+
   Levye::Log::Info("Sandbox started.");
 }
 void OnBeforeReload(void* state) {
@@ -47,6 +57,7 @@ void OnBeforeReload(void* state) {
 #endif
   Levye::Log::Info("Sandbox preparing for reload.");
 }
+
 void OnAfterReload(void* state) {
   auto* game = GetState(state);
   Levye::Log::Info("Sandbox reloaded.");
@@ -62,17 +73,21 @@ void OnAfterReload(void* state) {
                                                     : "FAIL: Physics state was not preserved");
 #endif
 }
+
 void OnUpdate(void* state, float deltaTime) {
   auto* game = GetState(state);
+
 #ifdef LEVYE_WITH_PHYSICS
   if (Levye::Input::IsPressed("ShowPhysics")) {
     Levye::Screen::Set("Physics");
     return;
   }
   if (Levye::Screen::Is("Physics")) {
-    if (Levye::Input::IsPressed("Back"))
+    if (Levye::Input::IsPressed("Back")) {
+      (void)Levye::Physics::SetCharacterVelocity(game->physicsScene.world,
+                                                 game->physicsScene.character, {0, 0, 0});
       Levye::Screen::Set("Menu");
-    else
+    } else
       game->physicsScene.Update();
     return;
   }
@@ -112,7 +127,9 @@ void OnUpdate(void* state, float deltaTime) {
   }
   if (Levye::Screen::Is("Game")) game->core.Update(deltaTime);
 }
+
 void OnFixedUpdate(void*, float) {}
+
 void OnDraw(void* state) {
   auto* game = GetState(state);
 #ifdef LEVYE_WITH_PHYSICS

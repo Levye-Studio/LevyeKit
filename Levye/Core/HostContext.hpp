@@ -16,6 +16,8 @@ struct ImGuiAPI;
 class Application;
 class AnimationService;
 struct AnimationAPI;
+class PhysicsService;
+struct PhysicsAPI;
 
 /**
  * @brief Internal collection of host-owned systems exposed to game services.
@@ -35,6 +37,8 @@ struct HostContext {
   ImGuiAPI* imguiAPI = nullptr;
   AnimationService* animation = nullptr;
   AnimationAPI* animationAPI = nullptr;
+  PhysicsService* physics = nullptr;
+  PhysicsAPI* physicsAPI = nullptr;
 
   TimeSystem* time = nullptr;
 
