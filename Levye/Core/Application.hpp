@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Levye/Core/ApplicationConfig.hpp>
+#include <Levye/Display/DisplayManager.hpp>
 #include <Levye/HotReload/GameModule.hpp>
 #ifdef LEVYE_WITH_IMGUI
 #include <Levye/Modules/ImGui/ImGuiService.hpp>
@@ -40,12 +41,15 @@ class Application {
   void RequestQuit();
 
 #ifdef LEVYE_WITH_IMGUI
-  [[nodiscard]] bool IsImGuiAvailable() const noexcept {
-    return m_ImGui.IsInitialized();
-  }
+  [[nodiscard]] bool IsImGuiAvailable() const noexcept { return m_ImGui.IsInitialized(); }
 #else
   [[nodiscard]] bool IsImGuiAvailable() const noexcept { return false; }
 #endif
+
+  /** @brief Returns the host-owned display manager to host code. */
+  [[nodiscard]] DisplayManager& GetDisplay() { return m_Display; }
+  /** @brief Returns the host-owned display manager to read-only host code. */
+  [[nodiscard]] const DisplayManager& GetDisplay() const { return m_Display; }
 
  private:
   ApplicationConfig m_Config;
@@ -53,6 +57,7 @@ class Application {
 #ifdef LEVYE_WITH_IMGUI
   ImGuiService m_ImGui;
 #endif
+  DisplayManager m_Display;
 
   bool m_QuitRequested = false;
 };

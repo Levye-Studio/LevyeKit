@@ -61,5 +61,6 @@ void CoreScene::Draw() const {
   DrawText("P: Pause time | M: Pause music | R: Resume music", 40, 100, 20, LIGHTGRAY);
 
   DrawText(Levye::Time::IsPaused() ? "PAUSED" : "RUNNING", 20, 20, 20, WHITE);
+  InputScene::Draw();
 }
 }  // namespace Sandbox

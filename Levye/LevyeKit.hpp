@@ -17,6 +17,7 @@
 #include <Levye/Assets/Assets.hpp>
 #include <Levye/Audio/Audio.hpp>
 #include <Levye/Debug/Log.hpp>
+#include <Levye/Display/Display.hpp>
 #include <Levye/Input/Input.hpp>
 #include <Levye/Screen/Screen.hpp>
 #include <Levye/Time/Time.hpp>

@@ -24,6 +24,10 @@ void Application::Run() {
     windowFlags |= FLAG_VSYNC_HINT;
   }
 
+  if (m_Config.useLogicalDisplay) {
+    windowFlags |= FLAG_WINDOW_HIGHDPI;
+  }
+
   if (windowFlags != 0) {
     SetConfigFlags(windowFlags);
   }
@@ -39,6 +43,17 @@ void Application::Run() {
 
   m_ImGui.SetCaptureSettings({.keyboard = true, .mouse = true});
 #endif
+
+  if (m_Config.useLogicalDisplay) {
+    if (!m_Display.Initialize(m_Config.display)) {
+      Logger::Error("Failed to initialize logical display.");
+#ifdef LEVYE_WITH_IMGUI
+      m_ImGui.Shutdown();
+#endif
+      CloseWindow();
+      return;
+    }
+  }
 
   SetExitKey(KEY_NULL);
 
@@ -58,6 +73,7 @@ void Application::Run() {
 #endif
 
     CloseAudioDevice();
+    m_Display.Shutdown();
     CloseWindow();
     return;
   }
@@ -72,9 +88,14 @@ void Application::Run() {
                                                settings.mouse && io.WantCaptureMouse);
 #endif
 
+    if (m_Config.useLogicalDisplay) {
+      m_Display.Resize(GetScreenWidth(), GetScreenHeight(), GetRenderWidth(), GetRenderHeight());
+    }
+
     // raylib polls events at EndDrawing(). Sample once before any callbacks,
     // including reload callbacks, so every callback sees this frame's state.
     m_GameModule.GetInputMap().Update();
+    m_GameModule.SampleTouchInput();
 
     /*
      * Check before executing game callbacks so no function from an
@@ -109,14 +130,22 @@ void Application::Run() {
     }
 
     BeginDrawing();
-
     ClearBackground(BLACK);
 
 #ifdef LEVYE_WITH_IMGUI
     m_ImGui.BeginFrame();
 #endif
 
+    if (m_Config.useLogicalDisplay) {
+      m_Display.BeginGame();
+    }
+
     m_GameModule.Draw();
+
+    if (m_Config.useLogicalDisplay) {
+      m_Display.EndGame();
+      m_Display.Present();
+    }
 
 #ifdef LEVYE_WITH_IMGUI
     m_ImGui.EndFrame();
@@ -136,6 +165,7 @@ void Application::Run() {
 #endif
 
   CloseAudioDevice();
+  m_Display.Shutdown();
 
   CloseWindow();
 }

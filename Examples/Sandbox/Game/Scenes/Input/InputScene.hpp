@@ -4,5 +4,7 @@ namespace Sandbox {
 struct InputScene {
   static void Bind();
   static void Update();
+  /** @brief Draws the host touch snapshot on the Sandbox game screen. */
+  static void Draw();
 };
 }  // namespace Sandbox

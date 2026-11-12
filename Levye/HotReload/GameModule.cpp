@@ -4,16 +4,27 @@
 #include <Levye/Core/Application.hpp>
 #include <Levye/Debug/Logger.hpp>
 #include <Levye/Input/InputMap.hpp>
+#include <Levye/Input/TouchManager.hpp>
+#include <Levye/Input/TouchRaylib.hpp>
 #include <Levye/Screen/ScreenManager.hpp>
 #ifdef LEVYE_WITH_PHYSICS
 #include <Levye/Modules/Physics/PhysicsBridge.hpp>
 #endif
+#include <cmath>
 #include <cstring>
 #include <type_traits>
 #include <utility>
 
 namespace Levye {
 namespace {
+
+bool ConvertTouchToLogical(float x, float y, float& logicalX, float& logicalY, void* context) {
+  const auto* app = static_cast<const Application*>(context);
+  const DisplayPosition converted = app->GetDisplay().ScreenToLogical({x, y});
+  logicalX = converted.point.x;
+  logicalY = converted.point.y;
+  return converted.insideViewport;
+}
 
 std::string ResolveAssetPath(HostContext* host, const char* path) {
   if (!host || !path) return {};
@@ -88,9 +99,87 @@ Vector2 HostGetMouseDelta(void* context) {
 
   auto* host = static_cast<HostContext*>(context);
 
-  if (!host->input) return {0.0f, 0.0f};
+  return host->mouseDelta ? *host->mouseDelta : Vector2{};
+}
 
-  return host->input->GetMouseDelta();
+Vector2 HostGetMousePosition(void* context) {
+  if (!context) return {};
+  const auto* host = static_cast<const HostContext*>(context);
+  return host->mousePosition ? *host->mousePosition : Vector2{};
+}
+
+bool HostIsMouseInsideViewport(void* context) {
+  if (!context) return false;
+  const auto* host = static_cast<const HostContext*>(context);
+  return host->mouseInsideViewport && *host->mouseInsideViewport;
+}
+
+bool HostGetDisplayInfo(void* context, DisplayInfo* outInfo) {
+  if (!context || !outInfo) return false;
+  const auto* host = static_cast<const HostContext*>(context);
+  if (!host->application) return false;
+  DisplayInfo info{};
+  info.window = {GetScreenWidth(), GetScreenHeight()};
+  info.framebuffer = {GetRenderWidth(), GetRenderHeight()};
+  const auto& display = host->application->GetDisplay();
+  info.enabled = display.IsReady();
+  if (info.enabled) {
+    const auto& layout = display.GetLayout();
+    info.logical = layout.GetLogicalSize();
+    info.window = layout.GetWindowSize();
+    info.framebuffer = layout.GetPhysicalSize();
+    info.viewport = layout.GetViewport();
+    info.windowViewport = layout.GetWindowViewport();
+    info.safeArea = layout.GetSafeArea();
+    info.orientation = layout.GetOrientation();
+    info.scaling = layout.GetScaling();
+  } else {
+    info.logical = info.window;
+    info.viewport = {0.0f, 0.0f, static_cast<float>(info.framebuffer.width),
+                     static_cast<float>(info.framebuffer.height)};
+    info.windowViewport = {0.0f, 0.0f, static_cast<float>(info.window.width),
+                           static_cast<float>(info.window.height)};
+    info.safeArea = info.windowViewport;
+    if (info.window.width > info.window.height) info.orientation = DisplayOrientation::Landscape;
+    if (info.window.width < info.window.height) info.orientation = DisplayOrientation::Portrait;
+  }
+  *outInfo = info;
+  return true;
+}
+
+DisplayPosition HostDisplayScreenToLogical(void* context, DisplayPoint position) {
+  if (!context || !std::isfinite(position.x) || !std::isfinite(position.y)) return {};
+  const auto* host = static_cast<const HostContext*>(context);
+  if (!host->application) return {};
+  const auto& display = host->application->GetDisplay();
+  if (display.IsReady()) return display.ScreenToLogical(position);
+  return {position, position.x >= 0.0f && position.y >= 0.0f &&
+                        position.x < static_cast<float>(GetScreenWidth()) &&
+                        position.y < static_cast<float>(GetScreenHeight())};
+}
+
+DisplayPoint HostDisplayLogicalToScreen(void* context, DisplayPoint position) {
+  if (!context || !std::isfinite(position.x) || !std::isfinite(position.y)) return {};
+  const auto* host = static_cast<const HostContext*>(context);
+  if (!host->application) return {};
+  const auto& display = host->application->GetDisplay();
+  return display.IsReady() ? display.LogicalToScreen(position) : position;
+}
+
+bool HostSetDisplayScaling(void* context, DisplayScaling scaling) {
+  if (!context) return false;
+  auto* host = static_cast<HostContext*>(context);
+  if (!host->application) return false;
+  auto& display = host->application->GetDisplay();
+  if (!display.IsReady()) return false;
+  switch (scaling) {
+    case DisplayScaling::Fit:
+    case DisplayScaling::Fill:
+    case DisplayScaling::Stretch:
+      display.SetScaling(scaling);
+      return true;
+  }
+  return false;
 }
 
 float HostGetMouseWheel(void* context) {
@@ -101,6 +190,57 @@ float HostGetMouseWheel(void* context) {
   if (!host->input) return 0.0f;
 
   return host->input->GetMouseWheel();
+}
+
+int HostGetTouchCount(void* context) {
+  if (!context) return 0;
+
+  auto* host = static_cast<HostContext*>(context);
+  if (!host->touch) return 0;
+
+  return static_cast<int>(host->touch->GetTouchCount());
+}
+
+int HostGetTouchEventCount(void* context) {
+  if (!context) return 0;
+  auto* host = static_cast<HostContext*>(context);
+  return host->touch ? static_cast<int>(host->touch->GetEventCount()) : 0;
+}
+
+bool HostGetTouchEvent(void* context, int index, TouchPoint* outTouch) {
+  if (!context || !outTouch || index < 0) return false;
+  auto* host = static_cast<HostContext*>(context);
+  if (!host->touch) return false;
+  const TouchPoint* touch = host->touch->GetEvent(static_cast<std::size_t>(index));
+  if (!touch) return false;
+  *outTouch = *touch;
+  return true;
+}
+
+bool HostGetTouch(void* context, int index, TouchPoint* outTouch) {
+  if (!context || !outTouch || index < 0) return false;
+
+  auto* host = static_cast<HostContext*>(context);
+  if (!host->touch) return false;
+
+  const TouchPoint* touch = host->touch->GetTouch(static_cast<std::size_t>(index));
+
+  if (!touch) return false;
+  *outTouch = *touch;
+  return true;
+}
+
+bool HostFindTouch(void* context, int id, TouchPoint* outTouch) {
+  if (!context || !outTouch) return false;
+
+  auto* host = static_cast<HostContext*>(context);
+  if (!host->touch) return false;
+
+  const TouchPoint* touch = host->touch->FindTouch(id);
+
+  if (!touch) return false;
+  *outTouch = *touch;
+  return true;
 }
 
 void HostBindKey(void* context, const char* action, int key) {
@@ -549,6 +689,10 @@ bool GameModule::Load(const std::string& path) {
 #endif
 
   m_HostContext = {.input = &m_InputMap,
+                   .touch = &m_TouchManager,
+                   .mousePosition = &m_MousePosition,
+                   .mouseDelta = &m_MouseDelta,
+                   .mouseInsideViewport = &m_MouseInsideViewport,
                    .screens = &m_ScreenManager,
                    .textures = &m_TextureManager,
                    .audio = &m_AudioManager,
@@ -631,7 +775,18 @@ bool GameModule::Load(const std::string& path) {
                     .IsPaused = HostIsPaused,
                     .GetInterpolationAlpha = HostGetInterpolationAlpha,
                     .GetModuleAPI = HostGetModuleAPI,
-                    .RequestQuit = HostRequestQuit};
+                    .RequestQuit = HostRequestQuit,
+                    .GetTouch = HostGetTouch,
+                    .FindTouch = HostFindTouch,
+                    .GetTouchCount = HostGetTouchCount,
+                    .GetTouchEventCount = HostGetTouchEventCount,
+                    .GetTouchEvent = HostGetTouchEvent,
+                    .GetDisplayInfo = HostGetDisplayInfo,
+                    .DisplayScreenToLogical = HostDisplayScreenToLogical,
+                    .DisplayLogicalToScreen = HostDisplayLogicalToScreen,
+                    .SetDisplayScaling = HostSetDisplayScaling,
+                    .GetMousePosition = HostGetMousePosition,
+                    .IsMouseInsideViewport = HostIsMouseInsideViewport};
 
   const std::filesystem::path sourcePath(m_Path);
 
@@ -1136,6 +1291,29 @@ bool GameModule::ValidateAPI(const GameAPI& api) const {
 TimeSystem& GameModule::GetTimeSystem() { return m_Time; }
 
 InputMap& GameModule::GetInputMap() { return m_InputMap; }
+
+void GameModule::SampleTouchInput() {
+  const Vector2 rawPosition = ::GetMousePosition();
+  const Vector2 rawDelta = m_InputMap.GetMouseDelta();
+  const bool logical = m_Application && m_Application->GetDisplay().IsReady();
+  if (logical) {
+    const auto& display = m_Application->GetDisplay();
+    const auto current = display.ScreenToLogical({rawPosition.x, rawPosition.y});
+    const auto previous =
+        display.ScreenToLogical({rawPosition.x - rawDelta.x, rawPosition.y - rawDelta.y});
+    m_MousePosition = {current.point.x, current.point.y};
+    m_MouseDelta = {current.point.x - previous.point.x, current.point.y - previous.point.y};
+    m_MouseInsideViewport = current.insideViewport;
+    SampleRaylibTouches(m_TouchManager, ConvertTouchToLogical, m_Application);
+  } else {
+    m_MousePosition = rawPosition;
+    m_MouseDelta = rawDelta;
+    m_MouseInsideViewport = rawPosition.x >= 0.0f && rawPosition.y >= 0.0f &&
+                            rawPosition.x < static_cast<float>(GetScreenWidth()) &&
+                            rawPosition.y < static_cast<float>(GetScreenHeight());
+    SampleRaylibTouches(m_TouchManager);
+  }
+}
 
 ScreenManager& GameModule::GetScreenManager() { return m_ScreenManager; }
 

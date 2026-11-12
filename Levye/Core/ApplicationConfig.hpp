@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Levye/Display/DisplayTypes.hpp>
 #include <string>
 
 namespace Levye {
@@ -41,5 +42,10 @@ struct ApplicationConfig {
    * @brief Whether vertical synchronization should be requested.
    */
   bool vsync = false;
+
+  /** @brief Enables host-owned logical rendering; false preserves raw raylib drawing. */
+  bool useLogicalDisplay = false;
+  /** @brief Logical size and scaling mode used only when logical display is enabled. */
+  DisplayConfig display{};
 };
-} // namespace Levye
+}  // namespace Levye

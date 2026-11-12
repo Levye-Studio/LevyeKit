@@ -157,7 +157,11 @@ add_library(
     Levye/HotReload/DynamicLibrary.cpp
     Levye/HotReload/GameModule.cpp
 
+    Levye/Display/DisplayLayout.cpp
+    Levye/Display/DisplayManager.cpp
+
     Levye/Input/InputMap.cpp
+    Levye/Input/TouchManager.cpp
     Levye/Screen/ScreenManager.cpp
     Levye/Assets/TextureManager.cpp
     Levye/Audio/AudioManager.cpp

@@ -2,6 +2,7 @@
 
 #include <rlgl.h>
 
+#include <Levye/Display/Display.hpp>
 #include <Levye/Input/Input.hpp>
 #include <Levye/Modules/Animation/EditablePose.hpp>
 #include <Levye/Modules/Animation/IK/EndEffectorOrientation.hpp>
@@ -516,8 +517,10 @@ void LocomotionScene::Draw() const {
              : phase.state == Levye::GaitPhase::Stance ? SKYBLUE
                                                        : ORANGE);
   }
-  const int panelX = GetScreenWidth() >= 1100 ? GetScreenWidth() - 440 : 12;
-  const int panelY = GetScreenWidth() >= 1100 ? 12 : 320;
+  const int screenWidth =
+      Levye::Display::IsEnabled() ? Levye::Display::GetLogicalSize().width : GetScreenWidth();
+  const int panelX = screenWidth >= 1100 ? screenWidth - 440 : 12;
+  const int panelY = screenWidth >= 1100 ? 12 : 320;
   DrawRectangle(panelX, panelY, 425, 160, Fade(BLACK, 0.8f));
   DrawText("Body stabilization", panelX + 12, panelY + 8, 20, WHITE);
   DrawText(TextFormat("B: %s | N/H strength %.1f | V: support %s",

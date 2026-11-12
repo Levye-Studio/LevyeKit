@@ -1,9 +1,12 @@
 #pragma once
 
+#include <raylib.h>
+
 #include <string>
 
 namespace Levye {
 class InputMap;
+class TouchManager;
 class ScreenManager;
 class TextureManager;
 class AudioManager;
@@ -27,6 +30,11 @@ struct PhysicsAPI;
  */
 struct HostContext {
   InputMap* input = nullptr;
+  TouchManager* touch = nullptr;
+  Vector2* mousePosition = nullptr;
+  Vector2* mouseDelta = nullptr;
+  bool* mouseInsideViewport = nullptr;
+
   ScreenManager* screens = nullptr;
   TextureManager* textures = nullptr;
   AudioManager* audio = nullptr;

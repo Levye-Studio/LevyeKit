@@ -4,6 +4,8 @@
 
 #include <Levye/Assets/AssetHandle.hpp>
 #include <Levye/Core/ModuleAPI.hpp>
+#include <Levye/Display/DisplayTypes.hpp>
+#include <Levye/Input/TouchTypes.hpp>
 
 namespace Levye {
 
@@ -282,6 +284,43 @@ struct HostServices {
    * @param context Opaque host-owned service context.
    */
   void (*RequestQuit)(void* context) = nullptr;
+
+  // ---------------------------------------------------------------------
+  // Touch Input
+  // ---------------------------------------------------------------------
+
+  /**
+   * @brief Retrieves a touch from the current frame snapshot.
+   */
+  bool (*GetTouch)(void* context, int index, TouchPoint* outTouch) = nullptr;
+
+  /**
+   * @brief Finds a touch by its persistent identifier.
+   */
+  bool (*FindTouch)(void* context, int id, TouchPoint* outTouch) = nullptr;
+
+  /** @brief Returns the number of active touches. */
+  int (*GetTouchCount)(void* context) = nullptr;
+
+  /** @brief Returns the number of touch events, including one-frame endings. */
+  int (*GetTouchEventCount)(void* context) = nullptr;
+
+  /** @brief Retrieves an active or terminal touch event by snapshot index. */
+  bool (*GetTouchEvent)(void* context, int index, TouchPoint* outTouch) = nullptr;
+
+  // Display and pointer input (appended for Game API v17).
+  /** @brief Copies the current host display state into a plain ABI value. */
+  bool (*GetDisplayInfo)(void* context, DisplayInfo* outInfo) = nullptr;
+  /** @brief Converts a raylib window point to logical game coordinates. */
+  DisplayPosition (*DisplayScreenToLogical)(void* context, DisplayPoint position) = nullptr;
+  /** @brief Converts logical game coordinates to a raylib window point. */
+  DisplayPoint (*DisplayLogicalToScreen)(void* context, DisplayPoint position) = nullptr;
+  /** @brief Changes the host viewport scaling policy without rebuilding the texture. */
+  bool (*SetDisplayScaling)(void* context, DisplayScaling scaling) = nullptr;
+  /** @brief Returns the mouse position sampled with other host input. */
+  Vector2 (*GetMousePosition)(void* context) = nullptr;
+  /** @brief Reports whether the sampled mouse is inside the visible game viewport. */
+  bool (*IsMouseInsideViewport)(void* context) = nullptr;
 };
 
 }  // namespace Levye

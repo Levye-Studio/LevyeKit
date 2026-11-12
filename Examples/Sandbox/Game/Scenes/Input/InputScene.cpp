@@ -181,8 +181,16 @@ void InputScene::Bind() {
 
   Levye::Input::BindKey("TestMouse", KEY_C);
   Levye::Input::BindMouseButton("TestMouse", MOUSE_BUTTON_LEFT);
+  Levye::Input::BindKey("DisplayCycleScaling", KEY_SPACE);
 }
 void InputScene::Update() {
+  if (Levye::Input::IsPressed("DisplayCycleScaling") && Levye::Display::IsEnabled()) {
+    const auto current = Levye::Display::GetScaling();
+    const auto next = current == Levye::DisplayScaling::Fit    ? Levye::DisplayScaling::Fill
+                      : current == Levye::DisplayScaling::Fill ? Levye::DisplayScaling::Stretch
+                                                               : Levye::DisplayScaling::Fit;
+    (void)Levye::Display::SetScaling(next);
+  }
   if (Levye::Input::IsPressed("TestMouse")) {
     Levye::Log::Info("Mouse pressed");
   }
@@ -203,6 +211,54 @@ void InputScene::Update() {
     std::string mouseMSG =
         "Mouse delta: x=" + std::to_string(mouseDelta.x) + " y=" + std::to_string(mouseDelta.y);
     Levye::Log::Info(mouseMSG.c_str());
+  }
+}
+
+void InputScene::Draw() {
+  Levye::DisplayInfo info;
+  if (Levye::Display::GetInfo(info)) {
+    const char* scaling = info.scaling == Levye::DisplayScaling::Fit    ? "Fit"
+                          : info.scaling == Levye::DisplayScaling::Fill ? "Fill"
+                                                                        : "Stretch";
+    DrawText(TextFormat("SPACE: %s | logical %dx%d | window %dx%d | framebuffer %dx%d", scaling,
+                        info.logical.width, info.logical.height, info.window.width,
+                        info.window.height, info.framebuffer.width, info.framebuffer.height),
+             40, 130, 18, RAYWHITE);
+    DrawText(TextFormat("Viewport fb: (%.1f, %.1f) %.1f x %.1f", info.viewport.x, info.viewport.y,
+                        info.viewport.width, info.viewport.height),
+             40, 154, 18, RAYWHITE);
+    DrawRectangleLines(0, 0, info.logical.width - 1, info.logical.height - 1, LIME);
+    const Vector2 raw = GetMousePosition();
+    const Vector2 logical = Levye::Input::GetMousePosition();
+    DrawText(TextFormat("Mouse raw (%.1f, %.1f) logical (%.1f, %.1f) %s", raw.x, raw.y, logical.x,
+                        logical.y, Levye::Input::IsMouseInsideViewport() ? "inside" : "outside"),
+             40, 178, 18, RAYWHITE);
+    DrawCircleLines(info.logical.width * 3 / 4, info.logical.height / 2, 25.0f, YELLOW);
+    DrawLine(info.logical.width * 3 / 4 - 35, info.logical.height / 2,
+             info.logical.width * 3 / 4 + 35, info.logical.height / 2, YELLOW);
+    DrawLine(info.logical.width * 3 / 4, info.logical.height / 2 - 35, info.logical.width * 3 / 4,
+             info.logical.height / 2 + 35, YELLOW);
+    if (Levye::Input::IsMouseInsideViewport())
+      DrawCircleLines(static_cast<int>(logical.x), static_cast<int>(logical.y), 12.0f, MAGENTA);
+  }
+  DrawText(
+      TextFormat("Touches: %d (hold left mouse to simulate one)", Levye::Input::GetTouchCount()),
+      40, 205, 18, RAYWHITE);
+  for (int i = 0; i < Levye::Input::GetTouchEventCount(); ++i) {
+    Levye::TouchPoint touch;
+    if (!Levye::Input::GetTouchEvent(i, touch)) continue;
+    const bool released = Levye::Input::IsTouchReleased(touch);
+    const Color color = released                                  ? ORANGE
+                        : touch.phase == Levye::TouchPhase::Began ? GREEN
+                                                                  : SKYBLUE;
+    DrawCircleLines(static_cast<int>(touch.x), static_cast<int>(touch.y), 24.0f, color);
+    DrawText(TextFormat("%d %s", touch.id,
+                        touch.phase == Levye::TouchPhase::Cancelled ? "cancelled"
+                        : touch.phase == Levye::TouchPhase::Ended   ? "ended"
+                        : touch.phase == Levye::TouchPhase::Began   ? "began"
+                        : touch.phase == Levye::TouchPhase::Moved   ? "moved"
+                                                                    : "stationary"),
+             static_cast<int>(touch.x) + 28, static_cast<int>(touch.y) - 10, 16, color);
   }
 }
 }  // namespace Sandbox

@@ -10,23 +10,19 @@
 #include <string>
 
 int main() {
-  const std::filesystem::path executableDirectory =
-      Levye::ExecutablePath::GetDirectory();
+  const std::filesystem::path executableDirectory = Levye::ExecutablePath::GetDirectory();
 
-  const std::filesystem::path targetDirectory =
-      executableDirectory.parent_path();
+  const std::filesystem::path targetDirectory = executableDirectory.parent_path();
 
   const std::filesystem::path gameModulePath =
       targetDirectory / "lib" / Levye::SharedLibrary::MakeFilename("Game");
 
-  const std::filesystem::path frameworkRoot =
-      (executableDirectory / "../../..").lexically_normal();
+  const std::filesystem::path frameworkRoot = (executableDirectory / "../../..").lexically_normal();
 
   Levye::GameModule gameModule;
   gameModule.GetScreenManager().SetScreen("Menu");
 
-  const std::filesystem::path projectFile =
-      frameworkRoot / "Examples/Sandbox/levye.project";
+  const std::filesystem::path projectFile = frameworkRoot / "Examples/Sandbox/levye.project";
 
   const std::filesystem::path projectDirectory = projectFile.parent_path();
 
@@ -38,10 +34,13 @@ int main() {
     return 1;
   }
 
-  const std::filesystem::path assetRoot =
-      projectDirectory / project->assetDirectory;
+  const std::filesystem::path assetRoot = projectDirectory / project->assetDirectory;
 
   Levye::ApplicationConfig config = project->CreateApplicationConfig();
+
+  config.useLogicalDisplay = true;
+  config.display.logical = {720, 1280};
+  config.display.scaling = Levye::DisplayScaling::Fit;
 
   gameModule.SetAssetRoot(assetRoot.string());
 

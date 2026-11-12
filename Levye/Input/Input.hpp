@@ -93,12 +93,13 @@ class Input {
   /**
    * @brief Returns the mouse movement sampled during the current host frame.
    *
-   * The value represents the raw raylib mouse delta sampled by the host.
+   * The value uses logical game coordinates when Display is enabled, and raw
+   * raylib window coordinates otherwise.
    * Repeated calls during the same frame return the same value.
    *
    * @return Mouse movement since the previous host frame.
    */
-  static Vector2 GetMouseDelta() {
+  [[nodiscard]] static Vector2 GetMouseDelta() {
     const HostServices* host = Services::Get();
 
     if (!host || !host->GetMouseDelta) {
@@ -115,7 +116,7 @@ class Input {
    *
    * @return Mouse wheel movement for the current frame.
    */
-  static float GetMouseWheel() {
+  [[nodiscard]] static float GetMouseWheel() {
     const HostServices* host = Services::Get();
 
     if (!host || !host->GetMouseWheel) {
@@ -123,6 +124,65 @@ class Input {
     }
 
     return host->GetMouseWheel(host->context);
+  }
+
+  /** @brief Returns the sampled mouse position, logical when Display is enabled. */
+  [[nodiscard]] static Vector2 GetMousePosition() {
+    const HostServices* host = Services::Get();
+    return host && host->GetMousePosition ? host->GetMousePosition(host->context) : Vector2{};
+  }
+
+  /** @brief Reports whether the sampled mouse is in the visible game viewport. */
+  [[nodiscard]] static bool IsMouseInsideViewport() {
+    const HostServices* host = Services::Get();
+    return host && host->IsMouseInsideViewport && host->IsMouseInsideViewport(host->context);
+  }
+
+  /** @brief Returns the number of active touches in this host frame. */
+  [[nodiscard]] static int GetTouchCount() {
+    const HostServices* host = Services::Get();
+    return host && host->GetTouchCount ? host->GetTouchCount(host->context) : 0;
+  }
+
+  /**
+   * @brief Reads an active touch by index without consuming its state.
+   * @return false for an invalid index or when touch input is unavailable.
+   */
+  [[nodiscard]] static bool GetTouch(int index, TouchPoint& touch) {
+    const HostServices* host = Services::Get();
+    return index >= 0 && host && host->GetTouch && host->GetTouch(host->context, index, &touch);
+  }
+
+  /**
+   * @brief Finds an active or one-frame terminal touch by stable ID.
+   * @return false when the ID is absent from the current snapshot.
+   */
+  [[nodiscard]] static bool FindTouch(int id, TouchPoint& touch) {
+    const HostServices* host = Services::Get();
+    return id >= 0 && host && host->FindTouch && host->FindTouch(host->context, id, &touch);
+  }
+
+  /** @brief Returns the number of touch records, including Ended and Cancelled. */
+  [[nodiscard]] static int GetTouchEventCount() {
+    const HostServices* host = Services::Get();
+    return host && host->GetTouchEventCount ? host->GetTouchEventCount(host->context) : 0;
+  }
+
+  /** @brief Reads any touch record from this frame, including terminal events. */
+  [[nodiscard]] static bool GetTouchEvent(int index, TouchPoint& touch) {
+    const HostServices* host = Services::Get();
+    return index >= 0 && host && host->GetTouchEvent &&
+           host->GetTouchEvent(host->context, index, &touch);
+  }
+
+  /** @brief Checks whether a touch began in the current frame. */
+  [[nodiscard]] static bool IsTouchPressed(const TouchPoint& touch) {
+    return touch.phase == TouchPhase::Began;
+  }
+
+  /** @brief Checks whether a touch ended or was cancelled in the current frame. */
+  [[nodiscard]] static bool IsTouchReleased(const TouchPoint& touch) {
+    return touch.phase == TouchPhase::Ended || touch.phase == TouchPhase::Cancelled;
   }
 
   /**

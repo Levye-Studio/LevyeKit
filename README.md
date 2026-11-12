@@ -696,7 +696,7 @@ Levye::Input::ClearAction("Jump"); // Remove action bindings and state immediate
 Levye::Input::Clear();             // Remove all actions, axes, and cached values.
 ```
 
-Mouse movement and wheel input are sampled once per host frame alongside actions and axes. `GetMouseDelta()` returns the frame's raw mouse movement, while `GetMouseWheel()` returns the raw wheel movement. These values are intentionally not exposed as named axes because LevyeKit's named axes are normalized to `[-1, 1]`, while mouse delta and wheel movement preserve their raw magnitude.
+Mouse movement and wheel input are sampled once per host frame alongside actions and axes. `GetMouseDelta()` uses logical game coordinates when Display is enabled and raw raylib window coordinates otherwise; `GetMouseWheel()` retains raw wheel movement. These values are intentionally not exposed as named axes because LevyeKit's named axes are normalized to `[-1, 1]`, while pointer delta and wheel movement preserve their magnitude.
 
 Clearing does not synthesize release events. `ClearAction` leaves a same-named
 axis intact; there is currently no individual-axis removal function. A cleared
@@ -708,7 +708,67 @@ The Sandbox uses WASD/arrows or the left stick to move, Enter/controller A to
 start, Escape/controller B to return to the menu, and Space/controller A for a
 sound. `P` pauses game time, `M` pauses music, and `R` resumes music.
 
-The current input service API requires `GAME_API_VERSION` **15**. Rebuild and restart the host and rebuild game modules together when upgrading across an incompatible game API version. `GAME_API_VERSION` tracks the hot-reload ABI independently from the LevyeKit release version.
+Touch input is sampled once per host frame, immediately after the action and
+axis snapshot and before hot reload callbacks. `GetTouchCount()` and
+`GetTouch(index, point)` enumerate active touches. IDs remain stable when the
+platform changes touch order; use `FindTouch(id, point)` to follow one finger.
+`GetTouchEventCount()` and `GetTouchEvent(index, point)` also enumerate `Ended`
+and `Cancelled` records for one frame. Reads never consume events, so update,
+fixed update, drawing, and reload callbacks see the same snapshot. A lost
+window focus cancels active touches. On desktop, holding the left mouse button
+simulates one touch when raylib reports no native touches; native touch input
+takes precedence. The Sandbox game screen draws touch markers.
+
+```cpp
+for (int i = 0; i < Levye::Input::GetTouchEventCount(); ++i) {
+    Levye::TouchPoint touch;
+    if (!Levye::Input::GetTouchEvent(i, touch)) continue;
+    if (Levye::Input::IsTouchPressed(touch)) { /* begin gesture */ }
+    if (Levye::Input::IsTouchReleased(touch)) { /* finish or cancel gesture */ }
+}
+```
+
+Set `ApplicationConfig::useLogicalDisplay = true` and provide
+`ApplicationConfig::display.logical` and `.scaling` to render the game through
+one host-owned logical render texture. `Fit` keeps the entire frame visible
+with letterboxing, `Fill` preserves aspect ratio while cropping, and `Stretch`
+fills the window. The target is allocated once and released before the window
+closes. The Sandbox enables a 1280×720 logical frame; resize its window and
+press **F12** on the Game screen to cycle through all three modes.
+
+`Levye::Display` exposes logical/window/framebuffer sizes, the framebuffer and
+window viewports, orientation, safe area, scaling mode, and coordinate
+conversion. `Display::SetScaling()` applies on the next host frame so drawing
+and pointer snapshots always use the same viewport. `GetViewport()` uses
+physical framebuffer pixels; `GetWindowViewport()` uses raylib window
+coordinates. In Fill mode these rectangles can extend beyond the framebuffer
+or window because the outer part is cropped. Safe insets supplied to the host manager are framebuffer pixels;
+`GetSafeArea()` returns their clipped intersection with the visible game in
+logical coordinates. If logical rendering is disabled, coordinate conversions
+are identity operations and mouse/touch input retains raw raylib window
+coordinates.
+
+When enabled, the host converts raylib mouse and touch positions from window
+coordinates to framebuffer pixels using the measured framebuffer/window size
+ratio, then maps through the viewport into logical coordinates. This ratio
+handles Retina scaling and framebuffer rounding without applying DPI scaling
+twice. `Input::GetMousePosition()`, `Input::GetMouseDelta()`, and touch positions
+use logical coordinates; `Input::IsMouseInsideViewport()` and each touch's
+`insideViewport` identify letterbox or out-of-window input. ImGui continues to
+use raylib's window coordinates. Game code should use `Display::GetLogicalSize()`
+for logical layout instead of `GetScreenWidth()` after enabling this mode.
+
+```cpp
+const auto size = Levye::Display::GetLogicalSize();
+const Vector2 mouse = Levye::Input::GetMousePosition();
+if (Levye::Input::IsMouseInsideViewport()) {
+    // mouse is aligned with game drawing in the logical render target.
+}
+```
+
+No touch binding to named actions or gesture recognition is provided.
+
+The current display/input service API requires `GAME_API_VERSION` **17**. Rebuild and restart the host and rebuild game modules together when upgrading across an incompatible game API version. Older modules are rejected before their API table is copied. `GAME_API_VERSION` tracks the hot-reload ABI independently from the LevyeKit release version.
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

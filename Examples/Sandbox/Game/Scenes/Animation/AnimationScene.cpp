@@ -2,6 +2,7 @@
 
 #include <raymath.h>
 
+#include <Levye/Display/Display.hpp>
 #include <Levye/Input/Input.hpp>
 #include <Levye/Modules/Animation/TargetSmoothing.hpp>
 #include <algorithm>
@@ -906,7 +907,9 @@ void AnimationScene::DrawIKHUD() const {
       selectedSolved && (m_IKSelectedChain ? m_IK2Result.reachable != 0 : m_IKReachable);
   const float selectedError = m_IKSelectedChain ? m_IK2EndError : m_IKEndError;
   const int width = 360;
-  const int x = std::max(10, GetScreenWidth() - width - 12);
+  const int screenWidth =
+      Levye::Display::IsEnabled() ? Levye::Display::GetLogicalSize().width : GetScreenWidth();
+  const int x = std::max(10, screenWidth - width - 12);
   const int y = 12;
   DrawRectangle(x, y, width, 518, Fade(BLACK, 0.82f));
   DrawText(TextFormat("8/8 IK  Arm %d", m_IKSelectedChain + 1), x + 12, y + 10, 21, RAYWHITE);

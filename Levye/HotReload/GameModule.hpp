@@ -10,6 +10,7 @@
 #include <Levye/HotReload/DynamicLibrary.hpp>
 #include <Levye/IO/FileWatcher.hpp>
 #include <Levye/Input/InputMap.hpp>
+#include <Levye/Input/TouchManager.hpp>
 #include <Levye/Screen/ScreenManager.hpp>
 #include <Levye/Time/TimeSystem.hpp>
 #ifdef LEVYE_WITH_SERIALIZATION
@@ -155,6 +156,9 @@ class GameModule {
    */
   InputMap& GetInputMap();
 
+  /** @brief Samples host-owned touch state once before gameplay and reload callbacks. */
+  void SampleTouchInput();
+
   /**
    * @brief Returns the host-owned screen manager.
    *
@@ -264,6 +268,10 @@ class GameModule {
   HostContext m_HostContext{};
 
   InputMap m_InputMap;
+  TouchManager m_TouchManager;
+  Vector2 m_MousePosition{};
+  Vector2 m_MouseDelta{};
+  bool m_MouseInsideViewport = false;
   ScreenManager m_ScreenManager;
 
   TextureManager m_TextureManager;
