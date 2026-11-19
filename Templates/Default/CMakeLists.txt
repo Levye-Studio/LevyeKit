@@ -78,6 +78,24 @@ include(
     OPTIONAL
 )
 
+if(LEVYE_WITH_ANDROID)
+    add_library(${PROJECT_NAME}Android SHARED
+        "${CMAKE_CURRENT_SOURCE_DIR}/Source/AndroidMain.cpp"
+        ${LEVYE_GAME_SOURCES})
+    target_include_directories(${PROJECT_NAME}Android PRIVATE
+        "${LEVYE_ROOT}" "${CMAKE_CURRENT_SOURCE_DIR}/Source")
+    target_link_libraries(${PROJECT_NAME}Android PRIVATE LevyeKit)
+   
+    target_link_options(${PROJECT_NAME}Android PRIVATE "LINKER:-z,max-page-size=16384")
+    get_filename_component(LEVYE_BUILD_NAME "${CMAKE_BINARY_DIR}" NAME)
+    set_target_properties(${PROJECT_NAME}Android PROPERTIES
+        OUTPUT_NAME main
+        LIBRARY_OUTPUT_DIRECTORY
+            "${CMAKE_CURRENT_SOURCE_DIR}/Targets/${LEVYE_BUILD_NAME}/lib")
+    target_link_options(raylib PRIVATE "LINKER:-z,max-page-size=16384")
+    return()
+endif()
+
 add_library(
     Game
     SHARED
@@ -149,15 +167,18 @@ target_link_libraries(
 # Output directories
 # ---------------------------------------------------------
 
-if(WIN32)
-    set(LEVYE_TARGET_DIRECTORY "${CMAKE_SOURCE_DIR}/Targets/$<CONFIG>")
-else()
-    # Preserve the existing macOS/Linux configuration and output layout.
-    if(NOT CMAKE_BUILD_TYPE)
-        set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
-    endif()
-    set(LEVYE_TARGET_DIRECTORY "${CMAKE_SOURCE_DIR}/Targets/${CMAKE_BUILD_TYPE}")
-endif()
+get_filename_component(
+    LEVYE_BUILD_NAME
+    "${CMAKE_BINARY_DIR}"
+    NAME
+)
+
+set(
+    LEVYE_OUTPUT_DIR
+    "${CMAKE_SOURCE_DIR}/Targets/${LEVYE_BUILD_NAME}"
+)
+
+set(LEVYE_TARGET_DIRECTORY "${LEVYE_OUTPUT_DIR}")
 
 set_target_properties(
     Game

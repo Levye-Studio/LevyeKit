@@ -51,6 +51,12 @@ option(
     OFF
 )
 
+option(
+    LEVYE_WITH_ANDROID
+    "Enable LevyeKit Android support"
+    OFF
+)
+
 set(
     LEVYE_PHYSICS_BACKEND
     "JOLT"
@@ -67,6 +73,22 @@ project(
     VERSION 0.5.0
     LANGUAGES CXX
 )
+
+if(LEVYE_WITH_ANDROID AND NOT ANDROID)
+    message(FATAL_ERROR "LEVYE_WITH_ANDROID requires an Android toolchain.")
+endif()
+
+if(ANDROID AND NOT LEVYE_WITH_ANDROID)
+    message(FATAL_ERROR "Android toolchains require LEVYE_WITH_ANDROID=ON.")
+endif()
+
+if(LEVYE_WITH_ANDROID)
+    foreach(LEVYE_MODULE IN ITEMS SERIALIZATION IMGUI ANIMATION PHYSICS)
+        if(LEVYE_WITH_${LEVYE_MODULE})
+            message(FATAL_ERROR "Android does not yet support ${LEVYE_MODULE}.")
+        endif()
+    endforeach()
+endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -101,8 +123,16 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # ---------------------------------------------------------------------------
 # -B Build/build-animation -> Targets/build-animation
 # -B Build/build-no-animation -> Targets/build-no-animation
-get_filename_component(LEVYE_BUILD_NAME "${CMAKE_BINARY_DIR}" NAME)
-set(LEVYE_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/Targets/${LEVYE_BUILD_NAME}")
+get_filename_component(
+    LEVYE_BUILD_NAME
+    "${CMAKE_BINARY_DIR}"
+    NAME
+)
+
+set(
+    LEVYE_OUTPUT_DIR
+    "${CMAKE_SOURCE_DIR}/Targets/${LEVYE_BUILD_NAME}"
+)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${LEVYE_OUTPUT_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${LEVYE_OUTPUT_DIR}/lib")
@@ -118,21 +148,165 @@ endforeach()
 
 message(STATUS "LevyeKit output directory: ${LEVYE_OUTPUT_DIR}")
 
+
 include(FetchContent)
 
-# Build raylib as a shared library.
-#
-# The Levye host and reloadable game module must use the same raylib
-# instance. Linking independent static copies of raylib into both binaries
-# could result in separate internal raylib state.
+# The host and reloadable game module must use the same raylib instance.
 set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
-
 set(FETCHCONTENT_QUIET OFF CACHE BOOL "" FORCE)
+
+set(LEVYE_RAYLIB_TAG "6.2")
+set(LEVYE_RAYLIB_REPOSITORY "https://github.com/raysan5/raylib.git")
+
+# A caller-provided source override takes priority.
+if(NOT FETCHCONTENT_SOURCE_DIR_RAYLIB)
+    if(DEFINED ENV{LEVYE_DEPENDENCY_CACHE}
+       AND NOT "$ENV{LEVYE_DEPENDENCY_CACHE}" STREQUAL "")
+        set(LEVYE_CACHE_ROOT "$ENV{LEVYE_DEPENDENCY_CACHE}")
+    elseif(DEFINED ENV{XDG_CACHE_HOME}
+           AND NOT "$ENV{XDG_CACHE_HOME}" STREQUAL "")
+        set(LEVYE_CACHE_ROOT "$ENV{XDG_CACHE_HOME}/levye/dependencies")
+    elseif(DEFINED ENV{HOME})
+        set(LEVYE_CACHE_ROOT "$ENV{HOME}/.cache/levye/dependencies")
+    else()
+        message(FATAL_ERROR
+            "Set LEVYE_DEPENDENCY_CACHE to a writable cache directory.")
+    endif()
+
+    set(LEVYE_RAYLIB_CACHE
+        "${LEVYE_CACHE_ROOT}/raylib/${LEVYE_RAYLIB_TAG}")
+    set(LEVYE_RAYLIB_SOURCE "${LEVYE_RAYLIB_CACHE}/source")
+
+    file(MAKE_DIRECTORY "${LEVYE_RAYLIB_CACHE}")
+    file(LOCK "${LEVYE_RAYLIB_CACHE}/cache.lock"
+         GUARD PROCESS TIMEOUT 300)
+
+    find_package(Git REQUIRED)
+
+    set(LEVYE_RAYLIB_VALID FALSE)
+
+    if(EXISTS "${LEVYE_RAYLIB_SOURCE}/.git")
+        execute_process(
+            COMMAND "${GIT_EXECUTABLE}" -C "${LEVYE_RAYLIB_SOURCE}"
+                    rev-parse HEAD
+            OUTPUT_VARIABLE LEVYE_RAYLIB_HEAD
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE LEVYE_HEAD_RESULT
+            ERROR_QUIET
+        )
+
+        execute_process(
+            COMMAND "${GIT_EXECUTABLE}" -C "${LEVYE_RAYLIB_SOURCE}"
+                    rev-parse "refs/tags/6.2^{commit}"
+            OUTPUT_VARIABLE LEVYE_RAYLIB_TAG_COMMIT
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE LEVYE_TAG_RESULT
+            ERROR_QUIET
+        )
+
+        if(LEVYE_HEAD_RESULT EQUAL 0
+           AND LEVYE_TAG_RESULT EQUAL 0
+           AND LEVYE_RAYLIB_HEAD STREQUAL LEVYE_RAYLIB_TAG_COMMIT
+           AND EXISTS "${LEVYE_RAYLIB_SOURCE}/src/raylib.h")
+            set(LEVYE_RAYLIB_VALID TRUE)
+        endif()
+    endif()
+
+    if(NOT LEVYE_RAYLIB_VALID)
+        if(FETCHCONTENT_FULLY_DISCONNECTED
+           OR FETCHCONTENT_UPDATES_DISCONNECTED
+           OR FETCHCONTENT_UPDATES_DISCONNECTED_RAYLIB)
+            message(FATAL_ERROR
+                "raylib 6.2 is missing from the shared cache: "
+                "${LEVYE_RAYLIB_SOURCE}. Offline mode is enabled.")
+        endif()
+
+        if(EXISTS "${LEVYE_RAYLIB_SOURCE}")
+            message(FATAL_ERROR
+                "Invalid raylib cache at ${LEVYE_RAYLIB_SOURCE}. "
+                "Move it aside before retrying.")
+        endif()
+
+        set(LEVYE_RAYLIB_TEMP
+            "${LEVYE_RAYLIB_CACHE}/source-incomplete")
+
+        file(REMOVE_RECURSE "${LEVYE_RAYLIB_TEMP}")
+
+        message(STATUS "Downloading raylib 6.2 to shared cache")
+
+        execute_process(
+            COMMAND "${GIT_EXECUTABLE}" clone
+                    --depth 1
+                    --branch "${LEVYE_RAYLIB_TAG}"
+                    "${LEVYE_RAYLIB_REPOSITORY}"
+                    "${LEVYE_RAYLIB_TEMP}"
+            RESULT_VARIABLE LEVYE_CLONE_RESULT
+        )
+
+        if(NOT LEVYE_CLONE_RESULT EQUAL 0)
+            file(REMOVE_RECURSE "${LEVYE_RAYLIB_TEMP}")
+            message(FATAL_ERROR "Failed to download raylib 6.2.")
+        endif()
+
+        execute_process(
+            COMMAND "${GIT_EXECUTABLE}" -C "${LEVYE_RAYLIB_TEMP}"
+                    rev-parse HEAD
+            OUTPUT_VARIABLE LEVYE_TEMP_HEAD
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE LEVYE_TEMP_HEAD_RESULT
+        )
+
+        execute_process(
+            COMMAND "${GIT_EXECUTABLE}" -C "${LEVYE_RAYLIB_TEMP}"
+                    rev-parse "refs/tags/6.2^{commit}"
+            OUTPUT_VARIABLE LEVYE_TEMP_TAG
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE LEVYE_TEMP_TAG_RESULT
+        )
+
+        if(NOT LEVYE_TEMP_HEAD_RESULT EQUAL 0
+           OR NOT LEVYE_TEMP_TAG_RESULT EQUAL 0
+           OR NOT LEVYE_TEMP_HEAD STREQUAL LEVYE_TEMP_TAG
+           OR NOT EXISTS "${LEVYE_RAYLIB_TEMP}/src/raylib.h")
+            file(REMOVE_RECURSE "${LEVYE_RAYLIB_TEMP}")
+            message(FATAL_ERROR "raylib 6.2 verification failed.")
+        endif()
+
+        file(RENAME
+            "${LEVYE_RAYLIB_TEMP}"
+            "${LEVYE_RAYLIB_SOURCE}")
+    else()
+        message(STATUS
+            "Reusing shared raylib source: ${LEVYE_RAYLIB_SOURCE}")
+    endif()
+
+    set(FETCHCONTENT_SOURCE_DIR_RAYLIB
+        "${LEVYE_RAYLIB_SOURCE}")
+endif()
+
+# Preserve the existing source-override version check.
+set(LEVYE_RAYLIB_HEADER
+    "${FETCHCONTENT_SOURCE_DIR_RAYLIB}/src/raylib.h")
+
+if(NOT EXISTS "${LEVYE_RAYLIB_HEADER}")
+    message(FATAL_ERROR
+        "Local raylib source is missing src/raylib.h: "
+        "${FETCHCONTENT_SOURCE_DIR_RAYLIB}")
+endif()
+
+file(STRINGS "${LEVYE_RAYLIB_HEADER}" LEVYE_RAYLIB_VERSION_LINE
+     REGEX "^#define RAYLIB_VERSION[ \t]+\"6\\.2\"$")
+
+if(NOT LEVYE_RAYLIB_VERSION_LINE)
+    message(FATAL_ERROR
+        "Local raylib source must be version 6.2: "
+        "${FETCHCONTENT_SOURCE_DIR_RAYLIB}")
+endif()
 
 FetchContent_Declare(
     raylib
-    GIT_REPOSITORY https://github.com/raysan5/raylib.git
-    GIT_TAG 6.2
+    GIT_REPOSITORY "${LEVYE_RAYLIB_REPOSITORY}"
+    GIT_TAG "${LEVYE_RAYLIB_TAG}"
 )
 
 FetchContent_MakeAvailable(raylib)
@@ -185,6 +359,7 @@ target_include_directories(
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
 
 target_link_libraries(
     LevyeKit
@@ -315,7 +490,28 @@ if(LEVYE_WITH_PHYSICS)
     )
 endif()
 
-if(LEVYE_BUILD_EXAMPLES)
+if(LEVYE_BUILD_EXAMPLES AND LEVYE_WITH_ANDROID)
+    # raylib's Android NativeActivity calls main() from libmain.so.
+    add_library(SandboxAndroid SHARED
+        Examples/Sandbox/AndroidMain.cpp
+        Examples/Sandbox/Game/Game.cpp
+        Examples/Sandbox/Game/Scenes/Audio/AudioScene.cpp
+        Examples/Sandbox/Game/Scenes/Core/CoreScene.cpp
+        Examples/Sandbox/Game/Scenes/Input/InputScene.cpp
+        Examples/Sandbox/Game/Scenes/Menu/MenuScene.cpp
+        Examples/Sandbox/Game/Scenes/Serialization/SerializationScene.cpp)
+
+    target_include_directories(SandboxAndroid PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+    target_link_libraries(SandboxAndroid PRIVATE LevyeKit)
+
+    set_target_properties(SandboxAndroid PROPERTIES OUTPUT_NAME main)
+
+    # Current Android emulator images use 16 KiB pages.
+    target_link_options(SandboxAndroid PRIVATE "LINKER:-z,max-page-size=16384")
+
+    target_link_options(raylib PRIVATE "LINKER:-z,max-page-size=16384")
+elseif(LEVYE_BUILD_EXAMPLES)
 
 # ---------------------------------------------------------------------------
 # Sandbox Game Module
@@ -504,6 +700,7 @@ add_executable(
     levye
     Tools/LevyeCLI/Main.cpp
     Tools/LevyeCLI/ProjectGenerator.cpp
+    Tools/LevyeCLI/ProjectCommand.cpp
     Tools/LevyeCLI/ProjectLocator.cpp
     Tools/LevyeCLI/BuildCommand.cpp
     Tools/LevyeCLI/RunCommand.cpp
@@ -521,6 +718,10 @@ add_executable(
     Levye/Project/ProjectConfig.cpp
     Levye/Project/ProjectLoader.cpp
     Levye/Platform/ExecutablePath.cpp
+
+    Tools/LevyeCLI/ExportCommand.cpp
+    Tools/LevyeCLI/Export/AndroidExporter.cpp
+    Tools/LevyeCLI/Export/AndroidSigning.cpp
 )
 
 set_target_properties(

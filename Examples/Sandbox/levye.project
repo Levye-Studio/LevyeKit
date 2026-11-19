@@ -12,6 +12,9 @@ vsync = false
 [paths]
 assets = "Assets"
 
+[android]
+package = "com.levyekit.sandbox"
+
 [modules]
 serialization = true
 imgui = true

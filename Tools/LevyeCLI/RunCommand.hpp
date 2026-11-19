@@ -6,6 +6,7 @@
 
 namespace Levye {
 
+
 /**
  * @brief Runs an existing build of a LevyeKit game project.
  *
@@ -22,7 +23,8 @@ public:
    * @return True when the application launches and exits successfully.
    */
   static bool Execute(const std::filesystem::path &projectDirectory,
-                      BuildConfiguration configuration);
+                      BuildConfiguration configuration,
+                      ProjectPlatform platform = ProjectPlatform::ProjectDefault);
 };
 
 } // namespace Levye

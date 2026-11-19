@@ -8,7 +8,9 @@ ApplicationConfig ProjectConfig::CreateApplicationConfig() const {
           .height = windowHeight,
           .targetFPS = targetFPS,
           .resizable = resizable,
-          .vsync = vsync};
+          .vsync = vsync,
+          .useLogicalDisplay = useLogicalDisplay,
+          .display = display};
 }
 
-} // namespace Levye
+}  // namespace Levye

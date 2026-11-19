@@ -2,7 +2,6 @@
 Build/
 build/
 Targets/
-**/hotreload/
 
 # Runtime hot-reload copies
 *.runtime.*
@@ -57,3 +56,5 @@ ImGuiTest/
 .clangd
 .clang-format
 *.backup
+
+.vscode/

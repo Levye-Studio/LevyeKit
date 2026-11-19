@@ -19,10 +19,14 @@ public:
    *
    * @param projectDirectory Root directory of the project.
    * @param configuration Build configuration to compile.
+   * @param platform Platform override, or the project default.
+   * @param productionSign Use the configured production key for Android Release.
    * @return True when configuration and compilation succeed.
    */
   static bool Execute(const std::filesystem::path &projectDirectory,
-                      BuildConfiguration configuration);
+                      BuildConfiguration configuration,
+                      ProjectPlatform platform = ProjectPlatform::ProjectDefault,
+                      bool productionSign = false);
 };
 
 } // namespace Levye

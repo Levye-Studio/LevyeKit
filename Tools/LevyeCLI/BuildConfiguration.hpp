@@ -9,6 +9,16 @@ namespace Levye {
  */
 enum class BuildConfiguration { Debug, Release };
 
+/** @brief Requested project platform; ProjectDefault reads levye.project. */
+enum class ProjectPlatform { ProjectDefault, Desktop, Android };
+
+/** @brief Resolves a one-command override against the manifest default. */
+inline constexpr ProjectPlatform ResolveProjectPlatform(ProjectPlatform requested,
+                                                        std::string_view storedDefault) {
+  if (requested != ProjectPlatform::ProjectDefault) return requested;
+  return storedDefault == "android" ? ProjectPlatform::Android : ProjectPlatform::Desktop;
+}
+
 /**
  * @brief Returns the CMake build-type name for a build configuration.
  *
@@ -17,14 +27,14 @@ enum class BuildConfiguration { Debug, Release };
  */
 inline constexpr std::string_view ToString(BuildConfiguration configuration) {
   switch (configuration) {
-  case BuildConfiguration::Debug:
-    return "Debug";
+    case BuildConfiguration::Debug:
+      return "Debug";
 
-  case BuildConfiguration::Release:
-    return "Release";
+    case BuildConfiguration::Release:
+      return "Release";
   }
 
   return "Debug";
 }
 
-} // namespace Levye
+}  // namespace Levye

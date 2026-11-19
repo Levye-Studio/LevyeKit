@@ -40,7 +40,9 @@ bool ReadRegular(const fs::path& path, std::string& text, std::string& error) {
   return true;
 }
 
-bool SupportsBuildLayout(const std::string& cmake, std::string_view target, std::string& error) {
+bool SupportsBuildLayout(std::string& cmake, std::string_view target, bool& changed,
+                         std::string& error) {
+  changed = false;
   const std::regex projectName(R"(^[ \t]*project\s*\(\s*([A-Za-z0-9_.+-]+)\s+LANGUAGES\b)",
                                std::regex::icase | std::regex_constants::multiline);
   std::smatch projectMatch;
@@ -58,21 +60,59 @@ bool SupportsBuildLayout(const std::string& cmake, std::string_view target, std:
     error = "Unsupported host executable layout; expected the project target and Source/Main.cpp.";
     return false;
   }
-  if (cmake.find(R"("${CMAKE_SOURCE_DIR}/Targets/$<CONFIG>")") == std::string::npos ||
-      cmake.find(R"("${CMAKE_SOURCE_DIR}/Targets/${CMAKE_BUILD_TYPE}")") == std::string::npos ||
+  constexpr std::string_view legacyLayout = R"(if(WIN32)
+    set(LEVYE_TARGET_DIRECTORY "${CMAKE_SOURCE_DIR}/Targets/$<CONFIG>")
+else()
+    # Preserve the existing macOS/Linux configuration and output layout.
+    if(NOT CMAKE_BUILD_TYPE)
+        set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+    endif()
+    set(LEVYE_TARGET_DIRECTORY "${CMAKE_SOURCE_DIR}/Targets/${CMAKE_BUILD_TYPE}")
+endif())";
+  constexpr std::string_view buildNameLayout = R"(get_filename_component(
+    LEVYE_BUILD_NAME
+    "${CMAKE_BINARY_DIR}"
+    NAME
+)
+
+set(
+    LEVYE_OUTPUT_DIR
+    "${CMAKE_SOURCE_DIR}/Targets/${LEVYE_BUILD_NAME}"
+)
+
+set(LEVYE_TARGET_DIRECTORY "${LEVYE_OUTPUT_DIR}"))";
+  constexpr std::string_view simpleLegacyLayout = R"(if(NOT CMAKE_BUILD_TYPE)
+    set(
+        CMAKE_BUILD_TYPE
+        Debug
+        CACHE STRING
+        "Build type"
+        FORCE
+    )
+endif()
+
+set(
+    LEVYE_TARGET_DIRECTORY
+    "${CMAKE_SOURCE_DIR}/Targets/${CMAKE_BUILD_TYPE}"
+))";
+  const auto old = cmake.find(legacyLayout);
+  const auto simpleOld = cmake.find(simpleLegacyLayout);
+  if (old != std::string::npos && simpleOld != std::string::npos) {
+    error = "Multiple output layout blocks require manual review.";
+    return false;
+  }
+  if (old != std::string::npos || simpleOld != std::string::npos) {
+    cmake.replace(old != std::string::npos ? old : simpleOld,
+                  old != std::string::npos ? legacyLayout.size() : simpleLegacyLayout.size(),
+                  buildNameLayout);
+    changed = true;
+  }
+  if (cmake.find(buildNameLayout) == std::string::npos ||
       cmake.find("LIBRARY_OUTPUT_DIRECTORY") == std::string::npos ||
       cmake.find("RUNTIME_OUTPUT_DIRECTORY") == std::string::npos ||
       cmake.find(R"("${LEVYE_TARGET_DIRECTORY}/bin")") == std::string::npos ||
       cmake.find(R"("${LEVYE_TARGET_DIRECTORY}/lib")") == std::string::npos) {
-    error = "Unsupported output layout; levye build/run expect Targets/<configuration>.";
-    return false;
-  }
-  const std::regex imguiLink(R"(^[ \t]*target_link_libraries\s*\(\s*Game\b[^)]*\bLevyeDearImGui\b)",
-                             std::regex::icase | std::regex_constants::multiline);
-  if (!std::regex_search(cmake, imguiLink) ||
-      cmake.find("WIN32 AND LEVYE_WITH_IMGUI") == std::string::npos ||
-      cmake.find("$<TARGET_FILE:LevyeDearImGui>") == std::string::npos) {
-    error = "Unsupported ImGui game linkage or Windows runtime deployment layout.";
+    error = "Unsupported output layout; expected Targets/<build directory name>.";
     return false;
   }
   return true;
@@ -175,7 +215,8 @@ bool ValidateInstalled(const fs::path& root, const fs::path& templateRoot, std::
   }
   std::string cmake;
   if (!ReadRegular(root / "CMakeLists.txt", cmake, error)) return false;
-  if (!SupportsBuildLayout(cmake, target, error)) return false;
+  bool layoutChanged = false;
+  if (!SupportsBuildLayout(cmake, target, layoutChanged, error) || layoutChanged) return false;
   bool modulesChanged = false;
   const std::regex compileCommandsOn(R"(^[ \t]*set\s*\(\s*CMAKE_EXPORT_COMPILE_COMMANDS\s+ON\s*\))",
                                      std::regex::icase | std::regex_constants::multiline);
@@ -257,10 +298,12 @@ int UpgradeCommand::Execute(const fs::path& projectDirectory, const fs::path& fr
     std::cerr << "[Levye] Upgrade failed: " << error << '\n';
     return 1;
   }
-  if (!SupportsBuildLayout(source.rootCMake, target, error)) {
+  bool layoutChanged = false;
+  if (!SupportsBuildLayout(source.rootCMake, target, layoutChanged, error)) {
     std::cerr << "[Levye] Upgrade failed: " << error << '\n';
     return 1;
   }
+  source.updateRoot |= layoutChanged;
   bool modulesChanged = false;
   if (!ProjectModuleMigration::Prepare(source.rootCMake, modulesChanged, error)) {
     std::cerr << "[Levye] Upgrade failed: " << error << '\n';

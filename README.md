@@ -380,7 +380,10 @@ Or Release:
 levye run --release
 ```
 
-`levye run` does not implicitly rebuild the game. Build and run remain separate operations.
+Desktop `levye run` uses the existing build. Android `levye run` rebuilds the
+APK before installing it so updated assets are packaged.
+For generated-project Android builds, asset packaging, and the Sandbox emulator workflow, see
+[Platforms/Android/README.md](Platforms/Android/README.md).
 
 ### Clean
 
@@ -410,6 +413,19 @@ Display information about the current project:
 levye project
 ```
 
+`levye new --android` stores Android as the project's default platform;
+`levye new` and `levye new --desktop` store Desktop. Bare `levye build` and
+`levye run` use that default. `--desktop` or `--android` overrides it for one
+command without changing `levye.project`. To change the persistent default:
+
+```sh
+levye project --set-default android
+levye project --set-default desktop
+```
+
+The project command checks that Android is configured before selecting it.
+Legacy manifests without `[platform] default` continue to use Desktop.
+
 The CLI searches parent directories for `levye.project`, allowing commands to be used from directories inside a game project.
 
 ### Upgrade an existing project
@@ -424,9 +440,15 @@ custom CMake settings, game code, assets, project settings, and existing IDE
 files. It adds the shared module configuration, generator markers, compile
 commands export, missing IDE files, and a `project.template_version` schema
 marker. This schema version is separate from the LevyeKit release version.
+The upgrader also converts the known older `Targets/<configuration>` CMake
+output block to `Targets/<build directory name>` while preserving settings
+outside that block. Custom build directory names and CMake configurations work.
+Older serialization-only projects and projects with an Android target before
+the Game target are handled without changing their gameplay sources. The
+source manifest is loaded before either target when both need it.
 
 Projects with computed or ambiguous Game source lists, unrecognized custom
-module configuration, missing ImGui linkage, different host or output layouts, or newer template
+module configuration, missing ImGui linkage, different host or unknown output layouts, or newer template
 schema versions require manual migration. The command performs structural
 validation and rolls back on a
 validation failure; it does not run a full build.
@@ -735,6 +757,24 @@ with letterboxing, `Fill` preserves aspect ratio while cropping, and `Stretch`
 fills the window. The target is allocated once and released before the window
 closes. The Sandbox enables a 1280×720 logical frame; resize its window and
 press **F12** on the Game screen to cycle through all three modes.
+
+Generated desktop hosts can enable the same viewport from `levye.project`:
+
+```toml
+[window]
+width = 540
+height = 960
+
+[display]
+logical_width = 720
+logical_height = 1280
+scaling = "fit"
+```
+
+The window size sets the initial physical window; the display size keeps game
+coordinates at 720×1280. An absent `[display]` section preserves the legacy
+raw-window behavior. `fit` centers the complete playfield as the window is
+resized, and mouse and touch positions are mapped into logical coordinates.
 
 `Levye::Display` exposes logical/window/framebuffer sizes, the framebuffer and
 window viewports, orientation, safe area, scaling mode, and coordinate
@@ -1618,7 +1658,7 @@ LevyeKit is intended to provide a common foundation across desktop and mobile ta
 | Linux | Desktop | Supported build path retained; v0.5.0 unverified |
 | Windows | Desktop | MSVC/MinGW build paths retained; v0.5.0 unverified |
 | iOS | Mobile | Planned |
-| Android | Mobile | Planned |
+| Android | Mobile | Experimental ARM64 generated projects and Sandbox; macOS-hosted emulator verified |
 
 Native code hot reloading is primarily intended for desktop development.
 
@@ -1739,7 +1779,8 @@ Mobile platforms may use a different development workflow because of platform re
   * [ ] `levye export --platform windows --release`
   * [ ] `levye export --platform linux --release`
   * [ ] `levye export --platform macos --release`
-  * [ ] `levye export --platform android --release`
+  * [x] Android production-signed APK: `levye export --android`
+  * [ ] Android App Bundle export
   * [ ] `levye export --platform ios --release`
 * [ ] Platform-specific packaging
 * [ ] Release asset preparation

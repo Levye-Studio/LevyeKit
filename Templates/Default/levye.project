@@ -13,6 +13,11 @@ vsync = false
 [paths]
 assets = "Assets"
 
+[platform]
+default = "{{DEFAULT_PLATFORM}}"
+
+{{ANDROID_CONFIG}}
+
 [modules]
 serialization = false
 imgui = false

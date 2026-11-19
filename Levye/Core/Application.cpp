@@ -32,7 +32,15 @@ void Application::Run() {
     SetConfigFlags(windowFlags);
   }
 
+#if defined(__ANDROID__)
+  // raylib sizes its Android framebuffer from InitWindow's dimensions and
+  // applies its own scale matrix when they differ from the native surface.
+  // The manifest's [window] size is for desktop; logical scaling is handled
+  // by DisplayManager after raylib adopts the Android surface size.
+  InitWindow(0, 0, m_Config.title.c_str());
+#else
   InitWindow(m_Config.width, m_Config.height, m_Config.title.c_str());
+#endif
 
 #ifdef LEVYE_WITH_IMGUI
   if (!m_ImGui.Initialize()) {
@@ -79,6 +87,19 @@ void Application::Run() {
   }
 
   while (!WindowShouldClose() && !m_QuitRequested) {
+#if defined(__ANDROID__)
+    static double lastAndroidFrame = 0.0;
+    static bool lastAndroidFocus = true;
+    const double androidFrameTime = GetTime();
+    const bool androidFocus = IsWindowFocused();
+    if (androidFocus != lastAndroidFocus ||
+        (lastAndroidFrame > 0.0 && androidFrameTime - lastAndroidFrame > 1.0)) {
+      TraceLog(LOG_WARNING, "ANDROID LIFECYCLE: focus=%d previousFocus=%d frameGap=%.3f",
+               androidFocus, lastAndroidFocus, androidFrameTime - lastAndroidFrame);
+    }
+    lastAndroidFrame = androidFrameTime;
+    lastAndroidFocus = androidFocus;
+#endif
 #ifdef LEVYE_WITH_IMGUI
     const ImGuiIO& io = ImGui::GetIO();
 
@@ -96,6 +117,14 @@ void Application::Run() {
     // including reload callbacks, so every callback sees this frame's state.
     m_GameModule.GetInputMap().Update();
     m_GameModule.SampleTouchInput();
+#if defined(__ANDROID__)
+    static unsigned int touchDiagnosticFrame = 0;
+    if ((++touchDiagnosticFrame % 120) == 0 || GetTouchPointCount() > 0) {
+      TraceLog(LOG_WARNING, "ANDROID FRAME: frame=%u focused=%d nativeTouches=%d screen=%dx%d render=%dx%d",
+               touchDiagnosticFrame, IsWindowFocused(), GetTouchPointCount(), GetScreenWidth(),
+               GetScreenHeight(), GetRenderWidth(), GetRenderHeight());
+    }
+#endif
 
     /*
      * Check before executing game callbacks so no function from an

@@ -66,6 +66,11 @@ class GameModule {
    */
   bool Load(const std::string& path);
 
+#if defined(__ANDROID__)
+  /** @brief Binds a GameAPI linked into the Android application library. */
+  [[nodiscard]] bool LoadStatic(const GameAPI* api);
+#endif
+
   /**
    * @brief Starts the loaded game module.
    *
@@ -313,6 +318,9 @@ class GameModule {
 
   bool m_HasAPI = false;
   bool m_Started = false;
+#if defined(__ANDROID__)
+  const GameAPI* m_StaticAPI = nullptr;
+#endif
 
  private:
 #ifdef LEVYE_WITH_SERIALIZATION

@@ -30,6 +30,7 @@ const std::regex kModuleHelper(
 bool ProjectModuleMigration::Prepare(std::string& cmake, bool& changed, std::string& error) {
   changed = false;
   error.clear();
+  const bool existingImGuiConditional = cmake.find("if(LEVYE_WITH_IMGUI)") != std::string::npos;
 
   if (!std::regex_search(cmake, kModuleHelper)) {
     std::smatch match;
@@ -42,12 +43,20 @@ bool ProjectModuleMigration::Prepare(std::string& cmake, bool& changed, std::str
                                legacy.find("CMAKE_CONFIGURE_DEPENDS") != std::string::npos &&
                                legacy.find("LEVYE_WITH_ANIMATION") == std::string::npos &&
                                legacy.find("LEVYE_WITH_PHYSICS") == std::string::npos;
-      if (!knownLegacy && legacy.find("LEVYE_WITH_") == std::string::npos &&
+      const bool singleSerialization =
+          legacy.find("LEVYE_SERIALIZATION_SETTING") != std::string::npos &&
+          legacy.find("LEVYE_WITH_SERIALIZATION") != std::string::npos &&
+          legacy.find("LEVYE_IMGUI_SETTING") == std::string::npos &&
+          legacy.find("LEVYE_WITH_IMGUI") == std::string::npos &&
+          legacy.find("CMAKE_CONFIGURE_DEPENDS") == std::string::npos &&
+          legacy.find("LEVYE_WITH_ANIMATION") == std::string::npos &&
+          legacy.find("LEVYE_WITH_PHYSICS") == std::string::npos;
+      if (!knownLegacy && !singleSerialization && legacy.find("LEVYE_WITH_") == std::string::npos &&
           legacy.find("file(") == std::string::npos) {
         cmake.insert(static_cast<std::size_t>(match.position() + match.length()),
                      kHelper + "\n" + kMessages + "\n");
         changed = true;
-      } else if (!knownLegacy) {
+      } else if (!knownLegacy && !singleSerialization) {
         error = "Legacy module section contains an unsupported layout.";
         return false;
       } else {
@@ -78,7 +87,8 @@ bool ProjectModuleMigration::Prepare(std::string& cmake, bool& changed, std::str
             return false;
           }
         }
-        if (fileCount != 2 || messageCount != 2 || propertyCount != 1) {
+        if ((knownLegacy && (fileCount != 2 || messageCount != 2 || propertyCount != 1)) ||
+            (singleSerialization && (fileCount != 1 || messageCount != 1 || propertyCount != 0))) {
           error = "Legacy module section contains custom commands.";
           return false;
         }
@@ -124,6 +134,38 @@ bool ProjectModuleMigration::Prepare(std::string& cmake, bool& changed, std::str
              variable +
              "=1)\n"
              "endif()\n";
+    changed = true;
+  }
+  const std::regex imguiLink(R"(target_link_libraries\s*\(\s*Game\b[^)]*\bLevyeDearImGui\b)",
+                             std::regex::icase);
+  const bool hasImGui = cmake.find("LevyeDearImGui") != std::string::npos;
+  if (hasImGui && (!std::regex_search(cmake, imguiLink) ||
+                   cmake.find("WIN32 AND LEVYE_WITH_IMGUI") == std::string::npos ||
+                   cmake.find("$<TARGET_FILE:LevyeDearImGui>") == std::string::npos)) {
+    error = "Unsupported ImGui game linkage or Windows runtime deployment layout.";
+    return false;
+  }
+  if (!hasImGui && existingImGuiConditional) {
+    error = "Unsupported ImGui game linkage requires manual migration.";
+    return false;
+  }
+  if (!hasImGui) {
+    cmake += R"(
+if(LEVYE_WITH_IMGUI)
+    target_link_libraries(Game PRIVATE LevyeDearImGui)
+endif()
+
+if(WIN32 AND LEVYE_WITH_IMGUI)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:LevyeDearImGui> $<TARGET_FILE_DIR:${PROJECT_NAME}>
+        VERBATIM)
+    add_custom_command(TARGET Game POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:LevyeDearImGui> $<TARGET_FILE_DIR:Game>
+        VERBATIM)
+endif()
+)";
     changed = true;
   }
   return true;

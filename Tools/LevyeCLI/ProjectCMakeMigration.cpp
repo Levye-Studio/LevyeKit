@@ -298,18 +298,33 @@ bool ProjectCMakeMigration::Prepare(const fs::path& projectRoot, CMakeMigrationP
   plan.sourceManifest = MakeManifest(sources);
   plan.createManifest = true;
 
-  const std::string replacement =
+  const std::string sourceInclude =
       "include(\n"
       "    \"${CMAKE_CURRENT_SOURCE_DIR}/Source/CMakeLists.txt\"\n"
       "    OPTIONAL\n"
-      ")\n\n"
+      ")\n\n";
+  const std::string gameLibrary =
       "add_library(\n"
       "    Game\n"
       "    SHARED\n"
       "    ${LEVYE_GAME_SOURCES}\n"
       ")";
-
-  plan.rootCMake.replace(begin, end - begin, replacement);
+  const auto android = plan.rootCMake.find("if(LEVYE_WITH_ANDROID)\n    add_library(");
+  const bool androidNeedsSources =
+      android != std::string::npos && android < begin &&
+      plan.rootCMake.substr(android, begin - android).find("${LEVYE_GAME_SOURCES}") !=
+          std::string::npos;
+  plan.rootCMake.replace(begin, end - begin,
+                         androidNeedsSources ? gameLibrary : sourceInclude + gameLibrary);
+  if (androidNeedsSources) plan.rootCMake.insert(android, sourceInclude);
+  constexpr std::string_view oldAndroidIncludes =
+      "target_include_directories(${PROJECT_NAME}Android PRIVATE \"${LEVYE_ROOT}\")";
+  const auto includes = plan.rootCMake.find(oldAndroidIncludes);
+  if (includes != std::string::npos) {
+    plan.rootCMake.replace(includes, oldAndroidIncludes.size(),
+                           "target_include_directories(${PROJECT_NAME}Android PRIVATE "
+                           "\"${LEVYE_ROOT}\" \"${CMAKE_CURRENT_SOURCE_DIR}/Source\")");
+  }
 
   plan.updateRoot = true;
 

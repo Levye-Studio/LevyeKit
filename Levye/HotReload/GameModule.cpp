@@ -657,7 +657,11 @@ GameModule::~GameModule() {
 
 bool GameModule::Load(const std::string& path) {
   // Replacing a started module must run its state destructor while its code is loaded.
-  if (m_State && !m_Library.IsLoaded()) {
+  bool codeLoaded = m_Library.IsLoaded();
+#if defined(__ANDROID__)
+  codeLoaded = codeLoaded || m_StaticAPI;
+#endif
+  if (m_State && !codeLoaded) {
     Logger::Error("Cannot replace a module whose state outlived its library.");
     return false;
   }
@@ -788,6 +792,20 @@ bool GameModule::Load(const std::string& path) {
                     .GetMousePosition = HostGetMousePosition,
                     .IsMouseInsideViewport = HostIsMouseInsideViewport};
 
+#if defined(__ANDROID__)
+  if (m_StaticAPI) {
+    // Check the version prefix before reading the rest of the callback table.
+    if (m_StaticAPI->version != GAME_API_VERSION) return false;
+    GameAPI candidate{};
+    std::memcpy(&candidate, m_StaticAPI, sizeof(candidate));
+    if (!ValidateAPI(candidate)) return false;
+    m_API = candidate;
+    m_HasAPI = true;
+    m_Started = false;
+    return true;
+  }
+#endif
+
   const std::filesystem::path sourcePath(m_Path);
 
   if (!std::filesystem::exists(sourcePath)) {
@@ -869,6 +887,17 @@ bool GameModule::Load(const std::string& path) {
   return true;
 }
 
+#if defined(__ANDROID__)
+bool GameModule::LoadStatic(const GameAPI* api) {
+  if (!api || m_State) return false;
+  Shutdown();
+  m_StaticAPI = api;
+  if (Load({})) return true;
+  m_StaticAPI = nullptr;
+  return false;
+}
+#endif
+
 bool GameModule::Start() {
   if (!m_HasAPI) {
     Logger::Error("Cannot start game module: no valid GameAPI is loaded.");
@@ -898,6 +927,9 @@ bool GameModule::Start() {
 }
 
 bool GameModule::CheckForReload() {
+#if defined(__ANDROID__)
+  if (m_StaticAPI) return false;
+#endif
   if (!m_Started || m_Path.empty()) return false;
 
   /*
@@ -1083,7 +1115,11 @@ void GameModule::Unload() {
 #if defined(_WIN32)
   m_ReloadPending = false;
 #endif
-  if (!m_Library.IsLoaded()) return;
+  bool codeLoaded = m_Library.IsLoaded();
+#if defined(__ANDROID__)
+  codeLoaded = codeLoaded || m_HasAPI;
+#endif
+  if (!codeLoaded) return;
 
   if (m_State) {
     if (m_API.OnShutdown) m_API.OnShutdown(m_State);
@@ -1098,6 +1134,9 @@ void GameModule::Unload() {
   m_Started = false;
 
   m_Library.Unload();
+#if defined(__ANDROID__)
+  m_StaticAPI = nullptr;
+#endif
 
   std::error_code error;
 
@@ -1121,7 +1160,13 @@ void GameModule::Shutdown() {
 #endif
 }
 
-bool GameModule::IsLoaded() const { return m_Library.IsLoaded() && m_HasAPI; }
+bool GameModule::IsLoaded() const {
+#if defined(__ANDROID__)
+  return m_HasAPI && (m_Library.IsLoaded() || m_StaticAPI);
+#else
+  return m_Library.IsLoaded() && m_HasAPI;
+#endif
+}
 
 const std::string& GameModule::GetPath() const { return m_Path; }
 
@@ -1313,6 +1358,17 @@ void GameModule::SampleTouchInput() {
                             rawPosition.y < static_cast<float>(GetScreenHeight());
     SampleRaylibTouches(m_TouchManager);
   }
+#if defined(__ANDROID__)
+  static unsigned int touchDiagnosticFrame = 0;
+  if ((++touchDiagnosticFrame % 120) == 0 || GetTouchPointCount() > 0) {
+    const Vector2 rawTouch = GetTouchPointCount() > 0 ? GetTouchPosition(0) : Vector2{};
+    const TouchPoint* touch = m_TouchManager.GetTouch(0);
+    TraceLog(LOG_WARNING, "ANDROID TOUCH PIPELINE: frame=%u native=%d manager=%zu raw=(%.1f,%.1f) logical=(%.1f,%.1f) inside=%d",
+             touchDiagnosticFrame, GetTouchPointCount(), m_TouchManager.GetTouchCount(),
+             rawTouch.x, rawTouch.y, touch ? touch->x : 0.0f,
+             touch ? touch->y : 0.0f, touch ? touch->insideViewport : 0);
+  }
+#endif
 }
 
 ScreenManager& GameModule::GetScreenManager() { return m_ScreenManager; }

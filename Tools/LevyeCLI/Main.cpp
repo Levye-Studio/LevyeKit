@@ -12,8 +12,10 @@
 #include "BuildCommand.hpp"
 #include "CleanCommand.hpp"
 #include "ConvertCommand.hpp"
+#include "ExportCommand.hpp"
 #include "GenerateCommand.hpp"
 #include "ModuleRegistry.hpp"
+#include "ProjectCommand.hpp"
 #include "ProjectGenerator.hpp"
 #include "ProjectLocator.hpp"
 #include "RunCommand.hpp"
@@ -35,6 +37,7 @@ void PrintHelp() {
             << "  add <module>     Add an optional module to the current project\n"
             << "  build            Build the current project\n"
             << "  run              Run the current project\n"
+            << "  export           Export a distributable project package\n"
             << "  clean            Remove generated build files\n"
             << "  project          Show information about the current project\n"
             << "  generate <type> <name>  Generate C++ files\n"
@@ -65,6 +68,9 @@ void PrintNewHelp() {
             << "\n"
             << "Arguments:\n"
             << "  <name>            Name of the project to create\n"
+            << "  --android         Make Android the default and include its entry point\n"
+            << "  --desktop         Make Desktop the default\n"
+            << "  --ios             Reserved; iOS project generation is unavailable\n"
             << "\n"
             << "Options:\n"
             << "  --git             Initialize a Git repository\n"
@@ -84,6 +90,9 @@ void PrintBuildHelp() {
             << "\n"
             << "Options:\n"
             << "  --release         Build the Release configuration\n"
+            << "  --desktop         Build the desktop target\n"
+            << "  --android         Build an Android ARM64 APK\n"
+            << "  --sign            Sign an Android Release APK with [android.signing]\n"
             << "  -h, --help        Show this help message\n"
             << "\n"
             << "The Debug configuration is used by default.\n";
@@ -100,10 +109,12 @@ void PrintRunHelp() {
             << "\n"
             << "Options:\n"
             << "  --release         Run the Release configuration\n"
+            << "  --desktop         Run the desktop executable\n"
+            << "  --android         Install and launch the Android APK\n"
             << "  -h, --help        Show this help message\n"
             << "\n"
             << "The Debug configuration is used by default.\n"
-            << "The project must be built before it can be run.\n";
+            << "Android APKs are built when needed before launch.\n";
 }
 
 /**
@@ -130,9 +141,10 @@ void PrintProjectHelp() {
   std::cout << "Show information about the current LevyeKit project.\n"
             << "\n"
             << "Usage:\n"
-            << "  levye project\n"
+            << "  levye project [--set-default desktop|android]\n"
             << "\n"
             << "Options:\n"
+            << "  --set-default     Persist a configured default platform\n"
             << "  -h, --help        Show this help message\n";
 }
 
@@ -208,6 +220,22 @@ void PrintConvertHelp() {
             << "  --dry-run         Show the complete plan without modifying files\n"
             << "  --check           Return 2 if conversion is applicable and pending\n"
             << "  -h, --help        Show this help message\n";
+}
+
+void PrintExportHelp() {
+  std::cout << "Export a distributable LevyeKit project.\n"
+            << "\n"
+            << "Usage:\n"
+            << "  levye export --android [--apk | --aab | --all]\n"
+            << "\n"
+            << "Options:\n"
+            << "  --android         Export for Android\n"
+            << "  --apk             Export an APK (default)\n"
+            << "  --aab             Reserved; Android App Bundle export is unavailable\n"
+            << "  --all             Reserved; combined export is unavailable\n"
+            << "  -h, --help        Show this help message\n"
+            << "\n"
+            << "Android exports use Release configuration and production signing.\n";
 }
 
 /**
@@ -308,6 +336,8 @@ int main(int argc, char** argv) {
 
     bool initializeGit = false;
     bool createInitialCommit = false;
+    bool android = false;
+    bool desktop = false;
 
     std::vector<std::string> modules;
 
@@ -316,6 +346,21 @@ int main(int argc, char** argv) {
 
       if (argument == "--git") {
         initializeGit = true;
+      } else if (argument == "--android") {
+        if (desktop) {
+          std::cerr << "[Levye] Choose either --desktop or --android.\n";
+          return 1;
+        }
+        android = true;
+      } else if (argument == "--desktop") {
+        if (android) {
+          std::cerr << "[Levye] Choose either --desktop or --android.\n";
+          return 1;
+        }
+        desktop = true;
+      } else if (argument == "--ios") {
+        std::cerr << "[Levye] iOS project generation is not implemented; no project was created.\n";
+        return 1;
       } else if (argument == "--commit") {
         createInitialCommit = true;
         initializeGit = true;
@@ -351,8 +396,14 @@ int main(int argc, char** argv) {
 
     const std::filesystem::path templateDirectory = frameworkRoot / "Templates/Default";
 
+    if (android && !modules.empty()) {
+      std::cerr << "[Levye] Android does not yet support optional modules. "
+                   "Create a desktop project or omit --with.\n";
+      return 1;
+    }
+
     if (!Levye::ProjectGenerator::Generate(projectName, outputDirectory, templateDirectory,
-                                           frameworkRoot, modules)) {
+                                           frameworkRoot, modules, android)) {
       return 1;
     }
 
@@ -388,8 +439,8 @@ int main(int argc, char** argv) {
       return 0;
     }
 
-    if (argc > 2) {
-      std::cerr << "[Levye] The 'project' command does not accept arguments.\n\n";
+    if (argc != 2 && (argc != 4 || std::string_view(argv[2]) != "--set-default")) {
+      std::cerr << "[Levye] Usage: levye project [--set-default desktop|android].\n\n";
 
       PrintProjectHelp();
       return 1;
@@ -403,9 +454,7 @@ int main(int argc, char** argv) {
       return 1;
     }
 
-    std::cout << "[Levye] Project: " << *projectDirectory << '\n';
-
-    return 0;
+    return Levye::ProjectCommand::Execute(*projectDirectory, argc == 4 ? argv[3] : "") ? 0 : 1;
   }
 
   else if (command == "build") {
@@ -414,24 +463,36 @@ int main(int argc, char** argv) {
       return 0;
     }
 
-    if (argc > 3) {
-      std::cerr << "[Levye] Too many arguments for 'build'.\n\n";
-
-      PrintBuildHelp();
-      return 1;
-    }
-
     const auto projectDirectory = FindCurrentProject();
 
     if (!projectDirectory) return 1;
 
     Levye::BuildConfiguration configuration = Levye::BuildConfiguration::Debug;
+    Levye::ProjectPlatform platform = Levye::ProjectPlatform::ProjectDefault;
+    bool productionSign = false;
 
-    if (argc >= 3) {
-      const std::string option = argv[2];
+    for (int index = 2; index < argc; ++index) {
+      const std::string option = argv[index];
 
       if (option == "--release") {
         configuration = Levye::BuildConfiguration::Release;
+      } else if (option == "--sign") {
+        productionSign = true;
+      } else if (option == "--desktop") {
+        if (platform == Levye::ProjectPlatform::Android) {
+          std::cerr << "[Levye] Conflicting platform flags: --desktop and --android.\n";
+          return 1;
+        }
+        platform = Levye::ProjectPlatform::Desktop;
+      } else if (option == "--android") {
+        if (platform == Levye::ProjectPlatform::Desktop) {
+          std::cerr << "[Levye] Conflicting platform flags: --desktop and --android.\n";
+          return 1;
+        }
+        platform = Levye::ProjectPlatform::Android;
+      } else if (option == "--ios") {
+        std::cerr << "[Levye] iOS builds are unavailable.\n";
+        return 1;
       } else {
         std::cerr << "[Levye] Unknown build option: " << option << '\n';
         PrintBuildHelp();
@@ -439,11 +500,67 @@ int main(int argc, char** argv) {
       }
     }
 
-    if (!Levye::BuildCommand::Execute(*projectDirectory, configuration)) {
+    if (!Levye::BuildCommand::Execute(*projectDirectory, configuration, platform, productionSign)) {
       return 1;
     }
 
     return 0;
+  }
+
+  else if (command == "export") {
+    if (argc >= 3 && IsHelpArgument(argv[2])) {
+      PrintExportHelp();
+      return 0;
+    }
+
+    Levye::ExportOptions options;
+    bool platformSpecified = false;
+
+    for (int index = 2; index < argc; ++index) {
+      const std::string_view option = argv[index];
+
+      if (option == "--android" || option == "--desktop") {
+        if (platformSpecified) {
+          std::cerr << "[Levye] Choose only one export platform.\n";
+          return 1;
+        }
+
+        platformSpecified = true;
+
+        options.platform = option == "--android" ? Levye::ProjectPlatform::Android
+                                                 : Levye::ProjectPlatform::Desktop;
+
+      } else if (option == "--ios") {
+        std::cerr << "[Levye] iOS export is unavailable.\n";
+        return 1;
+
+      } else if (option == "--apk" || option == "--aab" || option == "--all") {
+        if (!options.format.empty()) {
+          std::cerr << "[Levye] Choose only one export format.\n";
+          return 1;
+        }
+
+        options.format = std::string(option.substr(2));
+
+      } else {
+        std::cerr << "[Levye] Unknown export option: " << option << '\n';
+
+        PrintExportHelp();
+        return 1;
+      }
+    }
+
+    if (!platformSpecified) {
+      std::cerr << "[Levye] Missing export platform.\n";
+      PrintExportHelp();
+      return 1;
+    }
+
+    const auto projectDirectory = FindCurrentProject();
+
+    if (!projectDirectory) return 1;
+
+    return Levye::ExportCommand::Execute(*projectDirectory, options) ? 0 : 1;
   }
 
   else if (command == "add") {
@@ -478,24 +595,33 @@ int main(int argc, char** argv) {
       return 0;
     }
 
-    if (argc > 3) {
-      std::cerr << "[Levye] Too many arguments for 'run'.\n\n";
-
-      PrintRunHelp();
-      return 1;
-    }
-
     const auto projectDirectory = FindCurrentProject();
 
     if (!projectDirectory) return 1;
 
     Levye::BuildConfiguration configuration = Levye::BuildConfiguration::Debug;
+    Levye::ProjectPlatform platform = Levye::ProjectPlatform::ProjectDefault;
 
-    if (argc >= 3) {
-      const std::string option = argv[2];
+    for (int index = 2; index < argc; ++index) {
+      const std::string option = argv[index];
 
       if (option == "--release") {
         configuration = Levye::BuildConfiguration::Release;
+      } else if (option == "--desktop") {
+        if (platform == Levye::ProjectPlatform::Android) {
+          std::cerr << "[Levye] Conflicting platform flags: --desktop and --android.\n";
+          return 1;
+        }
+        platform = Levye::ProjectPlatform::Desktop;
+      } else if (option == "--android") {
+        if (platform == Levye::ProjectPlatform::Desktop) {
+          std::cerr << "[Levye] Conflicting platform flags: --desktop and --android.\n";
+          return 1;
+        }
+        platform = Levye::ProjectPlatform::Android;
+      } else if (option == "--ios") {
+        std::cerr << "[Levye] iOS runtime is unavailable.\n";
+        return 1;
       } else {
         std::cerr << "[Levye] Unknown run option: " << option << '\n';
         PrintRunHelp();
@@ -503,7 +629,7 @@ int main(int argc, char** argv) {
       }
     }
 
-    if (!Levye::RunCommand::Execute(*projectDirectory, configuration)) {
+    if (!Levye::RunCommand::Execute(*projectDirectory, configuration, platform)) {
       return 1;
     }
 

@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace Levye {
@@ -27,7 +28,7 @@ class ProjectGenerator {
   static bool Generate(const std::string& name, const std::filesystem::path& outputDirectory,
                        const std::filesystem::path& templateDirectory,
                        const std::filesystem::path& frameworkDirectory,
-                       const std::vector<std::string>& modules = {});
+                       const std::vector<std::string>& modules = {}, bool android = false);
 
   /**
    * @brief Converts a human-readable project name into a build-safe target.
@@ -44,7 +45,8 @@ class ProjectGenerator {
   // Renders the same tokens used by levye new without writing a file.
   static std::string RenderText(std::string content, const std::string& projectName,
                                 const std::string& projectTarget,
-                                const std::filesystem::path& frameworkDirectory);
+                                const std::filesystem::path& frameworkDirectory,
+                                std::string_view defaultPlatform = "desktop");
 
  private:
   /**
@@ -57,7 +59,8 @@ class ProjectGenerator {
    */
   static bool ProcessTemplateFile(const std::filesystem::path& path, const std::string& projectName,
                                   const std::string& projectTarget,
-                                  const std::filesystem::path& frameworkDirectory);
+                                  const std::filesystem::path& frameworkDirectory,
+                                  std::string_view defaultPlatform);
 };
 
 }  // namespace Levye

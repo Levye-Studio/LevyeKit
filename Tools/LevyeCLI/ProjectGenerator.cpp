@@ -30,7 +30,7 @@ bool ProjectGenerator::Generate(const std::string& name,
                                 const std::filesystem::path& outputDirectory,
                                 const std::filesystem::path& templateDirectory,
                                 const std::filesystem::path& frameworkDirectory,
-                                const std::vector<std::string>& modules) {
+                                const std::vector<std::string>& modules, bool android) {
   if (name.empty()) {
     std::cerr << "[Levye] Project name cannot be empty.\n";
 
@@ -88,12 +88,31 @@ bool ProjectGenerator::Generate(const std::string& name,
     return false;
   }
 
+  if (!android) {
+    std::filesystem::remove(projectDirectory / "Source/AndroidMain.cpp", error);
+    if (error) {
+      std::cerr << "[Levye] Failed to prepare desktop project: " << error.message() << '\n';
+      std::filesystem::remove_all(projectDirectory);
+      return false;
+    }
+  }
+
+  for (const char* directory : {"Textures", "Audio", "Fonts", "Shaders", "Models"}) {
+    std::filesystem::create_directories(projectDirectory / "Assets" / directory, error);
+    if (error) {
+      std::cerr << "[Levye] Failed to create asset directory: " << error.message() << '\n';
+      std::filesystem::remove_all(projectDirectory);
+      return false;
+    }
+  }
+
   const std::filesystem::path filesToProcess[] = {projectDirectory / "levye.project",
                                                   projectDirectory / "CMakeLists.txt",
                                                   projectDirectory / "Source/Game.cpp"};
 
   for (const auto& path : filesToProcess) {
-    if (!ProcessTemplateFile(path, name, target, frameworkDirectory)) {
+    if (!ProcessTemplateFile(path, name, target, frameworkDirectory,
+                             android ? "android" : "desktop")) {
       std::cerr << "[Levye] Failed to process template file: " << path << '\n';
 
       std::filesystem::remove_all(projectDirectory);
@@ -279,17 +298,52 @@ std::string ProjectGenerator::CreateTargetName(const std::string& name) {
 
 std::string ProjectGenerator::RenderText(std::string content, const std::string& projectName,
                                          const std::string& projectTarget,
-                                         const std::filesystem::path& frameworkDirectory) {
+                                         const std::filesystem::path& frameworkDirectory,
+                                         std::string_view defaultPlatform) {
   ReplaceAll(content, "{{PROJECT_NAME}}", projectName);
   ReplaceAll(content, "{{PROJECT_TARGET}}", projectTarget);
+  std::string packageSuffix = "game";
+  for (unsigned char character : projectTarget) {
+    if (std::isalnum(character))
+      packageSuffix += static_cast<char>(std::tolower(character));
+    else
+      packageSuffix += '_';
+  }
+  const bool android = defaultPlatform == "android";
+
+  std::string androidConfig;
+
+  if (android) {
+    androidConfig =
+        "[display]\n"
+        "logical_width = 720\n"
+        "logical_height = 1280\n"
+        "scaling = \"fit\"\n"
+        "\n"
+        "[android]\n"
+        "package = \"com.levyekit." +
+        packageSuffix +
+        "\"\n"
+        "orientation = \"portrait\"\n"
+        "app_name = \"" + projectName + "\"\n"
+        "version_name = \"1.0\"\n"
+        "version_code = 1\n"
+        "# icon = \"Icons/launcher.png\"\n"
+        "# adaptive_icon_foreground = \"Icons/foreground.png\"\n"
+        "# adaptive_icon_background = \"#202A44\"\n";
+  }
+
+  ReplaceAll(content, "{{ANDROID_CONFIG}}", androidConfig);
   ReplaceAll(content, "{{LEVYE_ROOT}}", frameworkDirectory.generic_string());
+  ReplaceAll(content, "{{DEFAULT_PLATFORM}}", std::string(defaultPlatform));
   return content;
 }
 
 bool ProjectGenerator::ProcessTemplateFile(const std::filesystem::path& path,
                                            const std::string& projectName,
                                            const std::string& projectTarget,
-                                           const std::filesystem::path& frameworkDirectory) {
+                                           const std::filesystem::path& frameworkDirectory,
+                                           std::string_view defaultPlatform) {
   std::ifstream input(path);
 
   if (!input) return false;
@@ -302,7 +356,8 @@ bool ProjectGenerator::ProcessTemplateFile(const std::filesystem::path& path,
    * Template values are replaced only in files explicitly processed by the
    * generator. Binary assets copied from the template are never modified.
    */
-  content = RenderText(std::move(content), projectName, projectTarget, frameworkDirectory);
+  content = RenderText(std::move(content), projectName, projectTarget, frameworkDirectory,
+                       defaultPlatform);
 
   std::ofstream output(path, std::ios::trunc);
 

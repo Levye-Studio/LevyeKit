@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Levye/Project/ProjectConfig.hpp>
-
 #include <filesystem>
 #include <optional>
 
@@ -14,7 +13,7 @@ namespace Levye {
  * ProjectConfig used by the host application.
  */
 class ProjectLoader {
-public:
+ public:
   /**
    * @brief Loads a project configuration from disk.
    *
@@ -25,7 +24,9 @@ public:
    * @return Loaded project configuration, or std::nullopt when the file
    *         cannot be read or contains invalid configuration.
    */
-  static std::optional<ProjectConfig> Load(const std::filesystem::path &path);
+  static std::optional<ProjectConfig> Load(const std::filesystem::path& path);
+
+  static std::optional<ProjectConfig> Parse(std::string_view content);
 };
 
-} // namespace Levye
+}  // namespace Levye
