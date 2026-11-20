@@ -52,6 +52,8 @@ class Application {
   [[nodiscard]] const DisplayManager& GetDisplay() const { return m_Display; }
 
  private:
+  void Frame();
+  void Finish();
   ApplicationConfig m_Config;
   GameModule& m_GameModule;
 #ifdef LEVYE_WITH_IMGUI

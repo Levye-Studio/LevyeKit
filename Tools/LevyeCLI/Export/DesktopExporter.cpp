@@ -1,7 +1,7 @@
 #include "DesktopExporter.hpp"
 
 #include <iostream>
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__linux__) || defined(_WIN32)
 #include <Levye/Platform/ExecutablePath.hpp>
 #include <Levye/Project/ProjectLoader.hpp>
 #include <cstdlib>
@@ -11,6 +11,7 @@
 
 #include "../BuildCommand.hpp"
 #include "../ProcessArguments.hpp"
+#include "WindowsPackage.hpp"
 #endif
 namespace Levye {
 bool DesktopExporter::Execute(const std::filesystem::path& projectDirectory,
@@ -19,8 +20,9 @@ bool DesktopExporter::Execute(const std::filesystem::path& projectDirectory,
     std::cerr << "[Levye] Android formats require --android.\n";
     return false;
   }
-#ifndef __APPLE__
-  std::cerr << "[Levye] Desktop export is currently implemented only on macOS.\n";
+#if !defined(__APPLE__) && !defined(__linux__) && !defined(_WIN32)
+  std::cerr
+      << "[Levye] Desktop export is currently implemented only on macOS, Linux and Windows.\n";
   return false;
 #else
   namespace fs = std::filesystem;
@@ -69,6 +71,13 @@ bool DesktopExporter::Execute(const std::filesystem::path& projectDirectory,
       }
     } cleanup{lock};
 
+#ifdef __linux__
+    if (std::system("command -v patchelf >/dev/null 2>&1 && command -v readelf >/dev/null 2>&1") !=
+        0) {
+      std::cerr << "[Levye] Linux export requires patchelf and readelf.\n";
+      return false;
+    }
+#endif
     if (!BuildCommand::Execute(root, BuildConfiguration::Release, ProjectPlatform::Desktop))
       return false;
 
@@ -81,14 +90,22 @@ bool DesktopExporter::Execute(const std::filesystem::path& projectDirectory,
       out << manifest;
       if (!out) return false;
     }
+#ifdef _WIN32
+    return WindowsPackage::Execute(root, *project, sanitized, appName, bundleId);
+#else
     const auto script = ExecutablePath::GetDirectory().parent_path().parent_path().parent_path() /
+#ifdef __APPLE__
                         "Platforms/Desktop/package-macos.sh";
+#else
+                        "Platforms/Desktop/package-linux.sh";
+#endif
     std::string command = "bash " + LevyeCLI::QuoteArgument(script.string());
     for (const auto& arg : {root.string(), project->target, project->assetDirectory,
                             sanitized.string(), appName, bundleId, project->desktopVersionName,
                             std::to_string(project->desktopVersionCode), project->desktopIcon})
       command += " " + LevyeCLI::QuoteArgument(arg);
     return std::system(command.c_str()) == 0;
+#endif
   } catch (const std::exception& error) {
     std::cerr << "[Levye] Desktop export failed: " << error.what() << '\n';
     return false;

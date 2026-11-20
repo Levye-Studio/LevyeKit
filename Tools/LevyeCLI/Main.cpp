@@ -227,11 +227,14 @@ void PrintExportHelp() {
             << "\n"
             << "Usage:\n"
             << "  levye export [--desktop]\n"
+            << "  levye export --html [--zip]\n"
             << "  levye export [--android] [--apk | --aab | --all]\n"
             << "\n"
             << "Options:\n"
             << "  --desktop         Export for desktop\n"
             << "  --android         Export for Android\n"
+            << "  --html            Export for browsers\n"
+            << "  --zip             Also create a Web ZIP archive\n"
             << "  --apk             Export an APK\n"
             << "  --aab             Export a signed Android App Bundle\n"
             << "  --all             Export both signed APK and AAB\n"
@@ -522,7 +525,7 @@ int main(int argc, char** argv) {
     for (int index = 2; index < argc; ++index) {
       const std::string_view option = argv[index];
 
-      if (option == "--android" || option == "--desktop") {
+      if (option == "--android" || option == "--desktop" || option == "--html") {
         if (platformSpecified) {
           std::cerr << "[Levye] Choose only one export platform.\n";
           return 1;
@@ -530,14 +533,15 @@ int main(int argc, char** argv) {
 
         platformSpecified = true;
 
-        options.platform = option == "--android" ? Levye::ProjectPlatform::Android
-                                                 : Levye::ProjectPlatform::Desktop;
+        options.platform = option == "--html"      ? Levye::ProjectPlatform::Web
+                           : option == "--android" ? Levye::ProjectPlatform::Android
+                                                   : Levye::ProjectPlatform::Desktop;
 
       } else if (option == "--ios") {
         std::cerr << "[Levye] iOS export is unavailable.\n";
         return 1;
 
-      } else if (option == "--apk" || option == "--aab" || option == "--all") {
+      } else if (option == "--apk" || option == "--aab" || option == "--all" || option == "--zip") {
         if (!options.format.empty()) {
           std::cerr << "[Levye] Choose only one export format.\n";
           return 1;

@@ -4,6 +4,7 @@
 #include <windows.h>
 #elif defined(__APPLE__)
 #include <mach-o/dyld.h>
+#elif defined(__EMSCRIPTEN__)
 #elif defined(__linux__)
 #include <unistd.h>
 #else
@@ -39,6 +40,8 @@ std::filesystem::path ExecutablePath::Get() {
       std::filesystem::path(buffer.data()));
 }
 
+#elif defined(__EMSCRIPTEN__)
+std::filesystem::path ExecutablePath::Get() { return {}; }
 #elif defined(__linux__)
 
 std::filesystem::path ExecutablePath::Get() {

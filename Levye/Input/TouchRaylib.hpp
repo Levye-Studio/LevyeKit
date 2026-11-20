@@ -18,7 +18,7 @@ inline void SampleRaylibTouches(TouchManager& manager, TouchManager::Convert con
     const Vector2 p = GetTouchPosition(i);
     touches.push_back({id, p.x, p.y});
   }
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(__EMSCRIPTEN__)
   const Vector2 mouse = GetMousePosition();
   manager.Sample(touches, IsMouseButtonDown(MOUSE_BUTTON_LEFT), mouse.x, mouse.y, IsWindowFocused(),
                  convert, context);

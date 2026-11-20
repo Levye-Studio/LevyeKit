@@ -10,7 +10,7 @@ namespace Levye {
 enum class BuildConfiguration { Debug, Release };
 
 /** @brief Requested project platform; ProjectDefault reads levye.project. */
-enum class ProjectPlatform { ProjectDefault, Desktop, Android };
+enum class ProjectPlatform { ProjectDefault, Desktop, Android, Web };
 
 /** @brief Resolves a one-command override against the manifest default. */
 inline constexpr ProjectPlatform ResolveProjectPlatform(ProjectPlatform requested,

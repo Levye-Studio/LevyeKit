@@ -134,6 +134,10 @@ set(
     "${CMAKE_SOURCE_DIR}/Targets/${LEVYE_BUILD_NAME}"
 )
 
+if(EMSCRIPTEN AND DEFINED LEVYE_PROJECT_ROOT)
+    set(LEVYE_OUTPUT_DIR "${LEVYE_PROJECT_ROOT}/Targets/${LEVYE_BUILD_NAME}")
+endif()
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${LEVYE_OUTPUT_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${LEVYE_OUTPUT_DIR}/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${LEVYE_OUTPUT_DIR}/lib")
@@ -152,7 +156,17 @@ message(STATUS "LevyeKit output directory: ${LEVYE_OUTPUT_DIR}")
 include(FetchContent)
 
 # The host and reloadable game module must use the same raylib instance.
-set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
+if(EMSCRIPTEN)
+    set(PLATFORM Web CACHE STRING "raylib platform" FORCE)
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+    foreach(module SERIALIZATION IMGUI ANIMATION PHYSICS)
+        if(LEVYE_WITH_${module})
+            message(FATAL_ERROR "Web does not yet support ${module}.")
+        endif()
+    endforeach()
+else()
+    set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
+endif()
 set(FETCHCONTENT_QUIET OFF CACHE BOOL "" FORCE)
 
 set(LEVYE_RAYLIB_TAG "6.2")
@@ -723,6 +737,7 @@ add_executable(
     Tools/LevyeCLI/ExportCommand.cpp
     Tools/LevyeCLI/Export/AndroidExporter.cpp
     Tools/LevyeCLI/Export/DesktopExporter.cpp
+    Tools/LevyeCLI/Export/WebExporter.cpp
     Tools/LevyeCLI/Export/AndroidSigning.cpp
 )
 
