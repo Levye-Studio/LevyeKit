@@ -29,7 +29,7 @@ namespace Levye {
 
 bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
                            BuildConfiguration configuration, ProjectPlatform platform,
-                           bool productionSign) {
+                           bool productionSign, std::string_view androidFormat) {
   const std::string configurationName{ToString(configuration)};
 
   const std::filesystem::path buildDirectory = projectDirectory / "Build" / configurationName;
@@ -38,13 +38,29 @@ bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
 
   {
     auto project = ProjectLoader::Load(projectDirectory / "levye.project");
+
     if (!project) return false;
+
     platform = ResolveProjectPlatform(platform, project->defaultPlatform);
+
+    if (androidFormat != "apk" && androidFormat != "aab" && androidFormat != "all") {
+      std::cerr << "[Levye] Invalid Android package format.\n";
+      return false;
+    }
+
+    if (androidFormat != "apk" &&
+        (platform != ProjectPlatform::Android || configuration != BuildConfiguration::Release ||
+         !productionSign)) {
+      std::cerr << "[Levye] AAB and combined packaging require a signed Android Release build.\n";
+      return false;
+    }
+
     if (productionSign &&
         (platform != ProjectPlatform::Android || configuration != BuildConfiguration::Release)) {
       std::cerr << "[Levye] --sign requires an Android Release build.\n";
       return false;
     }
+
     if (platform == ProjectPlatform::Android) {
       std::filesystem::path signingKeystore;
       if (productionSign) {
@@ -62,11 +78,13 @@ bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
           return false;
         }
       }
+
       const auto readFile = [](const std::filesystem::path& path) -> std::string {
         std::ifstream input(path, std::ios::binary);
         if (!input) return {};
         return {std::istreambuf_iterator<char>{input}, std::istreambuf_iterator<char>{}};
       };
+
       std::vector<PendingFile> pending;
       const auto entry = projectDirectory / "Source/AndroidMain.cpp";
       if (!std::filesystem::exists(entry)) {
@@ -161,11 +179,15 @@ bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
         project = ProjectLoader::Load(manifestPath);
         if (!project || project->androidPackage.empty()) return false;
       }
+
       const auto script = frameworkRoot / "Platforms/Android/package-project.sh";
+
       std::string command = "bash " + LevyeCLI::QuoteArgument(script.string());
+
       const auto addArgument = [&](const std::string& value) {
         command += " " + LevyeCLI::QuoteArgument(value);
       };
+
       addArgument(projectDirectory.string());
       addArgument(configurationName);
       addArgument(project->target);
@@ -178,11 +200,16 @@ bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
       addArgument(project->androidIcon);
       addArgument(project->androidAdaptiveIconForeground);
       addArgument(project->androidAdaptiveIconBackground);
+
       if (productionSign) {
         command += " --sign";
         addArgument(signingKeystore.string());
         addArgument(project->androidSigningAlias);
       }
+
+      command += " --format";
+      addArgument(std::string(androidFormat));
+
       return std::system(command.c_str()) == 0;
     }
   }

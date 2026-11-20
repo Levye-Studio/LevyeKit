@@ -6,6 +6,7 @@
 #include <random>
 #include <regex>
 #include <string>
+#include <vector>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -60,7 +61,7 @@ bool AndroidExporter::Execute(const std::filesystem::path& projectDirectory,
     format = "apk";
   }
 
-  if (format != "apk") {
+  if (format != "apk" && format != "aab" && format != "all") {
     std::cerr << "[Levye] Android export format '" << format << "' is not implemented yet.\n";
 
     return false;
@@ -94,23 +95,12 @@ bool AndroidExporter::Execute(const std::filesystem::path& projectDirectory,
   }
 
   if (!BuildCommand::Execute(projectDirectory, BuildConfiguration::Release,
-                             ProjectPlatform::Android, true)) {
+                             ProjectPlatform::Android, true, format)) {
     std::cerr << "[Levye] Android Release build failed.\n";
     return false;
   }
 
-  const auto source = projectDirectory / "Targets/android-Release/bin" / (project->target + ".apk");
-
-  if (!std::filesystem::is_regular_file(source)) {
-    std::cerr << "[Levye] Built APK not found: " << source << '\n';
-    return false;
-  }
-
   const auto exportDirectory = projectDirectory / "Exports/Android" / project->androidVersionName;
-
-  const auto destination =
-      exportDirectory / (project->target + "-v" + project->androidVersionName + "-" +
-                         std::to_string(project->androidVersionCode) + ".apk");
 
   std::error_code error;
 
@@ -136,32 +126,121 @@ bool AndroidExporter::Execute(const std::filesystem::path& projectDirectory,
     return false;
   }
 
-  // A unique, no-overwrite stage file prevents stale paths from redirecting a copy.
-  std::filesystem::path temporary;
+  struct Artifact {
+    fs::path source;
+    fs::path destination;
+    fs::path staged;
+    fs::path backup;
+    bool published = false;
+  };
+  std::vector<Artifact> artifacts;
+  for (const std::string extension : {"apk", "aab"}) {
+    if (format != "all" && format != extension) continue;
+    const auto filename = project->target + "-v" + project->androidVersionName + "-" +
+                          std::to_string(project->androidVersionCode) + "." + extension;
+    artifacts.push_back(
+        {projectDirectory / "Targets/android-Release/bin" / (project->target + "." + extension),
+         exportDirectory / filename,
+         {},
+         {},
+         false});
+  }
+
+  // Keep candidates and backups together on the destination filesystem.
+  fs::path stageDirectory;
   std::random_device random;
-  bool staged = false;
+
   for (int attempt = 0; attempt < 32; ++attempt) {
-    temporary = std::filesystem::path(destination.string() + ".tmp." + std::to_string(random()));
+    auto candidate = exportDirectory / (".stage." + std::to_string(random()));
     error.clear();
-    staged =
-        std::filesystem::copy_file(source, temporary, std::filesystem::copy_options::none, error);
-    if (staged || error != std::errc::file_exists) break;
+
+    if (fs::create_directory(candidate, error)) {
+      stageDirectory = candidate;
+      break;
+    }
+    if (error && error != std::errc::file_exists) break;
   }
 
-  if (!staged) {
-    std::cerr << "[Levye] Cannot stage APK: " << error.message() << '\n';
+  if (stageDirectory.empty()) {
+    std::cerr << "[Levye] Cannot create Android export staging directory.\n";
     return false;
   }
 
-  if (!Publish(temporary, destination, error)) {
+  const auto cleanup = [&]() {
     std::error_code cleanupError;
-    std::filesystem::remove(temporary, cleanupError);
-    std::cerr << "[Levye] Cannot publish APK: " << error.message() << '\n';
-    return false;
+    fs::remove_all(stageDirectory, cleanupError);
+    if (cleanupError)
+      std::cerr << "[Levye] Cannot clean staging directory: " << stageDirectory << '\n';
+  };
+  for (auto& artifact : artifacts) {
+    error.clear();
+    if (!fs::is_regular_file(fs::symlink_status(artifact.source, error)) || error) {
+      std::cerr << "[Levye] Missing or invalid built artifact: " << artifact.source << '\n';
+      cleanup();
+      return false;
+    }
+    artifact.staged = stageDirectory / artifact.destination.filename();
+    if (!fs::copy_file(artifact.source, artifact.staged, fs::copy_options::none, error)) {
+      std::cerr << "[Levye] Cannot stage artifact: " << error.message() << '\n';
+      cleanup();
+      return false;
+    }
+    error.clear();
+    const auto status = fs::symlink_status(artifact.destination, error);
+    if (error && error != std::errc::no_such_file_or_directory) {
+      std::cerr << "[Levye] Cannot inspect destination: " << error.message() << '\n';
+      cleanup();
+      return false;
+    }
+    if (fs::exists(status)) {
+      if (!fs::is_regular_file(status)) {
+        std::cerr << "[Levye] Invalid export destination: " << artifact.destination << '\n';
+        cleanup();
+        return false;
+      }
+      artifact.backup = artifact.staged.string() + ".backup";
+      error.clear();
+      if (!fs::copy_file(artifact.destination, artifact.backup, fs::copy_options::none, error)) {
+        std::cerr << "[Levye] Cannot back up existing export: " << error.message() << '\n';
+        cleanup();
+        return false;
+      }
+    }
   }
 
-  std::cout << "[Levye] Android APK exported:\n" << destination << '\n';
-
+  for (auto& artifact : artifacts) {
+    error.clear();
+    if (!Publish(artifact.staged, artifact.destination, error)) {
+      std::cerr << "[Levye] Cannot publish artifact: " << error.message() << '\n';
+      bool restored = true;
+      for (auto& previous : artifacts) {
+        if (!previous.published) continue;
+        std::error_code rollbackError;
+        if (previous.backup.empty()) {
+          fs::remove(previous.destination, rollbackError);
+        } else {
+          Publish(previous.backup, previous.destination, rollbackError);
+        }
+        if (rollbackError) {
+          restored = false;
+          std::cerr << "[Levye] Rollback failed: " << previous.destination << ": "
+                    << rollbackError.message() << '\n';
+        }
+      }
+      if (restored)
+        cleanup();
+      else
+        std::cerr << "[Levye] Recovery files retained in: " << stageDirectory << '\n';
+      return false;
+    }
+    artifact.published = true;
+  }
+  cleanup();
+  for (const auto& artifact : artifacts) {
+    std::cout << "[Levye] Android " << (artifact.destination.extension() == ".aab" ? "AAB" : "APK")
+              << " exported:\n"
+              << artifact.destination << '\n';
+  }
   return true;
 }
 

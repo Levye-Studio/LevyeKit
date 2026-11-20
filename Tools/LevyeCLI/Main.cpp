@@ -231,8 +231,8 @@ void PrintExportHelp() {
             << "Options:\n"
             << "  --android         Export for Android\n"
             << "  --apk             Export an APK (default)\n"
-            << "  --aab             Reserved; Android App Bundle export is unavailable\n"
-            << "  --all             Reserved; combined export is unavailable\n"
+            << "  --aab             Export a signed Android App Bundle\n"
+            << "  --all             Export both signed APK and AAB\n"
             << "  -h, --help        Show this help message\n"
             << "\n"
             << "Android exports use Release configuration and production signing.\n";

@@ -3,8 +3,23 @@
 set -euo pipefail
 set +x # Never trace password checks or password-bearing environment variables.
 
+package_format=apk
+
+if [[ $# -ge 2 && "${@: -2:1}" == "--format" ]]; then
+  package_format="${@: -1}"
+  set -- "${@:1:$(($# - 2))}"
+fi
+
+case "$package_format" in
+  apk|aab|all) ;;
+  *)
+    echo "Unsupported Android package format: $package_format" >&2
+    exit 2
+    ;;
+esac
+
 if [[ $# -ne 6 && $# -ne 12 && $# -ne 15 ]]; then
-  echo "Usage: package-project.sh PROJECT_DIR CONFIGURATION TARGET PACKAGE ASSET_DIR ORIENTATION [APP_NAME VERSION_NAME VERSION_CODE ICON FOREGROUND BACKGROUND [--sign KEYSTORE ALIAS]]" >&2
+  echo "Usage: package-project.sh PROJECT_DIR CONFIGURATION TARGET PACKAGE ASSET_DIR ORIENTATION [APP_NAME VERSION_NAME VERSION_CODE ICON FOREGROUND BACKGROUND [--sign KEYSTORE ALIAS]] [--format apk|aab|all]" >&2
   exit 2
 fi
 
@@ -36,6 +51,12 @@ if [[ $# -eq 15 ]]; then
     exit 2
   fi
 fi
+
+if [[ "$package_format" != apk ]] && ! "$production_sign"; then
+  echo "AAB and combined packaging require production signing." >&2
+  exit 2
+fi
+
 framework_root="$(cd "$(dirname "$0")/../.." && pwd)"
 
 if [[ ! "$configuration" =~ ^[A-Za-z][A-Za-z0-9_-]*$ ]] ||
@@ -49,11 +70,17 @@ if [[ ! "$version_code" =~ ^[1-9][0-9]*$ ]] || [[ -z "$version_name" ]]; then
   echo "Android version_code must be positive and version_name must be nonempty." >&2
   exit 2
 fi
-# A failed production signing attempt must not leave an older development-signed
-# Release APK at the expected output path.
+
+# Do not leave a stale artifact at the expected production output path.
 if "$production_sign"; then
-  rm -f "$project_dir/Targets/android-$configuration/bin/$target.apk"
+  if [[ "$package_format" == all ]]; then
+    rm -f "$project_dir/Targets/android-$configuration/bin/$target.apk" \
+          "$project_dir/Targets/android-$configuration/bin/$target.aab"
+  else
+    rm -f "$project_dir/Targets/android-$configuration/bin/$target.$package_format"
+  fi
 fi
+
 case "$asset_name" in
   ""|/*|../*|*/../*|*/..) echo "Android asset path must stay inside the project." >&2; exit 2 ;;
 esac
@@ -100,6 +127,14 @@ for tool in "$build_tools/aapt2" "$build_tools/zipalign" "$build_tools/apksigner
             "$ndk_root/build/cmake/android.toolchain.cmake" "$platform_jar"; do
   [[ -e "$tool" ]] || { echo "Missing Android SDK/NDK component: $tool" >&2; exit 2; }
 done
+
+bundletool=""
+
+if [[ "$package_format" != apk ]]; then
+  bundletool="$(
+    bash "$framework_root/Platforms/Android/ensure-bundletool.sh"
+  )"
+fi
 
 if "$production_sign"; then
   if [[ -z "${LEVYE_ANDROID_STORE_PASSWORD:-}" || -z "${LEVYE_ANDROID_KEY_PASSWORD:-}" ]]; then
@@ -215,6 +250,25 @@ java -Djava.awt.headless=true "$framework_root/Platforms/Android/GenerateLaunche
   "$target" "$package" "$orientation" "$app_name" "$version_name" \
   "$version_code" "$icon" "$foreground" "$background"
 "$build_tools/aapt2" compile --dir "$work_dir/res" -o "$work_dir/compiled-resources.zip"
+
+if [[ "$package_format" != apk ]]; then
+  bundle_aapt2="${LEVYE_ANDROID_BUNDLE_AAPT2:-$build_tools/aapt2}"
+
+  LEVYE_ANDROID_STORE_PASSWORD="$store_password" \
+  LEVYE_ANDROID_KEY_PASSWORD="$key_password" \
+    bash "$framework_root/Platforms/Android/package-bundle.sh" \
+      "$work_dir" \
+      "$output_dir/bin/$target.aab" \
+      "$bundle_aapt2" \
+      "$platform_jar" \
+      "$bundletool" \
+      "$signing_keystore" \
+      "$signing_alias"
+
+  if [[ "$package_format" == aab ]]; then
+    exit 0
+  fi
+fi
 
 "$build_tools/aapt2" link --auto-add-overlay -o "$work_dir/base.apk" \
   --manifest "$work_dir/AndroidManifest.xml" -A "$payload" \

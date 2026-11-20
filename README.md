@@ -385,6 +385,31 @@ APK before installing it so updated assets are packaged.
 For generated-project Android builds, asset packaging, and the Sandbox emulator workflow, see
 [Platforms/Android/README.md](Platforms/Android/README.md).
 
+### Android production builds and exports
+
+```sh
+levye build --android --release --sign
+levye export --android
+levye export --android --apk
+levye export --android --aab
+levye export --android --all
+```
+
+`--sign` is an explicit production-signing option for Android Release builds;
+it writes an APK to `Targets/android-Release/bin/`. Ordinary builds and runs
+use development signing, including Release. Configure an existing signing key
+before using `build --sign`.
+
+Exports always use production signing, with APK as the default format.
+`--aab` produces an Android App Bundle and `--all` produces both formats with
+one native build and one signing credential sequence. Interactive exports can
+configure a new or existing signing key. Output is versioned under
+`Exports/Android/<version_name>/`. AAB exports automatically install and verify
+pinned bundletool 1.18.3 when needed; APK exports do not require it.
+
+See the [Android guide](Platforms/Android/README.md) for signing, tooling,
+verification and distribution limitations.
+
 ### Clean
 
 Clean Debug output:
@@ -1658,7 +1683,7 @@ LevyeKit is intended to provide a common foundation across desktop and mobile ta
 | Linux | Desktop | Supported build path retained; v0.5.0 unverified |
 | Windows | Desktop | MSVC/MinGW build paths retained; v0.5.0 unverified |
 | iOS | Mobile | Planned |
-| Android | Mobile | Experimental ARM64 generated projects and Sandbox; macOS-hosted emulator verified |
+| Android | Mobile | ARM64 core projects and Sandbox; signed APK/AAB export; macOS-hosted emulator verified |
 
 Native code hot reloading is primarily intended for desktop development.
 
@@ -1780,7 +1805,8 @@ Mobile platforms may use a different development workflow because of platform re
   * [ ] `levye export --platform linux --release`
   * [ ] `levye export --platform macos --release`
   * [x] Android production-signed APK: `levye export --android`
-  * [ ] Android App Bundle export
+  * [x] Android App Bundle export: `levye export --android --aab`
+  * [x] Combined Android export: `levye export --android --all`
   * [ ] `levye export --platform ios --release`
 * [ ] Platform-specific packaging
 * [ ] Release asset preparation
