@@ -226,16 +226,19 @@ void PrintExportHelp() {
   std::cout << "Export a distributable LevyeKit project.\n"
             << "\n"
             << "Usage:\n"
-            << "  levye export --android [--apk | --aab | --all]\n"
+            << "  levye export [--desktop]\n"
+            << "  levye export [--android] [--apk | --aab | --all]\n"
             << "\n"
             << "Options:\n"
+            << "  --desktop         Export for desktop\n"
             << "  --android         Export for Android\n"
-            << "  --apk             Export an APK (default)\n"
+            << "  --apk             Export an APK\n"
             << "  --aab             Export a signed Android App Bundle\n"
             << "  --all             Export both signed APK and AAB\n"
             << "  -h, --help        Show this help message\n"
             << "\n"
-            << "Android exports use Release configuration and production signing.\n";
+            << "Android exports use Release configuration and production signing.\n"
+            << "Without a platform option, export uses the project default.\n";
 }
 
 /**
@@ -548,12 +551,6 @@ int main(int argc, char** argv) {
         PrintExportHelp();
         return 1;
       }
-    }
-
-    if (!platformSpecified) {
-      std::cerr << "[Levye] Missing export platform.\n";
-      PrintExportHelp();
-      return 1;
     }
 
     const auto projectDirectory = FindCurrentProject();

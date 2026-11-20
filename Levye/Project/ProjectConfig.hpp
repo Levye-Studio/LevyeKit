@@ -60,6 +60,13 @@ struct ProjectConfig {
   std::string androidSigningKeystore;
   std::string androidSigningAlias;
 
+  /** @brief Optional desktop distribution identity. */
+  std::string desktopAppName;
+  std::string desktopBundleId;
+  std::string desktopVersionName = "1.0.0";
+  int desktopVersionCode = 1;
+  std::string desktopIcon;
+
   int windowWidth = 1280;
   int windowHeight = 720;
   int targetFPS = 60;

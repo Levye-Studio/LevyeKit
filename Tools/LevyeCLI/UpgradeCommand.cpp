@@ -19,7 +19,7 @@ namespace Levye {
 namespace {
 namespace fs = std::filesystem;
 
-constexpr int kTemplateVersion = 1;
+constexpr int kTemplateVersion = 2;
 
 bool ReadRegular(const fs::path& path, std::string& text, std::string& error) {
   std::error_code ec;
@@ -37,6 +37,94 @@ bool ReadRegular(const fs::path& path, std::string& text, std::string& error) {
     error = "Cannot read: " + path.string();
     return false;
   }
+  return true;
+}
+
+// Match only the known generated host. Preserve custom source on failure.
+bool PrepareHost(const fs::path& root, const fs::path& templateRoot,
+                 std::vector<PendingFile>& changes, std::string& error) {
+  const auto path = root / "Source/Main.cpp";
+  std::string current, desired;
+  if (!ReadRegular(path, current, error) ||
+      !ReadRegular(templateRoot / "Source/Main.cpp", desired, error)) return false;
+  if (current == desired) return true;
+  constexpr std::string_view legacy = R"LEVYE(#include <Levye/Core/Application.hpp>
+#include <Levye/HotReload/GameModule.hpp>
+#include <Levye/Platform/ExecutablePath.hpp>
+#include <Levye/Project/ProjectLoader.hpp>
+#include <Levye/Platform/SharedLibrary.hpp>
+
+#include <filesystem>
+#include <iostream>
+
+int main()
+{
+    const std::filesystem::path executableDirectory =
+        Levye::ExecutablePath::GetDirectory();
+
+    const std::filesystem::path targetDirectory =
+        executableDirectory.parent_path();
+
+    const std::filesystem::path projectDirectory =
+        targetDirectory
+            .parent_path()
+            .parent_path();
+
+    const std::filesystem::path projectFile =
+        projectDirectory /
+        "levye.project";
+
+    const auto project =
+        Levye::ProjectLoader::Load(
+            projectFile
+        );
+
+    if (!project)
+    {
+        std::cerr
+            << "[Levye] Failed to load project.\n";
+
+        return 1;
+    }
+
+    const std::filesystem::path assetRoot =
+        projectDirectory /
+        project->assetDirectory;
+
+    const std::filesystem::path gameModulePath =
+        targetDirectory /
+        "lib" /
+        Levye::SharedLibrary::MakeFilename("Game");
+
+    Levye::GameModule gameModule;
+
+    gameModule.SetAssetRoot(
+        assetRoot.string()
+    );
+
+    if (!gameModule.Load(
+            gameModulePath.string()))
+    {
+        return 1;
+    }
+
+    const Levye::ApplicationConfig applicationConfig =
+        project->CreateApplicationConfig();
+
+    Levye::Application application{
+        applicationConfig,
+        gameModule
+    };
+
+    application.Run();
+
+    return 0;
+})LEVYE";
+  if (current != legacy) {
+    error = "Custom Source/Main.cpp requires manual runtime migration; no files changed.";
+    return false;
+  }
+  changes.push_back({path, desired, true});
   return true;
 }
 
@@ -182,10 +270,10 @@ bool PrepareMetadata(const std::string& original, std::string& updated, std::str
   std::smatch versionMatch;
   if (std::regex_search(section, versionMatch, field)) {
     section.replace(static_cast<std::size_t>(versionMatch.position(2)),
-                    static_cast<std::size_t>(versionMatch.length(2)), "1");
+                    static_cast<std::size_t>(versionMatch.length(2)), std::to_string(kTemplateVersion));
   } else {
     if (!section.empty() && section.back() != '\n') section += '\n';
-    section += "template_version = 1\n";
+    section += "template_version = " + std::to_string(kTemplateVersion) + "\n";
   }
   updated.replace(start, end - start, section);
   try {
@@ -205,6 +293,12 @@ bool ValidateInstalled(const fs::path& root, const fs::path& templateRoot, std::
   if (!PrepareMetadata(metadata, updated, name, target, version, error) ||
       version != kTemplateVersion) {
     if (error.empty()) error = "Project template version was not installed.";
+    return false;
+  }
+  std::vector<PendingFile> hostChanges;
+  if (!PrepareHost(root, templateRoot, hostChanges, error)) return false;
+  if (!hostChanges.empty()) {
+    error = "Desktop runtime host migration is incomplete.";
     return false;
   }
   CMakeMigrationPlan source;
@@ -287,8 +381,9 @@ int UpgradeCommand::Execute(const fs::path& projectDirectory, const fs::path& fr
             << '\n'
             << "[Levye] Target template: " << kTemplateVersion << '\n';
 
-  std::string hostSource;
-  if (!ReadRegular(projectDirectory / "Source/Main.cpp", hostSource, error)) {
+  std::vector<PendingFile> changes;
+  const auto templateRoot = frameworkRoot / "Templates/Default";
+  if (!PrepareHost(projectDirectory, templateRoot, changes, error)) {
     std::cerr << "[Levye] Upgrade failed: " << error << '\n';
     return 1;
   }
@@ -335,7 +430,6 @@ int UpgradeCommand::Execute(const fs::path& projectDirectory, const fs::path& fr
     source.updateRoot = true;
   }
 
-  std::vector<PendingFile> changes;
   if (source.updateRoot)
     changes.push_back({projectDirectory / "CMakeLists.txt", source.rootCMake, true});
   if (source.createManifest)
@@ -344,7 +438,6 @@ int UpgradeCommand::Execute(const fs::path& projectDirectory, const fs::path& fr
     changes.push_back({projectDirectory / "Source/CMakeLists.txt", source.sourceManifest, true});
 
   std::vector<fs::path> preserved;
-  const auto templateRoot = frameworkRoot / "Templates/Default";
   if (!ProjectIDE::Prepare(projectDirectory, templateRoot, target, changes, preserved, error)) {
     std::cerr << "[Levye] Upgrade failed: " << error << '\n';
     return 1;
@@ -369,7 +462,7 @@ int UpgradeCommand::Execute(const fs::path& projectDirectory, const fs::path& fr
               << change.path.lexically_relative(projectDirectory).generic_string() << '\n';
   std::cout << "[Levye] Preserved:\n";
   for (const auto& file : preserved) std::cout << "  " << file.generic_string() << '\n';
-  std::cout << "  Source/ and Assets/ contents, target names, custom project settings\n";
+  std::cout << "  Game sources and Assets/ contents, target names, custom project settings\n";
 
   if (check) return changes.empty() ? 0 : 2;
   if (dryRun) return 0;

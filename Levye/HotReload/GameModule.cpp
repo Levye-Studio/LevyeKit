@@ -655,7 +655,11 @@ GameModule::~GameModule() {
   CleanupRuntimeFiles();
 }
 
-bool GameModule::Load(const std::string& path) {
+bool GameModule::Load(const std::string& path) { return LoadInternal(path, false); }
+
+bool GameModule::LoadDistribution(const std::string& path) { return LoadInternal(path, true); }
+
+bool GameModule::LoadInternal(const std::string& path, bool distribution) {
   // Replacing a started module must run its state destructor while its code is loaded.
   bool codeLoaded = m_Library.IsLoaded();
 #if defined(__ANDROID__)
@@ -666,9 +670,11 @@ bool GameModule::Load(const std::string& path) {
     return false;
   }
   Shutdown();
+  CleanupRuntimeFiles();
+  m_RuntimeDirectory.clear();
+  m_Distribution = distribution;
 
 #if defined(_WIN32)
-  CleanupRuntimeFiles();
   m_Path = std::filesystem::absolute(path).string();
 #else
   m_Path = path;
@@ -814,6 +820,17 @@ bool GameModule::Load(const std::string& path) {
     return false;
   }
 
+  if (m_Distribution) {
+    DynamicLibrary candidateLibrary;
+    GameAPI candidateAPI{};
+    if (!LoadCandidate(sourcePath, candidateLibrary, candidateAPI)) return false;
+    // An empty runtime path means the library is not an owned temporary file.
+    PromoteCandidate(std::move(candidateLibrary), candidateAPI, {});
+    m_Started = false;
+    Logger::Info("Loaded distribution game module: " + m_Path);
+    return true;
+  }
+
   if (!m_ModuleWatcher.Watch(m_Path)) {
     Logger::Warning("Failed to watch game module: " + m_Path);
   }
@@ -927,6 +944,7 @@ bool GameModule::Start() {
 }
 
 bool GameModule::CheckForReload() {
+  if (m_Distribution) return false;
 #if defined(__ANDROID__)
   if (m_StaticAPI) return false;
 #endif
@@ -1171,11 +1189,12 @@ bool GameModule::IsLoaded() const {
 const std::string& GameModule::GetPath() const { return m_Path; }
 
 void GameModule::UpdateHostSystems() {
-  m_TextureManager.CheckForChanges();
-  m_ShaderManager.CheckForChanges();
-  m_FontManager.CheckForChanges();
-
-  m_AudioManager.CheckForChanges();
+  if (!m_Distribution) {
+    m_TextureManager.CheckForChanges();
+    m_ShaderManager.CheckForChanges();
+    m_FontManager.CheckForChanges();
+    m_AudioManager.CheckForChanges();
+  }
   /*
    * Streaming music requires regular buffer updates. Keeping this in the
    * host means playback continues across game-code hot reloads.
@@ -1363,10 +1382,12 @@ void GameModule::SampleTouchInput() {
   if ((++touchDiagnosticFrame % 120) == 0 || GetTouchPointCount() > 0) {
     const Vector2 rawTouch = GetTouchPointCount() > 0 ? GetTouchPosition(0) : Vector2{};
     const TouchPoint* touch = m_TouchManager.GetTouch(0);
-    TraceLog(LOG_WARNING, "ANDROID TOUCH PIPELINE: frame=%u native=%d manager=%zu raw=(%.1f,%.1f) logical=(%.1f,%.1f) inside=%d",
-             touchDiagnosticFrame, GetTouchPointCount(), m_TouchManager.GetTouchCount(),
-             rawTouch.x, rawTouch.y, touch ? touch->x : 0.0f,
-             touch ? touch->y : 0.0f, touch ? touch->insideViewport : 0);
+    TraceLog(LOG_WARNING,
+             "ANDROID TOUCH PIPELINE: frame=%u native=%d manager=%zu raw=(%.1f,%.1f) "
+             "logical=(%.1f,%.1f) inside=%d",
+             touchDiagnosticFrame, GetTouchPointCount(), m_TouchManager.GetTouchCount(), rawTouch.x,
+             rawTouch.y, touch ? touch->x : 0.0f, touch ? touch->y : 0.0f,
+             touch ? touch->insideViewport : 0);
   }
 #endif
 }

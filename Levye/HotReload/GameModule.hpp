@@ -66,6 +66,9 @@ class GameModule {
    */
   bool Load(const std::string& path);
 
+  /** Load a packaged module directly, without runtime copies or hot reload. */
+  bool LoadDistribution(const std::string& path);
+
 #if defined(__ANDROID__)
   /** @brief Binds a GameAPI linked into the Android application library. */
   [[nodiscard]] bool LoadStatic(const GameAPI* api);
@@ -316,6 +319,8 @@ class GameModule {
   std::string m_LastCopyError;
 #endif
 
+  bool LoadInternal(const std::string& path, bool distribution);
+  bool m_Distribution = false;
   bool m_HasAPI = false;
   bool m_Started = false;
 #if defined(__ANDROID__)

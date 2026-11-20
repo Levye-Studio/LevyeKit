@@ -1,3 +1,4 @@
+#include <cstdint>
 #include "ProjectLoader.hpp"
 
 #include <Levye/Debug/Logger.hpp>
@@ -123,6 +124,36 @@ std::optional<ProjectConfig> ProjectLoader::Parse(std::string_view content) {
       return std::nullopt;
     }
     config.defaultPlatform = *platform;
+  }
+  if (const auto node = table["desktop"]; node.node()) {
+    const auto* desktop = node.as_table();
+    if (!desktop) {
+      std::cerr << "[LevyeKit] [desktop] must be a table.\n";
+      return std::nullopt;
+    }
+    auto readString = [&](std::string_view key, std::string& output) {
+      const auto entry = (*desktop)[key];
+      if (!entry.node()) return true;
+      const auto value = entry.value<std::string>();
+      if (!value || value->empty() || value->find('\0') != std::string::npos) {
+        std::cerr << "[LevyeKit] [desktop] " << key << " must be a nonempty string.\n";
+        return false;
+      }
+      output = *value;
+      return true;
+    };
+    if (!readString("app_name", config.desktopAppName) ||
+        !readString("bundle_id", config.desktopBundleId) ||
+        !readString("version_name", config.desktopVersionName) ||
+        !readString("icon", config.desktopIcon)) return std::nullopt;
+    if (const auto entry = (*desktop)["version_code"]; entry.node()) {
+      const auto value = entry.value_exact<std::int64_t>();
+      if (!value || *value <= 0 || *value > 2147483647) {
+        std::cerr << "[LevyeKit] [desktop] version_code must be a positive integer.\n";
+        return std::nullopt;
+      }
+      config.desktopVersionCode = static_cast<int>(*value);
+    }
   }
   if (auto package = table["android"]["package"].value<std::string>()) {
     config.androidPackage = *package;

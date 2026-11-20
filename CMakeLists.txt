@@ -345,6 +345,7 @@ add_library(
     Levye/IO/FileWatcher.cpp
     Levye/Assets/AssetPath.cpp
     Levye/Platform/ExecutablePath.cpp
+    Levye/Platform/RuntimePaths.cpp
     Levye/Platform/SharedLibrary.cpp
     Levye/Time/TimeSystem.cpp
     Levye/Project/ProjectConfig.cpp
@@ -721,6 +722,7 @@ add_executable(
 
     Tools/LevyeCLI/ExportCommand.cpp
     Tools/LevyeCLI/Export/AndroidExporter.cpp
+    Tools/LevyeCLI/Export/DesktopExporter.cpp
     Tools/LevyeCLI/Export/AndroidSigning.cpp
 )
 
