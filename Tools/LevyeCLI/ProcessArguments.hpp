@@ -4,8 +4,10 @@
 
 namespace LevyeCLI {
 
-// Quote a single argument for the platform's command shell.
-// Use this only when constructing commands for std::system().
+/** @brief Quotes one argument for the platform shell used by std::system().
+ * @param value Argument to quote.
+ * @return Shell-quoted argument for the current host platform.
+ */
 inline std::string QuoteArgument(const std::string& value) {
 #ifdef _WIN32
   std::string result = "\"";

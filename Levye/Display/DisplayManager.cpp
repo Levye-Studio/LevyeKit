@@ -10,13 +10,20 @@ bool DisplayManager::Initialize(DisplayConfig config) {
 
   if (config.logical.width <= 0 || config.logical.height <= 0 ||
       (config.scaling != DisplayScaling::Fit && config.scaling != DisplayScaling::Fill &&
-       config.scaling != DisplayScaling::Stretch))
+       config.scaling != DisplayScaling::Stretch && config.scaling != DisplayScaling::Integer &&
+       config.scaling != DisplayScaling::Expand))
     return false;
 
+  config_ = config;
   layout_.Configure(config);
   layout_.Resize(GetScreenWidth(), GetScreenHeight(), GetRenderWidth(), GetRenderHeight());
 
-  target_ = LoadRenderTexture(config.logical.width, config.logical.height);
+  const auto size = layout_.GetLogicalSize();
+  target_ = LoadRenderTexture(size.width, size.height);
+  if (target_.id != 0)
+    SetTextureFilter(target_.texture, config.filter == DisplayFilter::Nearest
+                                          ? TEXTURE_FILTER_POINT
+                                          : TEXTURE_FILTER_BILINEAR);
 
   ready_ = target_.id != 0 && target_.texture.id != 0;
   if (!ready_ && target_.id != 0) {
@@ -44,15 +51,31 @@ void DisplayManager::Shutdown() {
 void DisplayManager::Resize(int windowWidth, int windowHeight, int framebufferWidth,
                             int framebufferHeight) {
   if (pendingScaling_) {
-    layout_.Configure({layout_.GetLogicalSize(), *pendingScaling_});
+    auto config = config_;
+    config.scaling = *pendingScaling_;
+    config_ = config;
+    layout_.Configure(config);
     pendingScaling_.reset();
   }
   layout_.Resize(windowWidth, windowHeight, framebufferWidth, framebufferHeight);
+  const auto size = layout_.GetLogicalSize();
+  if (ready_ && !drawing_ &&
+      (target_.texture.width != size.width || target_.texture.height != size.height)) {
+    auto replacement = LoadRenderTexture(size.width, size.height);
+    if (replacement.id != 0 && replacement.texture.id != 0) {
+      SetTextureFilter(replacement.texture, config_.filter == DisplayFilter::Nearest
+                                                ? TEXTURE_FILTER_POINT
+                                                : TEXTURE_FILTER_BILINEAR);
+      UnloadRenderTexture(target_);
+      target_ = replacement;
+    }
+  }
 }
 
 void DisplayManager::SetScaling(DisplayScaling scaling) {
   if (scaling == DisplayScaling::Fit || scaling == DisplayScaling::Fill ||
-      scaling == DisplayScaling::Stretch)
+      scaling == DisplayScaling::Stretch || scaling == DisplayScaling::Integer ||
+      scaling == DisplayScaling::Expand)
     pendingScaling_ = scaling;
 }
 

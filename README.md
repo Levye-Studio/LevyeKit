@@ -114,7 +114,7 @@ LevyeKit provides reusable systems for:
 
 The framework stays intentionally small so games can use raylib directly whenever it already provides the required functionality.
 
-> **Status:** LevyeKit **v0.5.0** introduces an optional Jolt Physics module with rigid bodies, collision queries, virtual character controllers, constraints, and runtime diagnostics. Linux and Windows validation remain outstanding. Physics API v7 requires rebuilding modules compiled against v6. See the [Physics guide](Docs/Physics-v0.5.0.md) and [Animation guide](Docs/Animation-v0.4.5.md).
+**Status:** LevyeKit **v0.6.0 (in development)** focuses on cross-platform integration and framework modernization. Android ARM64 and iOS simulator workflows, platform-aware CLI commands, unified display and touch input, project-manifest validation, and migration support are implemented. Android emulator and iOS simulator workflows have been exercised on macOS. **Web/HTML5 runtime integration and verification are the next active tasks.** Physical-device testing and current Linux/Windows validation remain outstanding. **v0.5.0 is complete** and introduced the optional Jolt Physics module. See the [Physics guide](Docs/Physics-v0.5.0.md), [Animation guide](Docs/Animation-v0.4.5.md), [Android guide](Platforms/Android/README.md), and [iOS guide](Platforms/iOS/README.md).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -380,10 +380,32 @@ Or Release:
 levye run --release
 ```
 
-Desktop `levye run` uses the existing build. Android `levye run` rebuilds the
-APK before installing it so updated assets are packaged.
-For generated-project Android builds, asset packaging, and the Sandbox emulator workflow, see
-[Platforms/Android/README.md](Platforms/Android/README.md).
+Desktop `levye run` uses the existing build. Android and iOS `levye run` rebuild
+before installing so updated source and assets are packaged.
+For generated-project Android builds, asset packaging, and the Sandbox emulator
+workflow, see the [Android guide](Platforms/Android/README.md). The
+[iOS guide](Platforms/iOS/README.md) covers simulator builds and source export.
+
+### iOS simulator
+
+On macOS with Xcode and an iOS simulator runtime installed:
+
+```sh
+levye new MyGame --ios
+levye build --ios
+levye run --ios
+levye build --ios --release
+levye run --ios --release
+levye export --ios
+```
+
+The app is written to `Targets/ios-Debug/bin/<target>.app` or
+`Targets/ios-Release/bin/<target>.app`. The CLI reads the asset directory from
+`levye.project`, embeds the project manifest, assets, and ANGLE frameworks, and
+installs the app on a booted simulator (or boots an available one). iOS builds
+currently require `Source/Game.cpp` and have no optional modules. Source export
+contains an independently configurable Xcode project; device builds require
+local Apple signing. See the [iOS guide](Platforms/iOS/README.md).
 
 ### Android production builds and exports
 
@@ -440,15 +462,16 @@ levye project
 
 `levye new --android` stores Android as the project's default platform;
 `levye new` and `levye new --desktop` store Desktop. Bare `levye build` and
-`levye run` use that default. `--desktop` or `--android` overrides it for one
+`levye run` use that default. `--desktop`, `--android`, or `--ios` overrides it for one
 command without changing `levye.project`. To change the persistent default:
 
 ```sh
 levye project --set-default android
 levye project --set-default desktop
+levye project --set-default ios
 ```
 
-The project command checks that Android is configured before selecting it.
+The project command checks that Android or iOS is configured before selecting it.
 Legacy manifests without `[platform] default` continue to use Desktop.
 
 The CLI searches parent directories for `levye.project`, allowing commands to be used from directories inside a game project.
@@ -779,27 +802,50 @@ Set `ApplicationConfig::useLogicalDisplay = true` and provide
 `ApplicationConfig::display.logical` and `.scaling` to render the game through
 one host-owned logical render texture. `Fit` keeps the entire frame visible
 with letterboxing, `Fill` preserves aspect ratio while cropping, and `Stretch`
-fills the window. The target is allocated once and released before the window
-closes. The Sandbox enables a 1280×720 logical frame; resize its window and
-press **F12** on the Game screen to cycle through all three modes.
+fills the window. `Integer` uses a whole-number Fit scale when possible and
+falls back to fractional Fit on smaller screens. `Expand` enlarges the logical
+canvas on wider or taller screens, revealing more game space; its render target
+is resized when the drawable size changes. The Sandbox enables a 1280×720
+logical frame; resize its window and press **F12** to cycle through its modes.
 
 Generated desktop hosts can enable the same viewport from `levye.project`:
 
 ```toml
-[window]
-width = 540
-height = 960
-
 [display]
+orientation = "portrait"
 logical_width = 720
 logical_height = 1280
-scaling = "fit"
+scale_mode = "fit"
+filter = "linear"
+target_fps = 60
+vsync = false
+fullscreen = false
+safe_area = "inset"
+
+[desktop]
+window_width = 540
+window_height = 960
+resizable = true
 ```
 
-The window size sets the initial physical window; the display size keeps game
+The desktop size sets the initial physical window; the display size keeps game
 coordinates at 720×1280. An absent `[display]` section preserves the legacy
 raw-window behavior. `fit` centers the complete playfield as the window is
 resized, and mouse and touch positions are mapped into logical coordinates.
+Frame pacing is configured with `[display].target_fps` and `[display].vsync`;
+older `[window]` values remain supported and `levye upgrade` migrates them.
+Recognized keys with invalid types fail loading. Unknown keys produce a warning
+with a suggested spelling when one is close; custom sections remain permitted.
+Use `scale_mode = "integer"` and `filter = "nearest"` for pixel art. Landscape
+mobile games use `orientation = "landscape"`. iOS permits `auto` rotation;
+Android builds reject `auto` with raylib 6.2 because its drawable dimensions
+can remain stale after rotation.
+Android and iOS packaging read orientation from `[display]`. `safe_area =
+"inset"` reports native cutout bounds through `Display::GetSafeArea()`, while
+the world renders across the drawable. `edge_to_edge` gives UI the entire
+visible drawable. On desktop, `fullscreen = true` requests a full-screen
+window. The physical drawable can differ from the logical size on high-DPI
+and mobile screens.
 
 `Levye::Display` exposes logical/window/framebuffer sizes, the framebuffer and
 window viewports, orientation, safe area, scaling mode, and coordinate
@@ -812,6 +858,13 @@ or window because the outer part is cropped. Safe insets supplied to the host ma
 logical coordinates. If logical rendering is disabled, coordinate conversions
 are identity operations and mouse/touch input retains raw raylib window
 coordinates.
+
+For an older project, run `levye upgrade` to migrate `viewport_width`,
+`viewport_height`, `viewport_mode`, mobile orientation, and desktop window size
+into the unified sections. The upgrade checks conflicting values and keeps
+custom source and asset files. Replaced files are copied to a numbered
+`.levye-upgrade-backup` directory before the transaction. `levye build` only initializes a missing
+platform section; it does not perform a full template upgrade.
 
 When enabled, the host converts raylib mouse and touch positions from window
 coordinates to framebuffer pixels using the measured framebuffer/window size
@@ -1679,11 +1732,20 @@ LevyeKit is intended to provide a common foundation across desktop and mobile ta
 
 | Platform | Target | Status |
 | -------- | ------ | ------ |
-| macOS | Desktop | v0.5.0 Physics Debug/Release tests passed (15/15 each); Physics Sandbox runtime inspected |
-| Linux | Desktop | Supported build path retained; v0.5.0 unverified |
-| Windows | Desktop | MSVC/MinGW build paths retained; v0.5.0 unverified |
-| iOS | Mobile | Planned |
-| Android | Mobile | ARM64 core projects and Sandbox; signed APK/AAB export; macOS-hosted emulator verified |
+| macOS | Desktop | Build, run, and hot-reload workflows implemented and exercised; current documentation-only changes do not alter them |
+| Linux | Desktop | Build path retained; current v0.6.0 validation outstanding |
+| Windows | Desktop | MSVC/MinGW build paths retained; current v0.6.0 validation outstanding |
+| Android | ARM64 | Build/run and signed APK/AAB export implemented; macOS-hosted emulator exercised; physical devices unverified |
+| iOS | arm64 simulator | Debug/Release build and CLI launch exercised on macOS; portable source export implemented; physical devices unverified |
+| Web/HTML5 | Browser | Export infrastructure exists; browser behavior and distribution remain experimental |
+
+Start with `levye new MyGame` (or `--android` / `--ios`), then use
+`levye build` and `levye run` with the stored default platform. Select a target
+for one command with `--desktop`, `--android`, or `--ios`; add `--release` for a
+Release build. `levye export --desktop`, `--android`, `--ios`, and `--html`
+provide their respective packaging or source-export workflows. The
+[Android guide](Platforms/Android/README.md) and
+[iOS guide](Platforms/iOS/README.md) cover platform-specific requirements.
 
 Native code hot reloading is primarily intended for desktop development.
 
@@ -1754,12 +1816,13 @@ Mobile platforms may use a different development workflow because of platform re
 * [x] CLI module registry and generated-project integration for `animation`
 * [x] Cross-platform build, execution, and hot-reload verification (macOS, Linux, Windows)
 
-### v0.4.5 — Animation Advancement (Release candidate)
+### v0.4.5 — Animation Advancement
 
 * [x] Editable poses, IK, contacts, locomotion, orientation, and kinematic stabilization implemented
-* [ ] Complete macOS graphical review and live hot-reload check; Linux and Windows remain unverified for v0.4.5
+* [x] v0.4.5 tagged
+* [ ] Additional graphical and cross-platform review; Linux and Windows remain unverified for v0.4.5
 
-### v0.4.6 — CLI Code Generation (Release preparation)
+### v0.4.6 — CLI Code Generation
 
 * [x] `levye generate` and `levye g` commands for classes, sources, headers, and folders
 * [x] Nested paths under `Source/` and automatic `.cpp` registration in CMake
@@ -1768,13 +1831,15 @@ Mobile platforms may use a different development workflow because of platform re
 * [x] Staged file transactions with rollback for recoverable failures
 * [x] Private generator and transaction regression tests passed on macOS
 * [x] New project generation, build, and runtime verification passed on macOS
-* [ ] Linux and Windows verification and final release publication
+* [x] v0.4.6 tagged
+* [ ] Linux and Windows verification
 
 ### v0.4.7 — CLI Project Migration
 
 * [x] `levye upgrade` for supported older project layouts
 * [x] `levye convert` for constrained CMake C++ projects
 * [x] macOS CLI regression and disposable project validation
+* [x] v0.4.7 tagged
 * [ ] Linux and Windows verification
 
 ### v0.5.0 — Physics Module
@@ -1790,32 +1855,62 @@ Mobile platforms may use a different development workflow because of platform re
 * [x] Graphical Physics Sandbox inspection on macOS
 * [ ] Linux and Windows verification
 
-### Planned Modules
+### v0.6.0 — Cross-Platform & Framework Integration (In Development)
 
-* [ ] Entity Component System
-  * [ ] EnTT backend
-  * [ ] Keep the public ECS API reasonably independent from the backend
-* [ ] Extended 3D model loading
-  * [ ] Additional formats such as STL
+* [x] Android ARM64 native host, lifecycle handling, and emulator build/run workflows
+* [x] Android APK/AAB export and production-signing workflows
+* [x] iOS arm64 simulator host, Debug/Release build/run, and portable Xcode source export
+* [x] Unified `[display]` configuration, orientation, and Fit/Fill/Stretch/Integer/Expand scaling
+* [x] Safe-area queries and logical mouse/touch coordinate mapping
+* [x] Platform-aware CLI project generation, build/run, defaults, and export workflows
+* [x] Strict recognized manifest-key validation, typo warnings, legacy `[window]` compatibility, and migration
+* [x] CLI regression tests for desktop, Android, and iOS workflows
+* [x] Public interface Doxygen `@brief` documentation and platform guide links
+* [x] Web/HTML export infrastructure implemented (runtime remains experimental)
+* [ ] Web/HTML5 browser runtime integration and verification: rendering, input, assets, audio, and lifecycle
+* [ ] Validate Web exports and document distribution constraints
+* [ ] Physical Android and iOS device testing, signing, and runtime verification
+* [ ] Current Linux and Windows build and runtime verification
+* [ ] Broader rotation, cutout, and scaling-mode testing; Android `auto` rotation remains unsupported with the current raylib backend
+* [ ] Final stabilization and v0.6.0 release preparation
+
+### v0.7.0 — Navigation (Planned)
+
+* [ ] Backend-independent 2D/3D navigation and pathfinding API
+* [ ] Initial Recast/Detour 3D backend
+
+### v0.8.0 — ECS (Planned)
+
+* [ ] Backend-independent entity-component-system API
+* [ ] Initial EnTT backend
+
+### v0.9.0 — Graphics (Planned)
+
+* [ ] Higher-level graphics APIs over raylib, driven by concrete game requirements
+
+### v0.10.0 — Model Import (Planned)
+
+* [ ] Model import interface and validated asset pipeline
+* [ ] Extend raylib-supported 3D formats, including FBX
 
 ### Levye CLI
 
 * [ ] Game export and packaging
-  * [ ] `levye export --platform windows --release`
-  * [ ] `levye export --platform linux --release`
-  * [ ] `levye export --platform macos --release`
+  * [ ] `levye export --desktop`  
   * [x] Android production-signed APK: `levye export --android`
   * [x] Android App Bundle export: `levye export --android --aab`
   * [x] Combined Android export: `levye export --android --all`
-  * [ ] `levye export --platform ios --release`
+  * [x] `levye export --ios` portable Xcode source export (device signing/validation pending)
 * [ ] Platform-specific packaging
 * [ ] Release asset preparation
 
 ### Platform & Framework
 
-* [x] Verify Linux framework and Platformer3D builds and hot reload
-* [ ] Android support
-* [ ] iOS support
+* [x] Earlier Linux framework and Platformer3D builds and hot reload verified
+* [x] Android ARM64 emulator and iOS simulator integration implemented
+* [x] Unified display configuration and project-manifest migration
+* [ ] Complete Web/HTML5 runtime verification for v0.6.0
+* [ ] Reverify current Linux and Windows workflows
 * [ ] Improve failed-reload diagnostics
 * [ ] Expand the framework only as real games require new reusable systems
 

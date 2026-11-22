@@ -74,15 +74,19 @@ struct SerializationAPI {
   // Writing values
   // -------------------------------------------------------------
 
+  /** @brief Writes an integer at a document path. */
   bool (*SetInt)(void* context, DocumentHandle handle, const char* path,
                  std::int64_t value) = nullptr;
 
+  /** @brief Writes a floating-point value at a document path. */
   bool (*SetFloat)(void* context, DocumentHandle handle, const char* path,
                    double value) = nullptr;
 
+  /** @brief Writes a boolean at a document path. */
   bool (*SetBool)(void* context, DocumentHandle handle, const char* path,
                   bool value) = nullptr;
 
+  /** @brief Copies a string into a host-owned document path. */
   bool (*SetString)(void* context, DocumentHandle handle, const char* path,
                     const char* value) = nullptr;
 
@@ -90,12 +94,15 @@ struct SerializationAPI {
   // Reading values
   // -------------------------------------------------------------
 
+  /** @brief Reads an integer or returns the caller's fallback. */
   std::int64_t (*GetInt)(void* context, DocumentHandle handle, const char* path,
                          std::int64_t fallback) = nullptr;
 
+  /** @brief Reads a floating-point value or returns the caller's fallback. */
   double (*GetFloat)(void* context, DocumentHandle handle, const char* path,
                      double fallback) = nullptr;
 
+  /** @brief Reads a boolean or returns the caller's fallback. */
   bool (*GetBool)(void* context, DocumentHandle handle, const char* path,
                   bool fallback) = nullptr;
 
@@ -121,9 +128,11 @@ struct SerializationAPI {
   // Files
   // -------------------------------------------------------------
 
+  /** @brief Saves a host-owned document to the requested path. */
   bool (*Save)(void* context, DocumentHandle handle,
                const char* path) = nullptr;
 
+  /** @brief Loads a document from disk into a new host-owned handle. */
   DocumentHandle (*Load)(void* context, const char* path) = nullptr;
 
   /**
@@ -154,6 +163,7 @@ struct SerializationAPI {
   bool (*AppendObject)(void* context, DocumentHandle document,
                        const char* path) = nullptr;
 
+  /** @brief Appends an empty nested array to an existing array. */
   bool (*AppendArray)(void* context, DocumentHandle handle,
                       const char* path) = nullptr;
 

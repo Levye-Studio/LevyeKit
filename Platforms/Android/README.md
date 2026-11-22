@@ -24,9 +24,20 @@ The generated `levye.project` contains `[android] package` and
 `[platform] default = "android"`. Optional launcher metadata can be added:
 
 ```toml
+[display]
+orientation = "portrait" # portrait or landscape on Android
+logical_width = 720
+logical_height = 1280
+scale_mode = "fit"
+filter = "linear"
+target_fps = 60
+vsync = false
+safe_area = "inset"
+```
+
+```toml
 [android]
 package = "com.example.mygame"
-orientation = "portrait"
 app_name = "My Game"
 version_name = "1.2.0"
 version_code = 12
@@ -193,9 +204,9 @@ self-signed certificate warnings were non-blocking with the tested toolchain.
 
 ## Project configuration and runtime
 
-`levye build --android` adds `Source/AndroidMain.cpp` to an existing generated
+`levye build --android` configures the shared `Platforms/Android/AndroidMain.cpp` for an existing generated
 desktop project if it is missing. An existing entry point is left intact.
-`levye new --ios` is currently rejected because iOS packaging is unavailable.
+For iOS simulator builds and source export, see [the iOS guide](../iOS/README.md).
 The packaging script also accepts a custom configuration name and writes to
 `Build/android-<name>` and `Targets/android-<name>`. The CLI currently selects
 Debug or Release; invoke the script directly for other configurations.
@@ -232,11 +243,13 @@ The APK targets ARM64 and Android API 29 or newer. The packaging script signs
 and checks the APK, and aligns its libraries and ZIP entries for 16 KiB pages.
 Check a connected emulator with `adb devices`. For background/resume testing,
 press Home and reopen the app. For platform diagnostics, inspect `adb logcat`.
-Portrait and landscape layouts use the existing Fit display behavior; the
-default Android logical resolution is 720x1280. Set
-`[android] orientation = "landscape"` to lock the activity to landscape and use
-1280x720. Runtime orientation changes are intentionally locked because raylib
-6.2 can retain stale window dimensions after an emulator rotation.
+Portrait and landscape layouts use the shared display viewport; the generated
+Android logical resolution is 720x1280. Set `[display].orientation = "landscape"`
+and choose a landscape logical size to lock the activity. Android builds reject
+`auto` because raylib 6.2 retains stale drawable dimensions after rotation,
+which visibly stretches the frame. `inset`
+reports Android display-cutout safe insets for UI while game rendering uses
+the drawable area. `edge_to_edge` exposes the entire visible area for UI.
 
 The repository Sandbox remains a separate regression example:
 

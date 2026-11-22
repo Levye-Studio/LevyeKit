@@ -5,6 +5,7 @@
 
 #include "Export/AndroidExporter.hpp"
 #include "Export/DesktopExporter.hpp"
+#include "Export/IOSExporter.hpp"
 #include "Export/WebExporter.hpp"
 
 namespace Levye {
@@ -31,6 +32,9 @@ bool ExportCommand::Execute(const std::filesystem::path& projectDirectory,
 
     case ProjectPlatform::Web:
       return WebExporter::Execute(projectDirectory, options.format);
+
+    case ProjectPlatform::IOS:
+      return IOSExporter::Execute(projectDirectory, options.format);
 
     default:
       std::cerr << "[Levye] Export is unavailable for "

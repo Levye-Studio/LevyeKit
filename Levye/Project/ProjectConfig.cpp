@@ -9,6 +9,7 @@ ApplicationConfig ProjectConfig::CreateApplicationConfig() const {
           .targetFPS = targetFPS,
           .resizable = resizable,
           .vsync = vsync,
+          .fullscreen = fullscreen,
           .useLogicalDisplay = useLogicalDisplay,
           .display = display};
 }

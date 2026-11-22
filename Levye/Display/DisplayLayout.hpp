@@ -20,13 +20,13 @@ class DisplayLayout {
   /** @brief Reports whether all sizes are positive and conversions are usable. */
   [[nodiscard]] bool IsValid() const;
 
-  /** @brief Returns the configured logical game resolution. */
-  [[nodiscard]] DisplaySize GetLogicalSize() const { return config_.logical; }
+  /** @brief Returns the visible logical canvas size (expanded on wider/taller drawables). */
+  [[nodiscard]] DisplaySize GetLogicalSize() const;
   /** @brief Returns the window size used by raylib drawing and pointer input. */
   [[nodiscard]] DisplaySize GetWindowSize() const { return window_; }
   /** @brief Returns the physical framebuffer size. */
   [[nodiscard]] DisplaySize GetPhysicalSize() const { return framebuffer_; }
-  /** @brief Returns the active Fit, Fill, or Stretch policy. */
+  /** @brief Returns the active scaling policy. */
   [[nodiscard]] DisplayScaling GetScaling() const { return config_.scaling; }
   /** @brief Returns the current window orientation. */
   [[nodiscard]] DisplayOrientation GetOrientation() const;
@@ -34,6 +34,10 @@ class DisplayLayout {
   [[nodiscard]] DisplayRect GetViewport() const;
   /** @brief Returns the presentation viewport in raylib window coordinates. */
   [[nodiscard]] DisplayRect GetWindowViewport() const;
+  /** @brief Returns presentation pixels per logical unit on each axis. */
+  [[nodiscard]] DisplayPoint GetScale() const;
+  /** @brief Returns logical coordinates currently visible in the drawable. */
+  [[nodiscard]] DisplayRect GetVisibleLogicalArea() const;
   /** @brief Returns the safe rectangle in logical coordinates, clipped to the game. */
   [[nodiscard]] DisplayRect GetSafeArea() const;
   /**

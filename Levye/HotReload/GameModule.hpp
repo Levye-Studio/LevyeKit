@@ -69,7 +69,7 @@ class GameModule {
   /** Load a packaged module directly, without runtime copies or hot reload. */
   bool LoadDistribution(const std::string& path);
 
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__) || defined(PLATFORM_IOS)
   /** @brief Binds a GameAPI linked into the Android application library. */
   [[nodiscard]] bool LoadStatic(const GameAPI* api);
 #endif
@@ -323,7 +323,7 @@ class GameModule {
   bool m_Distribution = false;
   bool m_HasAPI = false;
   bool m_Started = false;
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__) || defined(PLATFORM_IOS)
   const GameAPI* m_StaticAPI = nullptr;
 #endif
 

@@ -32,6 +32,13 @@ class Application {
    */
   void Run();
 
+  /** @brief Initializes the runtime for an externally owned frame loop. */
+  bool Initialize();
+  /** @brief Executes one frame; returns false when shutdown is requested. */
+  bool Tick();
+  /** @brief Releases the runtime while the graphics context is available. */
+  void Finish();
+
   /**
    * @brief Requests a clean shutdown of the application.
    *
@@ -53,7 +60,6 @@ class Application {
 
  private:
   void Frame();
-  void Finish();
   ApplicationConfig m_Config;
   GameModule& m_GameModule;
 #ifdef LEVYE_WITH_IMGUI
@@ -61,6 +67,7 @@ class Application {
 #endif
   DisplayManager m_Display;
 
+  bool m_Initialized = false;
   bool m_QuitRequested = false;
 };
 }  // namespace Levye

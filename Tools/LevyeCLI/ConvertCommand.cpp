@@ -173,8 +173,19 @@ bool PlanConversion(const ConversionAnalysis& analysis, const fs::path& template
     return false;
   }
   if (analysis.lifecycle == ConversionLifecycle::RaylibApplication) {
-    if (!ReplaceOnce(config, "width = 1280", "width = " + std::to_string(analysis.windowWidth)) ||
-        !ReplaceOnce(config, "height = 720", "height = " + std::to_string(analysis.windowHeight)) ||
+    if (analysis.windowHeight > analysis.windowWidth &&
+        !ReplaceOnce(config, "orientation = \"landscape\"", "orientation = \"portrait\"")) {
+      plan.error = "Current project manifest template has an unsupported orientation layout.";
+      return false;
+    }
+    if (!ReplaceOnce(config, "window_width = 1280",
+                     "window_width = " + std::to_string(analysis.windowWidth)) ||
+        !ReplaceOnce(config, "window_height = 720",
+                     "window_height = " + std::to_string(analysis.windowHeight)) ||
+        !ReplaceOnce(config, "logical_width = 1280",
+                     "logical_width = " + std::to_string(analysis.windowWidth)) ||
+        !ReplaceOnce(config, "logical_height = 720",
+                     "logical_height = " + std::to_string(analysis.windowHeight)) ||
         !ReplaceOnce(config, "target_fps = 60",
                      "target_fps = " + std::to_string(analysis.targetFPS)) ||
         !ReplaceOnce(config, "resizable = true", "resizable = false")) {

@@ -80,7 +80,7 @@ include(
 
 if(LEVYE_WITH_ANDROID)
     add_library(${PROJECT_NAME}Android SHARED
-        "${CMAKE_CURRENT_SOURCE_DIR}/Source/AndroidMain.cpp"
+        "${LEVYE_ROOT}/Platforms/Android/AndroidMain.cpp"
         ${LEVYE_GAME_SOURCES})
     target_include_directories(${PROJECT_NAME}Android PRIVATE
         "${LEVYE_ROOT}" "${CMAKE_CURRENT_SOURCE_DIR}/Source")

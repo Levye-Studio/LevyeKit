@@ -176,6 +176,8 @@ bool HostSetDisplayScaling(void* context, DisplayScaling scaling) {
     case DisplayScaling::Fit:
     case DisplayScaling::Fill:
     case DisplayScaling::Stretch:
+    case DisplayScaling::Integer:
+    case DisplayScaling::Expand:
       display.SetScaling(scaling);
       return true;
   }
@@ -662,7 +664,7 @@ bool GameModule::LoadDistribution(const std::string& path) { return LoadInternal
 bool GameModule::LoadInternal(const std::string& path, bool distribution) {
   // Replacing a started module must run its state destructor while its code is loaded.
   bool codeLoaded = m_Library.IsLoaded();
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__) || defined(PLATFORM_IOS)
   codeLoaded = codeLoaded || m_StaticAPI;
 #endif
   if (m_State && !codeLoaded) {
@@ -798,7 +800,7 @@ bool GameModule::LoadInternal(const std::string& path, bool distribution) {
                     .GetMousePosition = HostGetMousePosition,
                     .IsMouseInsideViewport = HostIsMouseInsideViewport};
 
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__) || defined(PLATFORM_IOS)
   if (m_StaticAPI) {
     // Check the version prefix before reading the rest of the callback table.
     if (m_StaticAPI->version != GAME_API_VERSION) return false;
@@ -904,12 +906,12 @@ bool GameModule::LoadInternal(const std::string& path, bool distribution) {
   return true;
 }
 
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__) || defined(PLATFORM_IOS)
 bool GameModule::LoadStatic(const GameAPI* api) {
   if (!api || m_State) return false;
   Shutdown();
   m_StaticAPI = api;
-#ifdef __EMSCRIPTEN__
+#if defined(__EMSCRIPTEN__) || defined(PLATFORM_IOS)
   if (LoadInternal({}, true)) return true;
 #else
   if (Load({})) return true;
@@ -949,7 +951,7 @@ bool GameModule::Start() {
 
 bool GameModule::CheckForReload() {
   if (m_Distribution) return false;
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__) || defined(PLATFORM_IOS)
   if (m_StaticAPI) return false;
 #endif
   if (!m_Started || m_Path.empty()) return false;
@@ -1138,7 +1140,7 @@ void GameModule::Unload() {
   m_ReloadPending = false;
 #endif
   bool codeLoaded = m_Library.IsLoaded();
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__) || defined(PLATFORM_IOS)
   codeLoaded = codeLoaded || m_HasAPI;
 #endif
   if (!codeLoaded) return;
@@ -1156,7 +1158,7 @@ void GameModule::Unload() {
   m_Started = false;
 
   m_Library.Unload();
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__) || defined(PLATFORM_IOS)
   m_StaticAPI = nullptr;
 #endif
 
@@ -1183,7 +1185,7 @@ void GameModule::Shutdown() {
 }
 
 bool GameModule::IsLoaded() const {
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__) || defined(PLATFORM_IOS)
   return m_HasAPI && (m_Library.IsLoaded() || m_StaticAPI);
 #else
   return m_Library.IsLoaded() && m_HasAPI;

@@ -1,5 +1,6 @@
 #include "UpgradeCommand.hpp"
 
+#include <Levye/Project/ProjectLoader.hpp>
 #include <algorithm>
 #include <cctype>
 #include <fstream>
@@ -46,7 +47,8 @@ bool PrepareHost(const fs::path& root, const fs::path& templateRoot,
   const auto path = root / "Source/Main.cpp";
   std::string current, desired;
   if (!ReadRegular(path, current, error) ||
-      !ReadRegular(templateRoot / "Source/Main.cpp", desired, error)) return false;
+      !ReadRegular(templateRoot / "Source/Main.cpp", desired, error))
+    return false;
   if (current == desired) return true;
   constexpr std::string_view legacy = R"LEVYE(#include <Levye/Core/Application.hpp>
 #include <Levye/HotReload/GameModule.hpp>
@@ -270,7 +272,8 @@ bool PrepareMetadata(const std::string& original, std::string& updated, std::str
   std::smatch versionMatch;
   if (std::regex_search(section, versionMatch, field)) {
     section.replace(static_cast<std::size_t>(versionMatch.position(2)),
-                    static_cast<std::size_t>(versionMatch.length(2)), std::to_string(kTemplateVersion));
+                    static_cast<std::size_t>(versionMatch.length(2)),
+                    std::to_string(kTemplateVersion));
   } else {
     if (!section.empty() && section.back() != '\n') section += '\n';
     section += "template_version = " + std::to_string(kTemplateVersion) + "\n";
@@ -285,6 +288,138 @@ bool PrepareMetadata(const std::string& original, std::string& updated, std::str
   return true;
 }
 
+bool PrepareDisplayMigration(std::string& text, std::string& error) {
+  toml::table parsed;
+  try {
+    parsed = toml::parse(text);
+  } catch (const toml::parse_error& e) {
+    error = std::string(e.description());
+    return false;
+  }
+  struct Move {
+    const char* fromSection;
+    const char* fromKey;
+    const char* toSection;
+    const char* toKey;
+  };
+  constexpr Move moves[] = {{"window", "target_fps", "display", "target_fps"},
+                            {"window", "vsync", "display", "vsync"},
+                            {"display", "viewport_width", "display", "logical_width"},
+                            {"display", "viewport_height", "display", "logical_height"},
+                            {"display", "viewport_mode", "display", "scale_mode"},
+                            {"display", "scaling", "display", "scale_mode"},
+                            {"display", "window_width", "desktop", "window_width"},
+                            {"display", "window_height", "desktop", "window_height"},
+                            {"ios", "orientation", "display", "orientation"},
+                            {"android", "orientation", "display", "orientation"}};
+  auto field = [&](std::string_view section, std::string_view key, std::size_t& start,
+                   std::size_t& end, std::string& value) {
+    const std::regex header("(^|\\n)[ \\t]*\\[" + std::string(section) +
+                            R"(\][ \t]*(?:#.*)?\r?\n)");
+    std::smatch found;
+    if (!std::regex_search(text, found, header)) return false;
+    const auto bodyStart = static_cast<std::size_t>(found.position() + found.length());
+    const std::regex nextTable(R"((^|\n)[ \t]*\[[^\]\r\n]+\][ \t]*(?:#.*)?\r?(?:\n|$))");
+    std::smatch nextMatch;
+    const auto tail = text.substr(bodyStart);
+    const auto limit = std::regex_search(tail, nextMatch, nextTable)
+                           ? bodyStart + static_cast<std::size_t>(nextMatch.position()) +
+                                 (nextMatch[1].length() ? 1 : 0)
+                           : text.size();
+    const std::regex line("(^|\\n)[ \\t]*" + std::string(key) +
+                          R"([ \t]*=[ \t]*([^#\r\n]+)[ \t]*(?:#.*)?(?=\r?\n|$))");
+    const auto body = text.substr(bodyStart, limit - bodyStart);
+    if (!std::regex_search(body, found, line)) return false;
+    start = bodyStart + static_cast<std::size_t>(found.position()) + (found[1].length() ? 1 : 0);
+    end = bodyStart + static_cast<std::size_t>(found.position() + found.length());
+    value = found[2].str();
+    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.back())))
+      value.pop_back();
+    return true;
+  };
+  for (const auto& move : moves) {
+    std::size_t sourceStart, sourceEnd, targetStart, targetEnd;
+    std::string sourceValue, targetValue;
+    if (!field(move.fromSection, move.fromKey, sourceStart, sourceEnd, sourceValue)) continue;
+    if (std::string_view(move.fromSection) == "ios" && sourceValue == "\"all\"")
+      sourceValue = "\"auto\"";
+    if (field(move.toSection, move.toKey, targetStart, targetEnd, targetValue)) {
+      const auto sourceNode = parsed[move.fromSection][move.fromKey];
+      const auto targetNode = parsed[move.toSection][move.toKey];
+      const bool sameValue = [&] {
+        if (const auto source = sourceNode.value<std::string>()) {
+          const auto target = targetNode.value<std::string>();
+          return target && (*target == *source || (std::string_view(move.fromSection) == "ios" &&
+                                                   *source == "all" && *target == "auto"));
+        }
+        if (const auto source = sourceNode.value<std::int64_t>())
+          return targetNode.value<std::int64_t>() == source;
+        if (const auto source = sourceNode.value<bool>()) return targetNode.value<bool>() == source;
+        return false;
+      }();
+      if (!sameValue) {
+        error = "Conflicting " + std::string(move.fromSection) + "." + move.fromKey + " and " +
+                move.toSection + "." + move.toKey + ".";
+        return false;
+      }
+      text.erase(sourceStart, sourceEnd - sourceStart);
+      continue;
+    }
+    if (std::string_view(move.fromSection) == move.toSection) {
+      const auto line = text.substr(sourceStart, sourceEnd - sourceStart);
+      const auto keyAt = line.find(move.fromKey);
+      text.replace(sourceStart + keyAt, std::char_traits<char>::length(move.fromKey), move.toKey);
+      continue;
+    }
+    std::string movedLine = text.substr(sourceStart, sourceEnd - sourceStart);
+    const auto keyAt = movedLine.find(move.fromKey);
+    movedLine.replace(keyAt, std::char_traits<char>::length(move.fromKey), move.toKey);
+    if (std::string_view(move.fromSection) == "ios" && sourceValue == "\"auto\"") {
+      const auto oldValue = movedLine.find("\"all\"");
+      if (oldValue != std::string::npos) movedLine.replace(oldValue, 5, "\"auto\"");
+    }
+    text.erase(sourceStart, sourceEnd - sourceStart);
+    const std::regex targetHeader("(^|\\n)[ \\t]*\\[" + std::string(move.toSection) +
+                                  R"(\][ \t]*(?:#.*)?\r?(?:\n|$))");
+    std::smatch targetMatch;
+    if (!std::regex_search(text, targetMatch, targetHeader)) {
+      if (!text.empty() && text.back() != '\n') text += '\n';
+      text += "\n[" + std::string(move.toSection) + "]\n" + movedLine + "\n";
+    } else {
+      const auto at = static_cast<std::size_t>(targetMatch.position() + targetMatch.length());
+      text.insert(at, movedLine + "\n");
+    }
+  }
+  // Drop an empty legacy [window] table after its last settings were moved.
+  // Preserve tables that still contain width, height, resizable, or custom keys.
+  text = std::regex_replace(
+      text, std::regex(R"((^|\n)[ \t]*\[window\][ \t]*(?:\#[^\n]*)?\n(?=[ \t]*(?:\n|\[|$)))"),
+      "$1");
+  if (!parsed["display"].node() && text.find("[display]") != std::string::npos) {
+    std::size_t start, end;
+    std::string orientation;
+    const bool portrait =
+        field("display", "orientation", start, end, orientation) && orientation == "\"portrait\"";
+    const int width = parsed["window"]["width"].value<int>().value_or(portrait ? 720 : 1280);
+    const int height = parsed["window"]["height"].value<int>().value_or(portrait ? 1280 : 720);
+    const auto at = text.find('[', text.find("[display]")) + std::string("[display]").size();
+    const auto lineEnd = text.find('\n', at);
+    text.insert(lineEnd + 1, "logical_width = " + std::to_string(width) + "\nlogical_height = " +
+                                 std::to_string(height) + "\nscale_mode = \"fit\"\n");
+  }
+  try {
+    (void)toml::parse(text);
+  } catch (const toml::parse_error& e) {
+    error = "Display migration produced invalid TOML: " + std::string(e.description());
+    return false;
+  }
+  if (!ProjectLoader::Parse(text)) {
+    error = "Display migration contains unsupported or conflicting settings.";
+    return false;
+  }
+  return true;
+}
+
 bool ValidateInstalled(const fs::path& root, const fs::path& templateRoot, std::string& error) {
   std::string metadata;
   if (!ReadRegular(root / "levye.project", metadata, error)) return false;
@@ -293,6 +428,10 @@ bool ValidateInstalled(const fs::path& root, const fs::path& templateRoot, std::
   if (!PrepareMetadata(metadata, updated, name, target, version, error) ||
       version != kTemplateVersion) {
     if (error.empty()) error = "Project template version was not installed.";
+    return false;
+  }
+  if (!PrepareDisplayMigration(updated, error) || updated != metadata) {
+    if (error.empty()) error = "Display migration is incomplete.";
     return false;
   }
   std::vector<PendingFile> hostChanges;
@@ -373,6 +512,10 @@ int UpgradeCommand::Execute(const fs::path& projectDirectory, const fs::path& fr
   int version = 0;
   if (!ReadRegular(projectDirectory / "levye.project", metadata, error) ||
       !PrepareMetadata(metadata, updatedMetadata, name, target, version, error)) {
+    std::cerr << "[Levye] Upgrade failed: " << error << '\n';
+    return 1;
+  }
+  if (!PrepareDisplayMigration(updatedMetadata, error)) {
     std::cerr << "[Levye] Upgrade failed: " << error << '\n';
     return 1;
   }
@@ -470,6 +613,25 @@ int UpgradeCommand::Execute(const fs::path& projectDirectory, const fs::path& fr
     std::cout << "[Levye] Project is current.\n";
     return 0;
   }
+  // Keep a recoverable copy of every file that the transaction will replace.
+  fs::path backupRoot = projectDirectory / ".levye-upgrade-backup";
+  for (int suffix = 2; fs::exists(backupRoot); ++suffix)
+    backupRoot = projectDirectory / (".levye-upgrade-backup-" + std::to_string(suffix));
+  std::error_code backupError;
+  if (!fs::create_directory(backupRoot, backupError) || backupError) {
+    std::cerr << "[Levye] Upgrade failed: cannot create backup directory.\n";
+    return 1;
+  }
+  for (const auto& change : changes) {
+    if (!change.allowReplace) continue;
+    const auto backup = backupRoot / change.path.lexically_relative(projectDirectory);
+    fs::create_directories(backup.parent_path(), backupError);
+    if (backupError || !fs::copy_file(change.path, backup, fs::copy_options::none, backupError)) {
+      std::cerr << "[Levye] Upgrade failed: cannot back up " << change.path << ".\n";
+      return 1;
+    }
+  }
+  std::cout << "[Levye] Backup: " << backupRoot << '\n';
   if (!CommitFiles(projectDirectory, changes, error, nullptr, [&](std::string& validationError) {
         return ValidateInstalled(projectDirectory, templateRoot, validationError);
       })) {

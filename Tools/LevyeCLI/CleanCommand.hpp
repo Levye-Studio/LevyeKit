@@ -1,8 +1,8 @@
 #pragma once
 
-#include "BuildConfiguration.hpp"
-
 #include <filesystem>
+
+#include "BuildConfiguration.hpp"
 
 namespace Levye {
 
@@ -13,7 +13,7 @@ namespace Levye {
  * modifying project source files or assets.
  */
 class CleanCommand {
-public:
+ public:
   /**
    * @brief Cleans one build configuration.
    *
@@ -23,8 +23,9 @@ public:
    * @param configuration Build configuration to clean.
    * @return True when the generated files were removed successfully.
    */
-  static bool Execute(const std::filesystem::path &projectDirectory,
-                      BuildConfiguration configuration);
+  static bool Execute(const std::filesystem::path& projectDirectory,
+                      BuildConfiguration configuration,
+                      ProjectPlatform platform = ProjectPlatform::ProjectDefault);
 
   /**
    * @brief Cleans all build configurations.
@@ -34,7 +35,7 @@ public:
    * @param projectDirectory Root directory of the LevyeKit project.
    * @return True when the generated files were removed successfully.
    */
-  static bool ExecuteAll(const std::filesystem::path &projectDirectory);
+  static bool ExecuteAll(const std::filesystem::path& projectDirectory);
 };
 
-} // namespace Levye
+}  // namespace Levye

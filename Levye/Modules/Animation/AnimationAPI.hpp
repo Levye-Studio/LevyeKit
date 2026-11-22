@@ -117,6 +117,7 @@ struct AnimationOrientationRequest {
   std::uint32_t worldSpace = 0;
 };
 
+/** @brief Per-request outcome for an end-effector orientation batch. */
 enum class AnimationOrientationStatus : std::uint32_t {
   Disabled,
   Invalid,
@@ -254,17 +255,23 @@ struct AnimationAPI {
   /** @brief Checks whether a controller handle is live. */
   bool (*IsControllerValid)(void* context, AnimationControllerHandle controller) = nullptr;
 
+  /** @brief Starts controller playback for the requested duration. */
   bool (*Play)(void* context, AnimationControllerHandle controller, float duration,
                bool looping) = nullptr;
 
+  /** @brief Stops controller playback. */
   bool (*Stop)(void* context, AnimationControllerHandle controller) = nullptr;
 
+  /** @brief Pauses controller playback without clearing its time. */
   bool (*Pause)(void* context, AnimationControllerHandle controller) = nullptr;
 
+  /** @brief Resumes a paused controller. */
   bool (*Resume)(void* context, AnimationControllerHandle controller) = nullptr;
 
+  /** @brief Sets the controller playback speed multiplier. */
   bool (*SetSpeed)(void* context, AnimationControllerHandle controller, float speed) = nullptr;
 
+  /** @brief Copies the current playback state into caller storage. */
   bool (*GetPlaybackState)(void* context, AnimationControllerHandle controller,
                            AnimationPlaybackState* output) = nullptr;
 
@@ -273,13 +280,17 @@ struct AnimationAPI {
   int (*LoadAnimations)(void* context, const char* path, AnimationResourceHandle* output,
                         int capacity) = nullptr;
 
+  /** @brief Releases a host-owned animation resource. */
   bool (*UnloadAnimation)(void* context, AnimationResourceHandle animation) = nullptr;
 
+  /** @brief Associates an animation resource and sampling rate with a controller. */
   bool (*BindAnimation)(void* context, AnimationControllerHandle controller,
                         AnimationResourceHandle animation, float framesPerSecond) = nullptr;
 
+  /** @brief Plays the animation currently bound to a controller. */
   bool (*PlayBound)(void* context, AnimationControllerHandle controller, bool looping) = nullptr;
 
+  /** @brief Returns the controller's current animation resource handle. */
   AnimationResourceHandle (*GetBoundAnimation)(void* context,
                                                AnimationControllerHandle controller) = nullptr;
 

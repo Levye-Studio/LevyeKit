@@ -3,12 +3,9 @@ name = "{{PROJECT_NAME}}"
 target = "{{PROJECT_TARGET}}"
 template_version = 2
 
-[window]
-width = 1280
-height = 720
-target_fps = 60
-resizable = true
-vsync = false
+{{DISPLAY_CONFIG}}
+
+{{DESKTOP_CONFIG}}
 
 [paths]
 assets = "Assets"
@@ -17,14 +14,7 @@ assets = "Assets"
 default = "{{DEFAULT_PLATFORM}}"
 
 {{ANDROID_CONFIG}}
-
-# Optional desktop distribution metadata (defaults are used when omitted).
-# [desktop]
-# app_name = "My Game"
-# bundle_id = "com.example.mygame"
-# version_name = "1.0.0"
-# version_code = 1
-# icon = "Branding/icon.png"
+{{IOS_CONFIG}}
 
 [modules]
 serialization = false

@@ -84,6 +84,7 @@ class Serialization {
     return api && api->SetInt && api->SetInt(api->context, handle, path, value);
   }
 
+  /** @brief Writes a floating-point value at a document path. */
   static bool SetFloat(DocumentHandle handle, const char* path, double value) {
     const auto* api = GetAPI();
 
@@ -91,6 +92,7 @@ class Serialization {
            api->SetFloat(api->context, handle, path, value);
   }
 
+  /** @brief Writes a boolean value at a document path. */
   static bool SetBool(DocumentHandle handle, const char* path, bool value) {
     const auto* api = GetAPI();
 
@@ -98,6 +100,7 @@ class Serialization {
            api->SetBool(api->context, handle, path, value);
   }
 
+  /** @brief Copies a string into a host-owned document path. */
   static bool SetString(DocumentHandle handle, const char* path,
                         const char* value) {
     const auto* api = GetAPI();
@@ -119,6 +122,7 @@ class Serialization {
                : fallback;
   }
 
+  /** @brief Reads a floating-point value or returns the caller's fallback. */
   [[nodiscard]] static double GetFloat(DocumentHandle handle, const char* path,
                                        double fallback = 0.0) {
     const auto* api = GetAPI();
@@ -128,6 +132,7 @@ class Serialization {
                : fallback;
   }
 
+  /** @brief Reads a boolean value or returns the caller's fallback. */
   [[nodiscard]] static bool GetBool(DocumentHandle handle, const char* path,
                                     bool fallback = false) {
     const auto* api = GetAPI();
@@ -429,6 +434,7 @@ class Serialization {
     return api->AppendObject(api->context, document, path);
   }
 
+  /** @brief Appends an empty nested array to an existing array. */
   [[nodiscard]] static bool AppendArray(DocumentHandle document,
                                         const char* path) {
     const auto* api = GetAPI();

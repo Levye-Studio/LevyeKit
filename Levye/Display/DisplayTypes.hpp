@@ -3,8 +3,12 @@
 #include <type_traits>
 
 namespace Levye {
-/** @brief How a logical game frame fits the window. */
-enum class DisplayScaling { Fit, Fill, Stretch };
+/** @brief How a logical game frame fits the drawable; Integer falls back to Fit below 1x. */
+enum class DisplayScaling { Fit, Fill, Stretch, Integer, Expand };
+/** @brief Texture sampling used when presenting the logical render target. */
+enum class DisplayFilter { Nearest, Linear };
+/** @brief Whether UI bounds account for native unsafe screen edges. */
+enum class DisplaySafeArea { Inset, EdgeToEdge };
 /** @brief Orientation of the current window dimensions. */
 enum class DisplayOrientation { Portrait, Landscape, Square };
 /** @brief Integral width and height in the coordinate space documented by the caller. */
@@ -28,10 +32,12 @@ struct DisplayRect {
 struct DisplayInsets {
   float left = 0, top = 0, right = 0, bottom = 0;
 };
-/** @brief Logical render size and viewport scaling policy. */
+/** @brief Base logical render size, scaling, filtering, and UI inset policy. */
 struct DisplayConfig {
   DisplaySize logical{1280, 720};
   DisplayScaling scaling = DisplayScaling::Fit;
+  DisplayFilter filter = DisplayFilter::Nearest;
+  DisplaySafeArea safeArea = DisplaySafeArea::Inset;
 };
 /** @brief Converted point and its visible gameplay-viewport membership. */
 struct DisplayPosition {

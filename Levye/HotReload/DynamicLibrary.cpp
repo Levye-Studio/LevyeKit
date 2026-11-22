@@ -5,8 +5,8 @@
 
 #if defined(_WIN32)
 #include <windows.h>
-#elif defined(__EMSCRIPTEN__)
-// Web games use static callbacks only.
+#elif defined(__EMSCRIPTEN__) || defined(PLATFORM_IOS)
+// Web and iOS games use static callbacks only.
 #elif defined(__APPLE__) || defined(__linux__)
 #include <dlfcn.h>
 #else
@@ -44,7 +44,7 @@ bool DynamicLibrary::Load(const std::string& path) {
   // A DynamicLibrary owns only one native library handle at a time.
   Unload();
 
-#if defined(__EMSCRIPTEN__)
+#if defined(__EMSCRIPTEN__) || defined(PLATFORM_IOS)
   (void)path;
   return false;
 #elif defined(_WIN32)
@@ -108,7 +108,7 @@ void DynamicLibrary::Unload() {
                   std::to_string(GetLastError()));
   }
 
-#elif defined(__EMSCRIPTEN__)
+#elif defined(__EMSCRIPTEN__) || defined(PLATFORM_IOS)
   // No dynamic handles exist on Web.
 #elif defined(__APPLE__) || defined(__linux__)
 
@@ -152,7 +152,7 @@ void* DynamicLibrary::GetSymbol(const std::string& name) const {
 
   return reinterpret_cast<void*>(symbol);
 
-#elif defined(__EMSCRIPTEN__)
+#elif defined(__EMSCRIPTEN__) || defined(PLATFORM_IOS)
   (void)name;
   return nullptr;
 #elif defined(__APPLE__) || defined(__linux__)

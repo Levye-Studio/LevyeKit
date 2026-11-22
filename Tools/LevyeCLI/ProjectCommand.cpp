@@ -9,23 +9,10 @@
 #include <toml++/toml.hpp>
 
 #include "FileTransaction.hpp"
+#include "PlatformPreparation.hpp"
 
 namespace Levye {
 namespace {
-
-bool AndroidConfigured(const ProjectConfig& project, const toml::table& manifest,
-                       const std::filesystem::path& root) {
-  static const std::regex packagePattern(R"([A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+)");
-  if (!std::regex_match(project.androidPackage, packagePattern)) return false;
-  for (const char* module : {"serialization", "imgui", "animation", "physics"})
-    if (manifest["modules"][module].value_or(false)) return false;
-  std::ifstream cmake(root / "CMakeLists.txt", std::ios::binary);
-  if (!cmake) return false;
-  const std::string content{std::istreambuf_iterator<char>{cmake},
-                            std::istreambuf_iterator<char>{}};
-  return content.find("Source/AndroidMain.cpp") != std::string::npos &&
-         content.find("Android SHARED") != std::string::npos;
-}
 
 bool UpdateDefault(std::string& content, std::string_view requested) {
   const std::regex section(R"((^|\n)[ \t]*\[platform\][ \t]*(?:#.*)?(?:\r?\n|$))");
@@ -82,19 +69,38 @@ bool ProjectCommand::Execute(const std::filesystem::path& projectDirectory,
     return false;
   }
 
-  const bool androidSupported = AndroidConfigured(*project, manifest, projectDirectory);
+  bool mobileSupported = std::filesystem::is_regular_file(projectDirectory / "Source/Game.cpp") &&
+                         std::filesystem::is_directory(projectDirectory / project->assetDirectory);
+  for (const char* module : {"serialization", "imgui", "animation", "physics"})
+    if (manifest["modules"][module].value_or(false)) mobileSupported = false;
+  const bool androidSupported = mobileSupported;
+  const bool iosSupported = mobileSupported;
   if (!requestedDefault.empty()) {
-    if (requestedDefault != "desktop" && requestedDefault != "android") {
+    if (requestedDefault != "desktop" && requestedDefault != "android" &&
+        requestedDefault != "ios") {
       std::cerr << "[Levye] Unsupported default platform: " << requestedDefault
-                << ". Choose desktop or android; iOS is unavailable.\n";
+                << ". Choose desktop, android, or ios.\n";
       return false;
     }
     if (requestedDefault == "android" && !androidSupported) {
-      std::cerr << "[Levye] Android is not configured for this project. Run 'levye build "
-                   "--android' first.\n";
+      std::cerr << "[Levye] Android requires Source/Game.cpp, assets, and no optional modules.\n";
       return false;
     }
-    if (project->defaultPlatform != requestedDefault || !manifest["platform"]["default"].node()) {
+    if (requestedDefault == "ios" && !iosSupported) {
+      std::cerr << "[Levye] iOS requires Source/Game.cpp, the configured asset directory, "
+                   "and no optional modules.\n";
+      return false;
+    }
+    bool initialized = false;
+    if (requestedDefault == "android" || requestedDefault == "ios") {
+      if (!PreparePlatformManifest(
+              projectDirectory,
+              requestedDefault == "ios" ? ProjectPlatform::IOS : ProjectPlatform::Android, content,
+              initialized))
+        return false;
+    }
+    if (initialized || project->defaultPlatform != requestedDefault ||
+        !manifest["platform"]["default"].node()) {
       UpdateDefault(content, requestedDefault);
       try {
         manifest = toml::parse(content);
@@ -124,9 +130,12 @@ bool ProjectCommand::Execute(const std::filesystem::path& projectDirectory,
   else
     std::cout << "[Levye] Template: legacy\n";
   std::cout << "[Levye] Default platform: "
-            << (project->defaultPlatform == "android" ? "Android" : "Desktop") << '\n'
-            << "[Levye] Supported platforms: Desktop" << (androidSupported ? ", Android" : "")
+            << (project->defaultPlatform == "android" ? "Android"
+                : project->defaultPlatform == "ios"   ? "iOS"
+                                                      : "Desktop")
             << '\n'
+            << "[Levye] Supported platforms: Desktop" << (androidSupported ? ", Android" : "")
+            << (iosSupported ? ", iOS" : "") << '\n'
             << "[Levye] Configuration: Debug\n"
             << "[Levye] Root: " << projectDirectory.string() << '\n';
   return true;

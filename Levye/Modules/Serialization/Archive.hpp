@@ -15,6 +15,10 @@ namespace Levye {
 
 namespace Detail {
 
+/** @brief Requires a free Serialize function returning a bool-like result.
+ * @tparam Archive Archive type passed to Serialize.
+ * @tparam T Value type being serialized.
+ */
 template <typename Archive, typename T>
 concept SerializableWith = requires(Archive& archive, T& value) {
   { Serialize(archive, value) } -> std::convertible_to<bool>;
@@ -30,6 +34,7 @@ concept SerializableWith = requires(Archive& archive, T& value) {
  */
 class WriteArchive {
  public:
+  /** @brief Creates a non-owning writer for a document path. */
   WriteArchive(DocumentHandle document, std::string path)
       : m_Document(document), m_Path(std::move(path)) {}
 
@@ -113,11 +118,17 @@ class WriteArchive {
     return Serialize(nested, value);
   }
 
+  /** @brief Writes a required field using the same validation as Field.
+   * @tparam T Type accepted by a Field overload.
+   */
   template <typename T>
   bool RequiredField(const char* name, T& value) {
     return Field(name, value);
   }
 
+  /** @brief Writes a const required field using the same validation as Field.
+   * @tparam T Type accepted by a Field overload.
+   */
   template <typename T>
   bool RequiredField(const char* name, const T& value) {
     return Field(name, value);
@@ -214,6 +225,7 @@ class WriteArchive {
  */
 class ReadArchive {
  public:
+  /** @brief Creates a non-owning reader for a document path. */
   ReadArchive(DocumentHandle document, std::string path)
       : m_Document(document), m_Path(std::move(path)) {}
 
@@ -313,6 +325,10 @@ class ReadArchive {
     return Serialize(nested, value);
   }
 
+  /** @brief Reads a field only when its path exists.
+   * @tparam T Type accepted by a Field overload.
+   * @return False when the required path is missing or reading fails.
+   */
   template <typename T>
   bool RequiredField(const char* name, T& value) const {
     if (!ContainsPath(MakePath(name))) {

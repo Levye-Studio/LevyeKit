@@ -12,6 +12,39 @@
 
 namespace {
 
+std::string TomlString(std::string_view value) {
+  constexpr char hex[] = "0123456789ABCDEF";
+  std::string quoted = "\"";
+  for (unsigned char ch : value) {
+    switch (ch) {
+      case '"':
+        quoted += "\\\"";
+        break;
+      case '\\':
+        quoted += "\\\\";
+        break;
+      case '\n':
+        quoted += "\\n";
+        break;
+      case '\r':
+        quoted += "\\r";
+        break;
+      case '\t':
+        quoted += "\\t";
+        break;
+      default:
+        if (ch < 0x20 || ch == 0x7f) {
+          quoted += "\\u00";
+          quoted += hex[ch >> 4];
+          quoted += hex[ch & 0xf];
+        } else {
+          quoted += static_cast<char>(ch);
+        }
+    }
+  }
+  return quoted + '"';
+}
+
 void ReplaceAll(std::string& content, const std::string& token, const std::string& value) {
   std::size_t position = 0;
 
@@ -30,7 +63,7 @@ bool ProjectGenerator::Generate(const std::string& name,
                                 const std::filesystem::path& outputDirectory,
                                 const std::filesystem::path& templateDirectory,
                                 const std::filesystem::path& frameworkDirectory,
-                                const std::vector<std::string>& modules, bool android) {
+                                const std::vector<std::string>& modules, bool android, bool ios) {
   if (name.empty()) {
     std::cerr << "[Levye] Project name cannot be empty.\n";
 
@@ -88,15 +121,6 @@ bool ProjectGenerator::Generate(const std::string& name,
     return false;
   }
 
-  if (!android) {
-    std::filesystem::remove(projectDirectory / "Source/AndroidMain.cpp", error);
-    if (error) {
-      std::cerr << "[Levye] Failed to prepare desktop project: " << error.message() << '\n';
-      std::filesystem::remove_all(projectDirectory);
-      return false;
-    }
-  }
-
   for (const char* directory : {"Textures", "Audio", "Fonts", "Shaders", "Models"}) {
     std::filesystem::create_directories(projectDirectory / "Assets" / directory, error);
     if (error) {
@@ -112,7 +136,7 @@ bool ProjectGenerator::Generate(const std::string& name,
 
   for (const auto& path : filesToProcess) {
     if (!ProcessTemplateFile(path, name, target, frameworkDirectory,
-                             android ? "android" : "desktop")) {
+                             android ? "android" : (ios ? "ios" : "desktop"))) {
       std::cerr << "[Levye] Failed to process template file: " << path << '\n';
 
       std::filesystem::remove_all(projectDirectory);
@@ -300,7 +324,9 @@ std::string ProjectGenerator::RenderText(std::string content, const std::string&
                                          const std::string& projectTarget,
                                          const std::filesystem::path& frameworkDirectory,
                                          std::string_view defaultPlatform) {
-  ReplaceAll(content, "{{PROJECT_NAME}}", projectName);
+  // The name placeholder is used inside quoted TOML and C++ string literals.
+  const std::string quotedName = TomlString(projectName);
+  ReplaceAll(content, "{{PROJECT_NAME}}", quotedName.substr(1, quotedName.size() - 2));
   ReplaceAll(content, "{{PROJECT_TARGET}}", projectTarget);
   std::string packageSuffix = "game";
   for (unsigned char character : projectTarget) {
@@ -310,22 +336,29 @@ std::string ProjectGenerator::RenderText(std::string content, const std::string&
       packageSuffix += '_';
   }
   const bool android = defaultPlatform == "android";
+  ReplaceAll(content, "{{DISPLAY_CONFIG}}",
+             std::string("[display]\norientation = \"") + (android ? "portrait" : "landscape") +
+                 "\"\nlogical_width = " + (android ? "720" : "1280") +
+                 "\nlogical_height = " + (android ? "1280" : "720") +
+                 "\nscale_mode = \"fit\"\nfilter = \"linear\"\ntarget_fps = 60\nvsync = "
+                 "false\nfullscreen = " +
+                 (defaultPlatform == "desktop" ? "false" : "true") + "\nsafe_area = \"inset\"\n");
+  ReplaceAll(content, "{{DESKTOP_CONFIG}}",
+             defaultPlatform == "desktop"
+                 ? "[desktop]\nwindow_width = 1280\nwindow_height = 720\nresizable = true\n"
+                 : "");
 
   std::string androidConfig;
 
   if (android) {
     androidConfig =
-        "[display]\n"
-        "logical_width = 720\n"
-        "logical_height = 1280\n"
-        "scaling = \"fit\"\n"
-        "\n"
         "[android]\n"
         "package = \"com.levyekit." +
         packageSuffix +
         "\"\n"
-        "orientation = \"portrait\"\n"
-        "app_name = \"" + projectName + "\"\n"
+        "app_name = " +
+        TomlString(projectName) +
+        "\n"
         "version_name = \"1.0\"\n"
         "version_code = 1\n"
         "# icon = \"Icons/launcher.png\"\n"
@@ -334,6 +367,21 @@ std::string ProjectGenerator::RenderText(std::string content, const std::string&
   }
 
   ReplaceAll(content, "{{ANDROID_CONFIG}}", androidConfig);
+  std::string iosConfig;
+  if (defaultPlatform == "ios") {
+    iosConfig =
+        "[ios]\n"
+        "bundle_id = \"com.levyekit." +
+        packageSuffix +
+        "\"\n"
+        "deployment_target = \"15.0\"\n"
+        "display_name = " +
+        TomlString(projectName) +
+        "\n"
+        "version_name = \"1.0.0\"\n"
+        "version_code = 1\n";
+  }
+  ReplaceAll(content, "{{IOS_CONFIG}}", iosConfig);
   ReplaceAll(content, "{{LEVYE_ROOT}}", frameworkDirectory.generic_string());
   ReplaceAll(content, "{{DEFAULT_PLATFORM}}", std::string(defaultPlatform));
   return content;
@@ -358,6 +406,11 @@ bool ProjectGenerator::ProcessTemplateFile(const std::filesystem::path& path,
    */
   content = RenderText(std::move(content), projectName, projectTarget, frameworkDirectory,
                        defaultPlatform);
+  if (path.filename() == "levye.project") {
+    for (auto position = content.find("\n\n\n"); position != std::string::npos;
+         position = content.find("\n\n\n"))
+      content.erase(position, 1);
+  }
 
   std::ofstream output(path, std::ios::trunc);
 

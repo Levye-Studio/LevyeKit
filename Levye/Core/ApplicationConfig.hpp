@@ -42,6 +42,8 @@ struct ApplicationConfig {
    * @brief Whether vertical synchronization should be requested.
    */
   bool vsync = false;
+  /** @brief Request a full-screen drawable on desktop. Mobile is always full-screen. */
+  bool fullscreen = false;
 
   /** @brief Enables host-owned logical rendering; false preserves raw raylib drawing. */
   bool useLogicalDisplay = false;

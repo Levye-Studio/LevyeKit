@@ -37,15 +37,16 @@ struct GameAPI {
    */
   void (*BindServices)(const HostServices* services) = nullptr;
 
-  /// Called after the game module has been loaded.
+  /** @brief Runs after the game module has been loaded. */
   void (*OnLoad)(void* state) = nullptr;
 
-  /// Called after game code has been successfully hot reloaded.
+  /** @brief Runs before the current game code is unloaded for hot reload. */
   void (*OnBeforeReload)(void*) = nullptr;
 
+  /** @brief Runs after replacement game code has been loaded successfully. */
   void (*OnAfterReload)(void*) = nullptr;
 
-  /// Called once per frame before rendering.
+  /** @brief Updates gameplay once per rendered frame. */
   void (*OnUpdate)(void* state, float deltaTime) = nullptr;
 
   /**
@@ -56,10 +57,10 @@ struct GameAPI {
    */
   void (*OnFixedUpdate)(void* state, float fixedDeltaTime) = nullptr;
 
-  /// Called once per frame while a raylib drawing context is active.
+  /** @brief Draws the game once per frame inside an active raylib drawing context. */
   void (*OnDraw)(void* state) = nullptr;
 
-  /// Called before the game module is unloaded.
+  /** @brief Runs when the game module shuts down. */
   void (*OnShutdown)(void* state) = nullptr;
 
   /**

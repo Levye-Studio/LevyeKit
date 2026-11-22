@@ -71,22 +71,33 @@ class AnimationService {
   /** @brief Creates an editable host pose from a borrowed model skeleton. */
   [[nodiscard]] AnimationPoseHandle CreatePose(AnimationControllerHandle controller,
                                                const Model* model);
+  /** @brief Destroys a host-owned editable pose handle. */
   void DestroyPose(AnimationPoseHandle pose);
+  /** @brief Checks whether an editable pose handle is live. */
   [[nodiscard]] bool IsPoseValid(AnimationPoseHandle pose) const noexcept;
+  /** @brief Returns the number of bones in an editable pose. */
   [[nodiscard]] int GetPoseBoneCount(AnimationPoseHandle pose) const noexcept;
+  /** @brief Finds a pose bone by name. */
   [[nodiscard]] int FindPoseBone(AnimationPoseHandle pose, const char* name) const noexcept;
+  /** @brief Copies a pose bone name into caller storage. */
   [[nodiscard]] bool GetPoseBoneName(AnimationPoseHandle pose, int bone, char* output,
                                      int capacity) const noexcept;
+  /** @brief Returns a pose bone's parent index. */
   [[nodiscard]] int GetPoseBoneParent(AnimationPoseHandle pose, int bone) const noexcept;
+  /** @brief Samples the controller's current animation into the editable pose. */
   [[nodiscard]] bool SamplePose(AnimationPoseHandle pose);
+  /** @brief Copies a pose bone transform in the requested space. */
   [[nodiscard]] bool GetPoseBoneTransform(AnimationPoseHandle pose, int bone,
                                           AnimationBoneSpace space,
                                           AnimationBoneTransform& output) const;
+  /** @brief Replaces a pose bone transform in the requested space. */
   [[nodiscard]] bool SetPoseBoneTransform(AnimationPoseHandle pose, int bone,
                                           AnimationBoneSpace space,
                                           const AnimationBoneTransform& value);
+  /** @brief Applies the current editable pose to a borrowed model. */
   [[nodiscard]] bool ApplyPose(AnimationPoseHandle pose, Model* model);
 
+  /** @brief Solves a full-strength two-bone chain on an editable pose. */
   [[nodiscard]] bool SolveTwoBoneIK(AnimationPoseHandle pose, int root, int middle, int end,
                                     const float target[3], const float pole[3],
                                     float tolerance = 0.001f);

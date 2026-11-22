@@ -39,11 +39,24 @@ struct ProjectConfig {
   /** @brief Default platform for `levye run`; desktop when omitted. */
   std::string defaultPlatform = "desktop";
 
+  /** @brief Optional iOS application metadata. */
+  std::string iosBundleId;
+  std::string iosDeploymentTarget = "15.0";
+  std::string iosDisplayName;
+  std::string iosVersionName = "1.0.0";
+  int iosVersionCode = 1;
+  /** @brief Legacy [ios] orientation fallback; new projects use displayOrientation. */
+  std::string iosOrientation = "all";
+
   /** @brief Android application ID used by `levye run --android`. */
   std::string androidPackage;
 
-  /** @brief Fixed Android activity orientation: portrait or landscape. */
+  /** @brief Legacy [android] orientation fallback; new projects use [display]. */
   std::string androidOrientation = "portrait";
+  /** @brief Shared mobile orientation; auto follows device rotation where supported. */
+  std::string displayOrientation = "landscape";
+  /** @brief Whether [display].orientation was explicitly configured. */
+  bool hasDisplayOrientation = false;
 
   /** @brief Optional Android launcher label; defaults to the project target. */
   std::string androidAppName;
@@ -72,6 +85,7 @@ struct ProjectConfig {
   int targetFPS = 60;
   bool resizable = true;
   bool vsync = false;
+  bool fullscreen = false;
 
   /** @brief Enables the host-owned logical viewport when [display] is configured. */
   bool useLogicalDisplay = false;

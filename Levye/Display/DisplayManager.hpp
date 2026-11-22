@@ -64,6 +64,7 @@ class DisplayManager {
   }
 
  private:
+  DisplayConfig config_{};
   DisplayLayout layout_;
   RenderTexture2D target_{};
   bool ready_ = false;

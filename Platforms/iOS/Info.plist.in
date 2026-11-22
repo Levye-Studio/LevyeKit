@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleIdentifier</key><string>${LEVYE_IOS_BUNDLE_ID}</string>
+<key>CFBundleDisplayName</key><string>${LEVYE_IOS_DISPLAY_NAME_XML}</string>
+<key>CFBundleName</key><string>${LEVYE_IOS_DISPLAY_NAME_XML}</string>
+<key>CFBundleExecutable</key><string>${LEVYE_IOS_EXECUTABLE_NAME}</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+<key>CFBundleShortVersionString</key><string>${LEVYE_IOS_VERSION_NAME}</string>
+<key>CFBundleVersion</key><string>${LEVYE_IOS_VERSION_CODE}</string>
+<key>UILaunchScreen</key><dict/>
+<key>UISupportedInterfaceOrientations</key><array>${LEVYE_IOS_ORIENTATIONS}</array>
+</dict></plist>

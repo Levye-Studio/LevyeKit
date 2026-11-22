@@ -65,7 +65,7 @@ class Display {
     return GetInfo(info) ? info.orientation : DisplayOrientation::Square;
   }
 
-  /** @brief Returns the active Fit, Fill, or Stretch scaling policy. */
+  /** @brief Returns the active scaling policy. */
   [[nodiscard]] static DisplayScaling GetScaling() {
     DisplayInfo info;
     return GetInfo(info) ? info.scaling : DisplayScaling::Fit;

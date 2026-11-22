@@ -43,6 +43,7 @@ class Services {
    */
   static bool IsBound() { return s_Host != nullptr; }
 
+  /** @brief Requests an orderly shutdown through the bound host, if available. */
   static void RequestQuit() {
     const auto* services = Get();
 

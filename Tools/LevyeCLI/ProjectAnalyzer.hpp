@@ -7,8 +7,10 @@
 
 namespace Levye {
 
+/** @brief CMake target kind recognized by the project converter. */
 enum class ConversionProjectType { Executable, StaticLibrary, SharedLibrary, Unsupported };
 
+/** @brief Detected application entry-point and lifecycle shape. */
 enum class ConversionLifecycle {
   NoEntryPoint,
   StandardMain,
@@ -18,6 +20,7 @@ enum class ConversionLifecycle {
   Unknown
 };
 
+/** @brief Source and build properties collected for one convertible target. */
 struct ConversionTarget {
   std::string name;
   ConversionProjectType type = ConversionProjectType::Unsupported;
@@ -30,6 +33,7 @@ struct ConversionTarget {
   std::vector<std::string> cmakeSettings;
 };
 
+/** @brief Read-only analysis used to plan project conversion. */
 struct ConversionAnalysis {
   std::filesystem::path projectRoot;
   std::vector<ConversionTarget> targets;
@@ -48,11 +52,14 @@ struct ConversionAnalysis {
   int targetFPS = 0;
   bool alreadyLevyeKit = false;
 
+  /** @brief Reports whether analysis found conversion-blocking errors. */
   bool CanConvert() const { return errors.empty(); }
 };
 
+/** @brief Inspects a CMake project without changing its files. */
 class ProjectAnalyzer {
  public:
+  /** @brief Analyzes a project root for supported conversion patterns. */
   static ConversionAnalysis Analyze(const std::filesystem::path& projectRoot);
 };
 

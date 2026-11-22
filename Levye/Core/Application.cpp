@@ -1,6 +1,9 @@
 #include "Application.hpp"
 
 #include <raylib.h>
+#if defined(PLATFORM_IOS)
+#include <libGLESv2/GLES3/gl3.h>
+#endif
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #include <emscripten/html5.h>
@@ -12,6 +15,13 @@
 #include <Levye/Debug/Logger.hpp>
 
 namespace Levye {
+#if defined(PLATFORM_IOS)
+extern "C" void LevyeIOSSafeInsets(int framebufferWidth, int framebufferHeight,
+                                   DisplayInsets* outputInsets);
+#elif defined(__ANDROID__)
+extern "C" void LevyeAndroidSafeInsets(DisplayInsets* outputInsets);
+extern "C" void LevyeAndroidEnableCutout();
+#endif
 #ifdef __EMSCRIPTEN__
 namespace {
 void GetBrowserSize(int& width, int& height) {
@@ -32,7 +42,8 @@ Application::Application(const ApplicationConfig& config, GameModule& gameModule
   m_GameModule.SetApplication(this);
 }
 
-void Application::Run() {
+bool Application::Initialize() {
+  if (m_Initialized) return true;
   unsigned int windowFlags = 0;
 
   if (m_Config.resizable) {
@@ -43,22 +54,31 @@ void Application::Run() {
     windowFlags |= FLAG_VSYNC_HINT;
   }
 
-#ifndef __EMSCRIPTEN__
+#if !defined(__ANDROID__) && !defined(PLATFORM_IOS) && !defined(__EMSCRIPTEN__)
+  if (m_Config.fullscreen) windowFlags |= FLAG_FULLSCREEN_MODE;
+#endif
+
+#if !defined(__EMSCRIPTEN__) && !defined(PLATFORM_IOS)
   if (m_Config.useLogicalDisplay) {
     windowFlags |= FLAG_WINDOW_HIGHDPI;
   }
-#else
+#elif defined(__EMSCRIPTEN__)
   windowFlags |= FLAG_WINDOW_RESIZABLE;
+#else
+  windowFlags |= FLAG_FULLSCREEN_MODE;
 #endif
 
   if (windowFlags != 0) {
     SetConfigFlags(windowFlags);
   }
 
+#if defined(__ANDROID__) || defined(PLATFORM_IOS)
 #if defined(__ANDROID__)
+  if (m_Config.useLogicalDisplay) LevyeAndroidEnableCutout();
+#endif
   // raylib sizes its Android framebuffer from InitWindow's dimensions and
   // applies its own scale matrix when they differ from the native surface.
-  // The manifest's [window] size is for desktop; logical scaling is handled
+  // The manifest's [desktop] size is for desktop; logical scaling is handled
   // by DisplayManager after raylib adopts the Android surface size.
   InitWindow(0, 0, m_Config.title.c_str());
 #elif defined(__EMSCRIPTEN__)
@@ -70,11 +90,22 @@ void Application::Run() {
   InitWindow(m_Config.width, m_Config.height, m_Config.title.c_str());
 #endif
 
+  if (!IsWindowReady()) return false;
+
+#if defined(PLATFORM_IOS)
+  // Validate GLES dispatch before creating the logical display's GPU resources.
+  if (glGetString(GL_VERSION) == nullptr) {
+    Logger::Error("iOS OpenGL ES context has no active GL version.");
+    CloseWindow();
+    return false;
+  }
+#endif
+
 #ifdef LEVYE_WITH_IMGUI
   if (!m_ImGui.Initialize()) {
     Logger::Error("Failed to initialize ImGui module.");
     CloseWindow();
-    return;
+    return false;
   }
 
   m_ImGui.SetCaptureSettings({.keyboard = true, .mouse = true});
@@ -87,14 +118,14 @@ void Application::Run() {
       m_ImGui.Shutdown();
 #endif
       CloseWindow();
-      return;
+      return false;
     }
   }
 
   SetExitKey(KEY_NULL);
 
   // Browser requestAnimationFrame owns frame pacing.
-#if defined(__EMSCRIPTEN__)
+#if defined(__EMSCRIPTEN__) || defined(PLATFORM_IOS)
   SetTargetFPS(0);
 #else
   if (m_Config.targetFPS > 0) {
@@ -116,10 +147,19 @@ void Application::Run() {
     CloseAudioDevice();
     m_Display.Shutdown();
     CloseWindow();
-    return;
+    return false;
   }
 
-#ifdef __EMSCRIPTEN__
+  m_Initialized = true;
+  return true;
+}
+
+void Application::Run() {
+  if (!Initialize()) return;
+#if defined(PLATFORM_IOS)
+  // UIKit owns the frame loop.
+  return;
+#elif defined(__EMSCRIPTEN__)
   emscripten_set_main_loop_arg(
       [](void* context) {
         auto& app = *static_cast<Application*>(context);
@@ -135,6 +175,12 @@ void Application::Run() {
   while (!WindowShouldClose() && !m_QuitRequested) Frame();
   Finish();
 #endif
+}
+
+bool Application::Tick() {
+  if (!m_Initialized || m_QuitRequested || WindowShouldClose()) return false;
+  Frame();
+  return true;
 }
 
 void Application::Frame() {
@@ -171,6 +217,15 @@ void Application::Frame() {
 
   if (m_Config.useLogicalDisplay) {
     m_Display.Resize(GetScreenWidth(), GetScreenHeight(), GetRenderWidth(), GetRenderHeight());
+#if defined(PLATFORM_IOS)
+    DisplayInsets nativeInsets{};
+    LevyeIOSSafeInsets(GetRenderWidth(), GetRenderHeight(), &nativeInsets);
+    m_Display.SetSafeInsets(nativeInsets);
+#elif defined(__ANDROID__)
+    DisplayInsets nativeInsets{};
+    LevyeAndroidSafeInsets(&nativeInsets);
+    m_Display.SetSafeInsets(nativeInsets);
+#endif
   }
 
   // raylib polls events at EndDrawing(). Sample once before any callbacks,
@@ -245,6 +300,8 @@ void Application::Frame() {
 }
 
 void Application::Finish() {
+  if (!m_Initialized) return;
+  m_Initialized = false;
   m_GameModule.Shutdown();
   /*
    * GPU resources must be released before raylib destroys the graphics context.

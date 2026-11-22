@@ -57,6 +57,12 @@ option(
     OFF
 )
 
+option(
+    LEVYE_WITH_IOS
+    "Enable LevyeKit iOS support"
+    OFF
+)
+
 set(
     LEVYE_PHYSICS_BACKEND
     "JOLT"
@@ -80,6 +86,19 @@ endif()
 
 if(ANDROID AND NOT LEVYE_WITH_ANDROID)
     message(FATAL_ERROR "Android toolchains require LEVYE_WITH_ANDROID=ON.")
+endif()
+
+if(LEVYE_WITH_IOS)
+    enable_language(OBJC)
+    enable_language(OBJCXX)
+    if(NOT APPLE OR NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        message(FATAL_ERROR "LEVYE_WITH_IOS requires an iOS toolchain.")
+    endif()
+    foreach(LEVYE_MODULE IN ITEMS SERIALIZATION IMGUI ANIMATION PHYSICS)
+        if(LEVYE_WITH_${LEVYE_MODULE})
+            message(FATAL_ERROR "iOS does not yet support ${LEVYE_MODULE}.")
+        endif()
+    endforeach()
 endif()
 
 if(LEVYE_WITH_ANDROID)
@@ -134,7 +153,7 @@ set(
     "${CMAKE_SOURCE_DIR}/Targets/${LEVYE_BUILD_NAME}"
 )
 
-if(EMSCRIPTEN AND DEFINED LEVYE_PROJECT_ROOT)
+if((EMSCRIPTEN OR LEVYE_WITH_IOS) AND DEFINED LEVYE_PROJECT_ROOT)
     set(LEVYE_OUTPUT_DIR "${LEVYE_PROJECT_ROOT}/Targets/${LEVYE_BUILD_NAME}")
 endif()
 
@@ -156,7 +175,16 @@ message(STATUS "LevyeKit output directory: ${LEVYE_OUTPUT_DIR}")
 include(FetchContent)
 
 # The host and reloadable game module must use the same raylib instance.
-if(EMSCRIPTEN)
+if(LEVYE_WITH_IOS)
+    set(PLATFORM iOS CACHE STRING "raylib platform" FORCE)
+    # raylib-iOS release/6.2 has a native backend but no iOS branch in
+    # LibraryConfigurations.cmake. Supply its compile definitions directly.
+    set(PLATFORM_CPP PLATFORM_IOS)
+    set(GRAPHICS GRAPHICS_API_OPENGL_ES2)
+    set(OPENGL_VERSION "OFF" CACHE STRING "" FORCE)
+    set(USE_EXTERNAL_GLFW OFF CACHE STRING "" FORCE)
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+elseif(EMSCRIPTEN)
     set(PLATFORM Web CACHE STRING "raylib platform" FORCE)
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
     foreach(module SERIALIZATION IMGUI ANIMATION PHYSICS)
@@ -171,6 +199,15 @@ set(FETCHCONTENT_QUIET OFF CACHE BOOL "" FORCE)
 
 set(LEVYE_RAYLIB_TAG "6.2")
 set(LEVYE_RAYLIB_REPOSITORY "https://github.com/raysan5/raylib.git")
+set(LEVYE_RAYLIB_CACHE_VERSION "6.2")
+set(LEVYE_RAYLIB_VERIFY_REF "refs/tags/6.2^{commit}")
+
+if(LEVYE_WITH_IOS)
+    set(LEVYE_RAYLIB_TAG "release/6.2")
+    set(LEVYE_RAYLIB_REPOSITORY "https://github.com/ghera/raylib-iOS.git")
+    set(LEVYE_RAYLIB_CACHE_VERSION "ios-6.2")
+    set(LEVYE_RAYLIB_VERIFY_REF "refs/remotes/origin/release/6.2^{commit}")
+endif()
 
 # A caller-provided source override takes priority.
 if(NOT FETCHCONTENT_SOURCE_DIR_RAYLIB)
@@ -188,7 +225,7 @@ if(NOT FETCHCONTENT_SOURCE_DIR_RAYLIB)
     endif()
 
     set(LEVYE_RAYLIB_CACHE
-        "${LEVYE_CACHE_ROOT}/raylib/${LEVYE_RAYLIB_TAG}")
+        "${LEVYE_CACHE_ROOT}/raylib/${LEVYE_RAYLIB_CACHE_VERSION}")
     set(LEVYE_RAYLIB_SOURCE "${LEVYE_RAYLIB_CACHE}/source")
 
     file(MAKE_DIRECTORY "${LEVYE_RAYLIB_CACHE}")
@@ -211,7 +248,7 @@ if(NOT FETCHCONTENT_SOURCE_DIR_RAYLIB)
 
         execute_process(
             COMMAND "${GIT_EXECUTABLE}" -C "${LEVYE_RAYLIB_SOURCE}"
-                    rev-parse "refs/tags/6.2^{commit}"
+                    rev-parse "${LEVYE_RAYLIB_VERIFY_REF}"
             OUTPUT_VARIABLE LEVYE_RAYLIB_TAG_COMMIT
             OUTPUT_STRIP_TRAILING_WHITESPACE
             RESULT_VARIABLE LEVYE_TAG_RESULT
@@ -231,7 +268,7 @@ if(NOT FETCHCONTENT_SOURCE_DIR_RAYLIB)
            OR FETCHCONTENT_UPDATES_DISCONNECTED
            OR FETCHCONTENT_UPDATES_DISCONNECTED_RAYLIB)
             message(FATAL_ERROR
-                "raylib 6.2 is missing from the shared cache: "
+                "raylib ${LEVYE_RAYLIB_TAG} is missing from the shared cache: "
                 "${LEVYE_RAYLIB_SOURCE}. Offline mode is enabled.")
         endif()
 
@@ -246,7 +283,7 @@ if(NOT FETCHCONTENT_SOURCE_DIR_RAYLIB)
 
         file(REMOVE_RECURSE "${LEVYE_RAYLIB_TEMP}")
 
-        message(STATUS "Downloading raylib 6.2 to shared cache")
+        message(STATUS "Downloading raylib ${LEVYE_RAYLIB_TAG} to shared cache")
 
         execute_process(
             COMMAND "${GIT_EXECUTABLE}" clone
@@ -259,7 +296,7 @@ if(NOT FETCHCONTENT_SOURCE_DIR_RAYLIB)
 
         if(NOT LEVYE_CLONE_RESULT EQUAL 0)
             file(REMOVE_RECURSE "${LEVYE_RAYLIB_TEMP}")
-            message(FATAL_ERROR "Failed to download raylib 6.2.")
+            message(FATAL_ERROR "Failed to download raylib ${LEVYE_RAYLIB_TAG}.")
         endif()
 
         execute_process(
@@ -272,7 +309,7 @@ if(NOT FETCHCONTENT_SOURCE_DIR_RAYLIB)
 
         execute_process(
             COMMAND "${GIT_EXECUTABLE}" -C "${LEVYE_RAYLIB_TEMP}"
-                    rev-parse "refs/tags/6.2^{commit}"
+                    rev-parse "${LEVYE_RAYLIB_VERIFY_REF}"
             OUTPUT_VARIABLE LEVYE_TEMP_TAG
             OUTPUT_STRIP_TRAILING_WHITESPACE
             RESULT_VARIABLE LEVYE_TEMP_TAG_RESULT
@@ -283,7 +320,7 @@ if(NOT FETCHCONTENT_SOURCE_DIR_RAYLIB)
            OR NOT LEVYE_TEMP_HEAD STREQUAL LEVYE_TEMP_TAG
            OR NOT EXISTS "${LEVYE_RAYLIB_TEMP}/src/raylib.h")
             file(REMOVE_RECURSE "${LEVYE_RAYLIB_TEMP}")
-            message(FATAL_ERROR "raylib 6.2 verification failed.")
+            message(FATAL_ERROR "raylib ${LEVYE_RAYLIB_TAG} verification failed.")
         endif()
 
         file(RENAME
@@ -323,7 +360,89 @@ FetchContent_Declare(
     GIT_TAG "${LEVYE_RAYLIB_TAG}"
 )
 
-FetchContent_MakeAvailable(raylib)
+if(LEVYE_WITH_IOS)
+    # The raylib-iOS release/6.2 fork implements PLATFORM_IOS but its
+    # CMakeOptions.txt rejects PLATFORM=iOS. Build its sources directly,
+    # without editing the shared, version-pinned dependency cache.
+    set(raylib_SOURCE_DIR "${FETCHCONTENT_SOURCE_DIR_RAYLIB}")
+    set(LEVYE_IOS_RAYLIB_SOURCES
+        rcore.c rshapes.c rtext.c rtextures.c raudio.c rmodels.c)
+    list(TRANSFORM LEVYE_IOS_RAYLIB_SOURCES
+        PREPEND "${raylib_SOURCE_DIR}/src/")
+
+    add_library(raylib STATIC ${LEVYE_IOS_RAYLIB_SOURCES})
+
+    target_include_directories(raylib PUBLIC "${raylib_SOURCE_DIR}/src")
+
+    target_compile_definitions(raylib PUBLIC
+        PLATFORM_IOS
+        GRAPHICS_API_OPENGL_ES3
+        GL_GLEXT_PROTOTYPES
+        )
+
+    # Use the ANGLE frameworks bundled with raylib-iOS 6.2.
+    set(LEVYE_ANGLE_ROOT "${raylib_SOURCE_DIR}/deps/ANGLE")
+
+    if(CMAKE_OSX_SYSROOT MATCHES "simulator")
+        set(LEVYE_ANGLE_SLICE "ios-arm64_x86_64-simulator")
+    else()
+        set(LEVYE_ANGLE_SLICE "ios-arm64")
+    endif()
+
+    set(LEVYE_ANGLE_FRAMEWORKS
+        "${LEVYE_ANGLE_ROOT}/libEGL.xcframework/${LEVYE_ANGLE_SLICE}/libEGL.framework"
+        "${LEVYE_ANGLE_ROOT}/libGLESv2.xcframework/${LEVYE_ANGLE_SLICE}/libGLESv2.framework"
+    )
+    set_property(TARGET raylib PROPERTY LEVYE_ANGLE_FRAMEWORKS
+        "${LEVYE_ANGLE_FRAMEWORKS}")
+
+    foreach(framework IN LISTS LEVYE_ANGLE_FRAMEWORKS)
+        if(NOT EXISTS "${framework}")
+            message(FATAL_ERROR "Missing ANGLE framework: ${framework}")
+        endif()
+    endforeach()
+
+    # Makes <libEGL/...> and <libGLESv2/...> headers discoverable.
+    foreach(framework IN LISTS LEVYE_ANGLE_FRAMEWORKS)
+        get_filename_component(framework_dir "${framework}" DIRECTORY)
+        target_compile_options(raylib PUBLIC "-F${framework_dir}")
+        target_link_options(raylib PUBLIC "-F${framework_dir}")
+    endforeach()
+
+    # Resolve fork header order and Apple type collisions in rcore.c only.
+    set_source_files_properties("${raylib_SOURCE_DIR}/src/rcore.c" PROPERTIES
+        COMPILE_OPTIONS "-include;${CMAKE_CURRENT_SOURCE_DIR}/Platforms/iOS/RaylibCompat.h")
+
+    target_link_libraries(raylib PUBLIC ${LEVYE_ANGLE_FRAMEWORKS})
+
+    # rcore.c includes the Objective-C UIKit backend implementation.
+    set_source_files_properties(
+        "${raylib_SOURCE_DIR}/src/rcore.c"
+        PROPERTIES LANGUAGE OBJC)
+
+    # miniaudio includes Apple Objective-C framework headers on iOS.
+    set_source_files_properties(
+        "${raylib_SOURCE_DIR}/src/raudio.c"
+        PROPERTIES LANGUAGE OBJC
+    )
+    foreach(LEVYE_IOS_FRAMEWORK IN ITEMS UIKit Foundation QuartzCore
+            CoreGraphics AudioToolbox AVFoundation CoreAudio)
+        find_library(LEVYE_IOS_${LEVYE_IOS_FRAMEWORK}
+            NAMES ${LEVYE_IOS_FRAMEWORK} REQUIRED)
+        target_link_libraries(raylib PUBLIC
+            "${LEVYE_IOS_${LEVYE_IOS_FRAMEWORK}}")
+    endforeach()
+else()
+    FetchContent_MakeAvailable(raylib)
+endif()
+
+if(ANDROID)
+    # raylib hides GetAndroidApp in shared builds. The host needs the native
+    # activity to query cutout insets without changing cached raylib sources.
+    set_property(SOURCE "${raylib_SOURCE_DIR}/src/rcore.c"
+        TARGET_DIRECTORY raylib APPEND PROPERTY COMPILE_OPTIONS
+        "-fvisibility=default")
+endif()
 
 FetchContent_Declare(
     tomlplusplus
@@ -367,6 +486,14 @@ add_library(
 
     Levye/Debug/Logger.cpp
 )
+
+if(LEVYE_WITH_IOS)
+    target_sources(LevyeKit PRIVATE Platforms/iOS/SafeArea.mm)
+elseif(ANDROID)
+    target_sources(LevyeKit PRIVATE Platforms/Android/SafeArea.cpp)
+    target_include_directories(LevyeKit PRIVATE
+        "${ANDROID_NDK}/sources/android/native_app_glue")
+endif()
 
 target_include_directories(
     LevyeKit
@@ -716,6 +843,7 @@ add_executable(
     Tools/LevyeCLI/Main.cpp
     Tools/LevyeCLI/ProjectGenerator.cpp
     Tools/LevyeCLI/ProjectCommand.cpp
+    Tools/LevyeCLI/PlatformPreparation.cpp
     Tools/LevyeCLI/ProjectLocator.cpp
     Tools/LevyeCLI/BuildCommand.cpp
     Tools/LevyeCLI/RunCommand.cpp
@@ -735,6 +863,7 @@ add_executable(
     Levye/Platform/ExecutablePath.cpp
 
     Tools/LevyeCLI/ExportCommand.cpp
+    Tools/LevyeCLI/Export/IOSExporter.cpp
     Tools/LevyeCLI/Export/AndroidExporter.cpp
     Tools/LevyeCLI/Export/DesktopExporter.cpp
     Tools/LevyeCLI/Export/WebExporter.cpp

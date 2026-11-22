@@ -71,7 +71,8 @@ bool AddCommand::Execute(const std::filesystem::path& projectDirectory, std::str
   std::string content = buffer.str();
 
   // Find the [modules] section without changing other sections.
-  const std::regex sectionPattern(R"((^|\n)[ \t]*\[modules\][ \t]*(?:#.*)?(?:\r?\n|$))");
+  const std::regex sectionPattern(
+      R"((^|\n)[ \t]*\[(?:modules|"modules")\][ \t]*(?:#.*)?(?:\r?\n|$))");
 
   std::smatch section;
 
@@ -101,8 +102,8 @@ bool AddCommand::Execute(const std::filesystem::path& projectDirectory, std::str
     std::string body = content.substr(sectionEnd, end - sectionEnd);
     if (sectionEnd > 0 && content[sectionEnd - 1] != '\n') body.insert(body.begin(), '\n');
 
-    const std::regex settingPattern("(^|\\n)[ \\t]*" + std::string(module) +
-                                    R"([ \t]*=[ \t]*(true|false)[ \t]*(?:#.*)?(?=\r?\n|$))");
+    const std::regex settingPattern("(^|\\n)[ \\t]*\\\"?" + std::string(module) +
+                                    R"("?[ \t]*=[ \t]*(true|false)[ \t]*(?:#.*)?(?=\r?\n|$))");
 
     std::smatch setting;
     if (std::regex_search(body, setting, settingPattern)) {

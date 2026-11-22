@@ -23,12 +23,16 @@ class ProjectGenerator {
    * @param outputDirectory Directory in which the project folder is created.
    * @param templateDirectory Directory containing the project template.
    * @param frameworkDirectory Root directory of the LevyeKit checkout.
+   * @param modules Optional modules to enable in the generated manifest.
+   * @param android Selects Android as the project default when true.
+   * @param ios Selects iOS as the project default when true.
    * @return True when the complete project was generated successfully.
    */
   static bool Generate(const std::string& name, const std::filesystem::path& outputDirectory,
                        const std::filesystem::path& templateDirectory,
                        const std::filesystem::path& frameworkDirectory,
-                       const std::vector<std::string>& modules = {}, bool android = false);
+                       const std::vector<std::string>& modules = {}, bool android = false,
+                       bool ios = false);
 
   /**
    * @brief Converts a human-readable project name into a build-safe target.
@@ -42,7 +46,9 @@ class ProjectGenerator {
    */
   static std::string CreateTargetName(const std::string& name);
 
-  // Renders the same tokens used by levye new without writing a file.
+  /** @brief Replaces generated-project template tokens without writing a file.
+   * @return Rendered template content.
+   */
   static std::string RenderText(std::string content, const std::string& projectName,
                                 const std::string& projectTarget,
                                 const std::filesystem::path& frameworkDirectory,

@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "FileTransaction.hpp"
+#include "PlatformPreparation.hpp"
 #include "ProcessArguments.hpp"
 
 namespace {
@@ -43,6 +44,20 @@ bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
 
     platform = ResolveProjectPlatform(platform, project->defaultPlatform);
 
+    if (platform == ProjectPlatform::Desktop) {
+      std::string prepared;
+      bool changed = false;
+      if (!PreparePlatformManifest(projectDirectory, platform, prepared, changed)) return false;
+      if (changed) {
+        std::string error;
+        if (!CommitFiles(projectDirectory, {{projectDirectory / "levye.project", prepared, true}},
+                         error)) {
+          std::cerr << "[Levye] Failed to initialize desktop configuration: " << error << '\n';
+          return false;
+        }
+      }
+    }
+
     if (androidFormat != "apk" && androidFormat != "aab" && androidFormat != "all") {
       std::cerr << "[Levye] Invalid Android package format.\n";
       return false;
@@ -59,6 +74,91 @@ bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
         (platform != ProjectPlatform::Android || configuration != BuildConfiguration::Release)) {
       std::cerr << "[Levye] --sign requires an Android Release build.\n";
       return false;
+    }
+
+    if (platform == ProjectPlatform::IOS) {
+#if !defined(__APPLE__)
+      std::cerr << "[Levye] iOS simulator builds require macOS and Xcode.\n";
+      return false;
+#else
+      if (std::system("xcodebuild -version > /dev/null 2>&1") != 0 ||
+          std::system("xcrun --sdk iphonesimulator --show-sdk-path > /dev/null 2>&1") != 0) {
+        std::cerr << "[Levye] Xcode and an iPhoneSimulator SDK are required.\n";
+        return false;
+      }
+      const auto manifestPath = projectDirectory / "levye.project";
+      std::string iosManifest;
+      bool iosChanged = false;
+      if (!PreparePlatformManifest(projectDirectory, ProjectPlatform::IOS, iosManifest, iosChanged))
+        return false;
+      if (iosChanged) {
+        std::string error;
+        if (!CommitFiles(projectDirectory, {{manifestPath, iosManifest, true}}, error)) {
+          std::cerr << "[Levye] Failed to initialize iOS configuration: " << error << '\n';
+          return false;
+        }
+        std::cout << "[Levye] Added [ios] configuration to levye.project.\n";
+        project = ProjectLoader::Load(manifestPath);
+        if (!project) return false;
+      }
+      const auto iosBuild = projectDirectory / "Build" / ("ios-" + configurationName);
+      const auto iosSource = frameworkRoot / "Platforms/iOS";
+      const auto assets = projectDirectory / project->assetDirectory;
+      std::string bundleId = project->iosBundleId;
+      if (bundleId.empty()) {
+        bundleId = "com.levyekit.game";
+        for (unsigned char character : project->target)
+          if (std::isalnum(character)) bundleId += static_cast<char>(std::tolower(character));
+      }
+      if (!std::filesystem::is_regular_file(projectDirectory / "Source/Game.cpp") ||
+          !std::filesystem::is_directory(assets)) {
+        std::cerr << "[Levye] iOS requires Source/Game.cpp and the configured asset directory.\n";
+        return false;
+      }
+      std::string configure =
+          "cmake -S " + LevyeCLI::QuoteArgument(iosSource.string()) + " -B " +
+          LevyeCLI::QuoteArgument(iosBuild.string()) +
+          " -G Xcode -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator"
+          " -DCMAKE_OSX_DEPLOYMENT_TARGET=" +
+          LevyeCLI::QuoteArgument(project->iosDeploymentTarget) +
+          " -DCMAKE_OSX_ARCHITECTURES=arm64"
+          " -DLEVYE_ROOT=" +
+          LevyeCLI::QuoteArgument(frameworkRoot.string()) +
+          " -DLEVYE_PROJECT_ROOT=" + LevyeCLI::QuoteArgument(projectDirectory.string()) +
+          " -DLEVYE_IOS_ASSET_DIRECTORY=" + LevyeCLI::QuoteArgument(project->assetDirectory) +
+          " -DLEVYE_IOS_DISPLAY_NAME=" +
+          LevyeCLI::QuoteArgument(project->iosDisplayName.empty() ? project->name
+                                                                  : project->iosDisplayName) +
+          " -DLEVYE_IOS_OUTPUT_NAME=" + LevyeCLI::QuoteArgument(project->target) +
+          " -DLEVYE_IOS_BUNDLE_ID=" + LevyeCLI::QuoteArgument(bundleId) +
+          " -DLEVYE_IOS_VERSION_NAME=" + LevyeCLI::QuoteArgument(project->iosVersionName) +
+          " -DLEVYE_IOS_VERSION_CODE=" +
+          LevyeCLI::QuoteArgument(std::to_string(project->iosVersionCode)) +
+          " -DLEVYE_IOS_DEPLOYMENT_TARGET=" + LevyeCLI::QuoteArgument(project->iosDeploymentTarget);
+      configure += " -DLEVYE_IOS_ORIENTATION=" +
+                   LevyeCLI::QuoteArgument(
+                       project->displayOrientation == "auto" ? "all" : project->displayOrientation);
+      std::cout << "[Levye] Configuring iOS simulator project...\n" << std::flush;
+      if (std::system(configure.c_str()) != 0) {
+        std::cerr << "[Levye] iOS CMake configuration failed.\n";
+        return false;
+      }
+      const std::string build = "cmake --build " + LevyeCLI::QuoteArgument(iosBuild.string()) +
+                                " --config " + LevyeCLI::QuoteArgument(configurationName);
+      std::cout << "[Levye] Building iOS simulator app...\n" << std::flush;
+      if (std::system(build.c_str()) != 0) {
+        std::cerr << "[Levye] iOS application build failed.\n";
+        return false;
+      }
+      const auto app = projectDirectory / "Targets" / ("ios-" + configurationName) / "bin" /
+                       (project->target + ".app");
+      if (!std::filesystem::is_regular_file(app / "Info.plist")) {
+        std::cerr << "[Levye] iOS app bundle was not produced: " << app << '\n';
+        return false;
+      }
+      std::cout << "[Levye] iOS app: " << app << '\n';
+      return true;
+#endif
     }
 
     if (platform == ProjectPlatform::Android) {
@@ -86,16 +186,8 @@ bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
       };
 
       std::vector<PendingFile> pending;
-      const auto entry = projectDirectory / "Source/AndroidMain.cpp";
-      if (!std::filesystem::exists(entry)) {
-        const auto templateEntry = frameworkRoot / "Templates/Default/Source/AndroidMain.cpp";
-        auto content = readFile(templateEntry);
-        if (content.empty()) {
-          std::cerr << "[Levye] Android entry template is missing: " << templateEntry << '\n';
-          return false;
-        }
-        pending.push_back({entry, std::move(content), false});
-      }
+      // Android entry points are owned by LevyeKit, not generated game projects.
+      // Existing projects are migrated below when their CMake uses the known entry path.
       const auto manifestPath = projectDirectory / "levye.project";
       auto manifest = readFile(manifestPath);
       if (manifest.empty()) {
@@ -104,48 +196,9 @@ bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
       }
 
       bool manifestChanged = false;
-
-      if (!project->useLogicalDisplay) {
-        const bool landscape = project->androidOrientation == "landscape";
-
-        const int logicalWidth = landscape ? 1280 : 720;
-        const int logicalHeight = landscape ? 720 : 1280;
-
-        manifest +=
-            "\n[display]\n"
-            "logical_width = " +
-            std::to_string(logicalWidth) + "\n" +
-            "logical_height = " + std::to_string(logicalHeight) + "\n" + "scaling = \"fit\"\n";
-
-        manifestChanged = true;
-      }
-
-      if (project->androidPackage.empty()) {
-        if (manifest.find("[android]") != std::string::npos) {
-          std::cerr << "[Levye] Set [android] package in levye.project.\n";
-          return false;
-        }
-
-        std::string suffix;
-
-        for (unsigned char character : project->target) {
-          if (std::isalnum(character)) {
-            suffix += static_cast<char>(std::tolower(character));
-          }
-        }
-
-        if (suffix.empty()) return false;
-
-        manifest +=
-            "\n[android]\n"
-            "package = \"com.levyekit.game" +
-            suffix +
-            "\"\n"
-            "orientation = \"portrait\"\n";
-
-        manifestChanged = true;
-      }
-
+      if (!PreparePlatformManifest(projectDirectory, ProjectPlatform::Android, manifest,
+                                   manifestChanged))
+        return false;
       if (manifestChanged) {
         pending.push_back({manifestPath, std::move(manifest), true});
       }
@@ -156,7 +209,12 @@ bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
         std::cerr << "[Levye] Cannot read project CMakeLists.txt.\n";
         return false;
       }
-      if (cmake.find("Source/AndroidMain.cpp") == std::string::npos) {
+      const std::string legacyEntry = "${CMAKE_CURRENT_SOURCE_DIR}/Source/AndroidMain.cpp";
+      const std::string frameworkEntry = "${LEVYE_ROOT}/Platforms/Android/AndroidMain.cpp";
+      if (cmake.find(legacyEntry) != std::string::npos) {
+        cmake.replace(cmake.find(legacyEntry), legacyEntry.size(), frameworkEntry);
+        pending.push_back({cmakePath, cmake, true});
+      } else if (cmake.find(frameworkEntry) == std::string::npos) {
         const auto templateCMake = readFile(frameworkRoot / "Templates/Default/CMakeLists.txt");
         const auto begin = templateCMake.find("if(LEVYE_WITH_ANDROID)\n    add_library(");
         const auto end =
@@ -193,7 +251,7 @@ bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
       addArgument(project->target);
       addArgument(project->androidPackage);
       addArgument(project->assetDirectory);
-      addArgument(project->androidOrientation);
+      addArgument(project->displayOrientation);
       addArgument(project->androidAppName);
       addArgument(project->androidVersionName);
       addArgument(std::to_string(project->androidVersionCode));

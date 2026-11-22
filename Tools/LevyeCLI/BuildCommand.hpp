@@ -22,6 +22,7 @@ class BuildCommand {
    * @param configuration Build configuration to compile.
    * @param platform Platform override, or the project default.
    * @param productionSign Use the configured production key for Android Release.
+   * @param androidFormat APK, AAB, or both for a signed Android Release build.
    * @return True when configuration and compilation succeed.
    */
   static bool Execute(const std::filesystem::path& projectDirectory,

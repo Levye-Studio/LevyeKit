@@ -12,7 +12,9 @@
 
 namespace Levye {
 
+/** @brief Generic two-bone positional IK on an editable skeletal pose. */
 struct TwoBoneIK {
+  /** @brief Solves a chain at full strength without mutating on failure. */
   static bool Solve(EditablePose& pose, int root, int middle, int end, Vector3 target, Vector3 pole,
                     float tolerance = 0.001f);
   /** @brief Blends local joint rotations toward a solved pose; failures leave the pose intact. */
