@@ -13,6 +13,7 @@
 #include "FileTransaction.hpp"
 #include "PlatformPreparation.hpp"
 #include "ProcessArguments.hpp"
+#include "WebBuild.hpp"
 
 namespace {
 
@@ -75,6 +76,8 @@ bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
       std::cerr << "[Levye] --sign requires an Android Release build.\n";
       return false;
     }
+
+    if (platform == ProjectPlatform::Web) return WebBuild::Execute(projectDirectory, configuration);
 
     if (platform == ProjectPlatform::IOS) {
 #if !defined(__APPLE__)

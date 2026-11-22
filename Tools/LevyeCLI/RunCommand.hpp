@@ -1,11 +1,10 @@
 #pragma once
 
-#include "BuildConfiguration.hpp"
-
 #include <filesystem>
 
-namespace Levye {
+#include "BuildConfiguration.hpp"
 
+namespace Levye {
 
 /**
  * @brief Runs an existing build of a LevyeKit game project.
@@ -14,7 +13,7 @@ namespace Levye {
  * It does not configure or build the project.
  */
 class RunCommand {
-public:
+ public:
   /**
    * @brief Runs an existing build of a LevyeKit project.
    *
@@ -22,9 +21,10 @@ public:
    * @param configuration Build configuration to run.
    * @return True when the application launches and exits successfully.
    */
-  static bool Execute(const std::filesystem::path &projectDirectory,
+  static bool Execute(const std::filesystem::path& projectDirectory,
                       BuildConfiguration configuration,
-                      ProjectPlatform platform = ProjectPlatform::ProjectDefault);
+                      ProjectPlatform platform = ProjectPlatform::ProjectDefault,
+                      unsigned short port = 8080);
 };
 
-} // namespace Levye
+}  // namespace Levye

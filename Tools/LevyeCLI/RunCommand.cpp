@@ -14,6 +14,7 @@
 
 #include "BuildCommand.hpp"
 #include "ProcessArguments.hpp"
+#include "WebBuild.hpp"
 
 namespace {
 
@@ -41,7 +42,8 @@ bool CaptureCommand(const std::string& command, std::string& output) {
 namespace Levye {
 
 bool RunCommand::Execute(const std::filesystem::path& projectDirectory,
-                         BuildConfiguration configuration, ProjectPlatform platform) {
+                         BuildConfiguration configuration, ProjectPlatform platform,
+                         unsigned short port) {
   const std::filesystem::path projectFile = projectDirectory / "levye.project";
 
   // Load the original project to determine its target and default platform.
@@ -53,6 +55,36 @@ bool RunCommand::Execute(const std::filesystem::path& projectDirectory,
   }
 
   platform = ResolveProjectPlatform(platform, project->defaultPlatform);
+
+  if (platform == ProjectPlatform::Web) {
+#if defined(_WIN32)
+    std::cerr << "[Levye] Web runs currently require macOS or Linux.\n";
+    return false;
+#else
+    const auto output = WebBuild::Output(projectDirectory, configuration);
+    if (!std::filesystem::is_regular_file(output / "index.html")) {
+      std::cerr << "[Levye] Web build not found. Run 'levye build --html' first.\n";
+      return false;
+    }
+    const auto url = "http://localhost:" + std::to_string(port) + "/";
+    // Start the HTTP server first; open the browser after it is listening.
+    // A child shell launches the browser after a short delay; the server remains
+    // attached to this terminal so Ctrl+C stops it.
+    const auto browser =
+#if defined(__APPLE__)
+        "open ";
+#else
+        "xdg-open ";
+#endif
+    const auto launch =
+        "(sleep 1; " + std::string(browser) + LevyeCLI::QuoteArgument(url) + " >/dev/null 2>&1) & ";
+    const auto serve = "python3 -m http.server " + std::to_string(port) +
+                       " --bind 127.0.0.1 --directory " + LevyeCLI::QuoteArgument(output.string());
+    std::cout << "[Levye] Serving " << output << " at " << url << " (Ctrl+C to stop).\n"
+              << std::flush;
+    return std::system((launch + serve).c_str()) == 0;
+#endif
+  }
 
   if (platform == ProjectPlatform::IOS) {
 #if !defined(__APPLE__)

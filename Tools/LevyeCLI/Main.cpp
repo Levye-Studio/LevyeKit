@@ -68,9 +68,11 @@ void PrintNewHelp() {
             << "\n"
             << "Arguments:\n"
             << "  <name>            Name of the project to create\n"
-            << "  --android         Make Android the default and include its entry point\n"
+            << "  --android         Make Android the default and include its entry "
+               "point\n"
             << "  --desktop         Make Desktop the default\n"
-            << "  --ios             Make iOS the default and generate its configuration\n"
+            << "  --ios             Make iOS the default and generate its "
+               "configuration\n"
             << "\n"
             << "Options:\n"
             << "  --git             Initialize a Git repository\n"
@@ -93,7 +95,9 @@ void PrintBuildHelp() {
             << "  --desktop         Build the desktop target\n"
             << "  --android         Build an Android ARM64 APK\n"
             << "  --ios             Build an iOS arm64 simulator app\n"
-            << "  --sign            Sign an Android Release APK with [android.signing]\n"
+            << "  --html            Build the WebAssembly browser target\n"
+            << "  --sign            Sign an Android Release APK with "
+               "[android.signing]\n"
             << "  -h, --help        Show this help message\n"
             << "\n"
             << "The Debug configuration is used by default.\n";
@@ -113,6 +117,8 @@ void PrintRunHelp() {
             << "  --desktop         Run the desktop executable\n"
             << "  --android         Install and launch the Android APK\n"
             << "  --ios             Install and launch the iOS simulator app\n"
+            << "  --html            Serve an existing Web build in the browser\n"
+            << "  --port <number>   Web server port (default: 8080)\n"
             << "  -h, --help        Show this help message\n"
             << "\n"
             << "The Debug configuration is used by default.\n"
@@ -201,7 +207,8 @@ Notes:
  * @brief Prints help for the upgrade command.
  */
 void PrintUpgradeHelp() {
-  std::cout << "Upgrade an existing LevyeKit project to the current template version.\n"
+  std::cout << "Upgrade an existing LevyeKit project to the current template "
+               "version.\n"
             << "\n"
             << "Usage:\n"
             << "  levye upgrade [options]\n"
@@ -223,7 +230,8 @@ void PrintConvertHelp() {
             << "\n"
             << "Options:\n"
             << "  --dry-run         Show the complete plan without modifying files\n"
-            << "  --check           Return 2 if conversion is applicable and pending\n"
+            << "  --check           Return 2 if conversion is applicable and "
+               "pending\n"
             << "  -h, --help        Show this help message\n";
 }
 
@@ -457,7 +465,8 @@ int main(int argc, char** argv) {
     }
 
     if (argc != 2 && (argc != 4 || std::string_view(argv[2]) != "--set-default")) {
-      std::cerr << "[Levye] Usage: levye project [--set-default desktop|android|ios].\n\n";
+      std::cerr << "[Levye] Usage: levye project [--set-default "
+                   "desktop|android|ios].\n\n";
 
       PrintProjectHelp();
       return 1;
@@ -516,6 +525,13 @@ int main(int argc, char** argv) {
           return 1;
         }
         platform = Levye::ProjectPlatform::IOS;
+      } else if (option == "--html") {
+        if (platform != Levye::ProjectPlatform::ProjectDefault &&
+            platform != Levye::ProjectPlatform::Web) {
+          std::cerr << "[Levye] Conflicting platform flags.\n";
+          return 1;
+        }
+        platform = Levye::ProjectPlatform::Web;
       } else {
         std::cerr << "[Levye] Unknown build option: " << option << '\n';
         PrintBuildHelp();
@@ -618,6 +634,9 @@ int main(int argc, char** argv) {
     Levye::BuildConfiguration configuration = Levye::BuildConfiguration::Debug;
     Levye::ProjectPlatform platform = Levye::ProjectPlatform::ProjectDefault;
 
+    unsigned short port = 8080;
+    bool portSpecified = false;
+
     for (int index = 2; index < argc; ++index) {
       const std::string option = argv[index];
 
@@ -644,6 +663,32 @@ int main(int argc, char** argv) {
           return 1;
         }
         platform = Levye::ProjectPlatform::IOS;
+      } else if (option == "--html") {
+        if (platform != Levye::ProjectPlatform::ProjectDefault &&
+            platform != Levye::ProjectPlatform::Web) {
+          std::cerr << "[Levye] Conflicting platform flags.\n";
+          return 1;
+        }
+        platform = Levye::ProjectPlatform::Web;
+      } else if (option == "--port") {
+        if (portSpecified || index + 1 >= argc) {
+          std::cerr << "[Levye] --port requires one port number.\n";
+          return 1;
+        }
+        const std::string value = argv[++index];
+        if (value.empty() || value.find_first_not_of("0123456789") != std::string::npos) {
+          std::cerr << "[Levye] Invalid port. Expected 1-65535.\n";
+          return 1;
+        }
+        try {
+          const auto parsed = std::stoul(value);
+          if (parsed == 0 || parsed > 65535) throw std::out_of_range("port");
+          port = static_cast<unsigned short>(parsed);
+        } catch (const std::exception&) {
+          std::cerr << "[Levye] Invalid port. Expected 1-65535.\n";
+          return 1;
+        }
+        portSpecified = true;
       } else {
         std::cerr << "[Levye] Unknown run option: " << option << '\n';
         PrintRunHelp();
@@ -651,7 +696,11 @@ int main(int argc, char** argv) {
       }
     }
 
-    if (!Levye::RunCommand::Execute(*projectDirectory, configuration, platform)) {
+    if (portSpecified && platform != Levye::ProjectPlatform::Web) {
+      std::cerr << "[Levye] --port requires --html.\n";
+      return 1;
+    }
+    if (!Levye::RunCommand::Execute(*projectDirectory, configuration, platform, port)) {
       return 1;
     }
 
@@ -805,7 +854,8 @@ int main(int argc, char** argv) {
     }
     if (all && (platform != Levye::ProjectPlatform::ProjectDefault ||
                 configuration == Levye::BuildConfiguration::Release)) {
-      std::cerr << "[Levye] --all cannot be combined with platform or configuration flags.\n";
+      std::cerr << "[Levye] --all cannot be combined with platform or "
+                   "configuration flags.\n";
       return 1;
     }
     return all ? (Levye::CleanCommand::ExecuteAll(*projectDirectory) ? 0 : 1)
