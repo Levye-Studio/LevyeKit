@@ -846,6 +846,7 @@ add_executable(
     Tools/LevyeCLI/PlatformPreparation.cpp
     Tools/LevyeCLI/ProjectLocator.cpp
     Tools/LevyeCLI/BuildCommand.cpp
+    Tools/LevyeCLI/WebBuild.cpp
     Tools/LevyeCLI/RunCommand.cpp
     Tools/LevyeCLI/CleanCommand.cpp
     Tools/LevyeCLI/AddCommand.cpp
