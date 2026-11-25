@@ -13,7 +13,7 @@ namespace Levye {
  * LoadLibrary() on Windows are hidden behind this class.
  */
 class DynamicLibrary {
-public:
+ public:
   DynamicLibrary() = default;
 
   /**
@@ -21,8 +21,8 @@ public:
    */
   ~DynamicLibrary();
 
-  DynamicLibrary(const DynamicLibrary &) = delete;
-  DynamicLibrary &operator=(const DynamicLibrary &) = delete;
+  DynamicLibrary(const DynamicLibrary&) = delete;
+  DynamicLibrary& operator=(const DynamicLibrary&) = delete;
   /**
    * @brief Transfers ownership of a loaded dynamic library.
    *
@@ -31,7 +31,7 @@ public:
    *
    * @param other DynamicLibrary whose native handle should be transferred.
    */
-  DynamicLibrary(DynamicLibrary &&other) noexcept;
+  DynamicLibrary(DynamicLibrary&& other) noexcept;
 
   /**
    * @brief Replaces this library with another DynamicLibrary's native handle.
@@ -42,7 +42,7 @@ public:
    * @param other DynamicLibrary whose native handle should be transferred.
    * @return Reference to this DynamicLibrary.
    */
-  DynamicLibrary &operator=(DynamicLibrary &&other) noexcept;
+  DynamicLibrary& operator=(DynamicLibrary&& other) noexcept;
 
   /**
    * @brief Loads a dynamic library from disk.
@@ -50,7 +50,7 @@ public:
    * @param path Path to the dynamic library.
    * @return true when the library was loaded successfully.
    */
-  bool Load(const std::string &path);
+  bool Load(const std::string& path);
 
   /**
    * @brief Unloads the currently loaded dynamic library.
@@ -67,14 +67,14 @@ public:
    *
    * @warning Returned pointers become invalid after Unload().
    */
-  void *GetSymbol(const std::string &name) const;
+  void* GetSymbol(const std::string& name) const;
 
   /**
    * @brief Returns whether a dynamic library is currently loaded.
    */
   bool IsLoaded() const;
 
-private:
-  void *m_Handle = nullptr;
+ private:
+  void* m_Handle = nullptr;
 };
-} // namespace Levye
+}  // namespace Levye

@@ -14,7 +14,8 @@ bool ExportCommand::Execute(const std::filesystem::path& projectDirectory,
                             const ExportOptions& options) {
   const auto project = ProjectLoader::Load(projectDirectory / "levye.project");
 
-  if (!project) return false;
+  if (!project)
+    return false;
 
   const auto platform = ResolveProjectPlatform(options.platform, project->defaultPlatform);
 

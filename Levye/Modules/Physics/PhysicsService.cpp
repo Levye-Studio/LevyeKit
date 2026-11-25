@@ -41,7 +41,9 @@ std::uint32_t NextGeneration(std::uint32_t generation) {
 
 }  // namespace
 
-PhysicsService::~PhysicsService() { Shutdown(); }
+PhysicsService::~PhysicsService() {
+  Shutdown();
+}
 
 PhysicsService::WorldSlot* PhysicsService::ResolveWorld(PhysicsWorldHandle world) {
   if (!world.IsValid() || world.index >= m_Worlds.size()) {
@@ -108,7 +110,8 @@ PhysicsWorldHandle PhysicsService::CreateWorld(const PhysicsWorldDesc& desc) {
 bool PhysicsService::DestroyWorld(PhysicsWorldHandle world) {
   auto* slot = ResolveWorld(world);
 
-  if (!slot) return false;
+  if (!slot)
+    return false;
 
   slot->bodies.clear();
   slot->characters.clear();
@@ -126,9 +129,11 @@ bool PhysicsService::DestroyWorld(PhysicsWorldHandle world) {
 
 bool PhysicsService::SetWorldPaused(PhysicsWorldHandle world, bool paused) {
   auto* slot = ResolveWorld(world);
-  if (!slot) return false;
+  if (!slot)
+    return false;
   slot->paused = paused;
-  if (!paused) slot->pendingSingleSteps = 0;
+  if (!paused)
+    slot->pendingSingleSteps = 0;
   return true;
 }
 
@@ -144,7 +149,8 @@ bool PhysicsService::StepWorldOnce(PhysicsWorldHandle world) {
 bool PhysicsService::GetWorldDiagnostics(PhysicsWorldHandle world,
                                          PhysicsWorldDiagnostics& output) const {
   const auto* slot = ResolveWorld(world);
-  if (!slot) return false;
+  if (!slot)
+    return false;
   output = {};
   output.bodyCount = static_cast<std::uint32_t>(slot->bodies.size());
   output.characterCount = static_cast<std::uint32_t>(slot->characters.size());
@@ -161,10 +167,12 @@ bool PhysicsService::GetWorldDiagnostics(PhysicsWorldHandle world,
 PhysicsBodyHandle PhysicsService::CreateBody(PhysicsWorldHandle world,
                                              const PhysicsBodyDesc& desc) {
   auto* slot = ResolveWorld(world);
-  if (!slot) return {};
+  if (!slot)
+    return {};
 
   const PhysicsBodyHandle backendHandle = slot->backend->CreateBody(desc);
-  if (!backendHandle.IsValid()) ++slot->rejectedCreations;
+  if (!backendHandle.IsValid())
+    ++slot->rejectedCreations;
 
   const PhysicsBodyHandle publicHandle = RegisterBody(*slot, backendHandle);
 
@@ -178,22 +186,26 @@ PhysicsBodyHandle PhysicsService::CreateBody(PhysicsWorldHandle world,
 
 bool PhysicsService::DestroyBody(PhysicsWorldHandle world, PhysicsBodyHandle body) {
   auto* slot = ResolveWorld(world);
-  if (!slot) return false;
+  if (!slot)
+    return false;
 
   const auto it = slot->bodies.find(BodyKey(body));
-  if (it == slot->bodies.end()) return false;
+  if (it == slot->bodies.end())
+    return false;
 
   const auto backendHandle = it->second;
   for (auto constraint = slot->constraints.begin(); constraint != slot->constraints.end();) {
     if (constraint->second.bodyA == body || constraint->second.bodyB == body) {
-      if (!slot->backend->DestroyConstraint(constraint->second.backend)) return false;
+      if (!slot->backend->DestroyConstraint(constraint->second.backend))
+        return false;
       constraint = slot->constraints.erase(constraint);
     } else {
       ++constraint;
     }
   }
   DrainBackendContacts(*slot);
-  if (!slot->backend->DestroyBody(backendHandle)) return false;
+  if (!slot->backend->DestroyBody(backendHandle))
+    return false;
   DrainBackendContacts(*slot);
   slot->publicByBackend.erase(BodyKey(backendHandle));
   slot->bodies.erase(it);
@@ -203,10 +215,12 @@ bool PhysicsService::DestroyBody(PhysicsWorldHandle world, PhysicsBodyHandle bod
 bool PhysicsService::GetTransform(PhysicsWorldHandle world, PhysicsBodyHandle body,
                                   Transform& output) const {
   auto* slot = ResolveWorld(world);
-  if (!slot) return false;
+  if (!slot)
+    return false;
 
   const auto* backendHandle = ResolveBody(*slot, body);
-  if (!backendHandle) return false;
+  if (!backendHandle)
+    return false;
 
   return slot->backend->GetTransform(*backendHandle, output);
 }
@@ -214,10 +228,12 @@ bool PhysicsService::GetTransform(PhysicsWorldHandle world, PhysicsBodyHandle bo
 bool PhysicsService::SetTransform(PhysicsWorldHandle world, PhysicsBodyHandle body,
                                   const Transform& transform) {
   auto* slot = ResolveWorld(world);
-  if (!slot) return false;
+  if (!slot)
+    return false;
 
   const auto* backendHandle = ResolveBody(*slot, body);
-  if (!backendHandle) return false;
+  if (!backendHandle)
+    return false;
 
   return slot->backend->SetTransform(*backendHandle, transform);
 }
@@ -225,10 +241,12 @@ bool PhysicsService::SetTransform(PhysicsWorldHandle world, PhysicsBodyHandle bo
 bool PhysicsService::SetLinearVelocity(PhysicsWorldHandle world, PhysicsBodyHandle body,
                                        Vector3 velocity) {
   auto* slot = ResolveWorld(world);
-  if (!slot) return false;
+  if (!slot)
+    return false;
 
   const auto* backendHandle = ResolveBody(*slot, body);
-  if (!backendHandle) return false;
+  if (!backendHandle)
+    return false;
 
   return slot->backend->SetLinearVelocity(*backendHandle, velocity);
 }
@@ -236,30 +254,36 @@ bool PhysicsService::SetLinearVelocity(PhysicsWorldHandle world, PhysicsBodyHand
 bool PhysicsService::GetLinearVelocity(PhysicsWorldHandle world, PhysicsBodyHandle body,
                                        Vector3& output) const {
   auto* slot = ResolveWorld(world);
-  if (!slot) return false;
+  if (!slot)
+    return false;
 
   const auto* backendHandle = ResolveBody(*slot, body);
-  if (!backendHandle) return false;
+  if (!backendHandle)
+    return false;
 
   return slot->backend->GetLinearVelocity(*backendHandle, output);
 }
 
 bool PhysicsService::AddForce(PhysicsWorldHandle world, PhysicsBodyHandle body, Vector3 force) {
   auto* slot = ResolveWorld(world);
-  if (!slot) return false;
+  if (!slot)
+    return false;
 
   const auto* backendHandle = ResolveBody(*slot, body);
-  if (!backendHandle) return false;
+  if (!backendHandle)
+    return false;
 
   return slot->backend->AddForce(*backendHandle, force);
 }
 
 bool PhysicsService::AddImpulse(PhysicsWorldHandle world, PhysicsBodyHandle body, Vector3 impulse) {
   auto* slot = ResolveWorld(world);
-  if (!slot) return false;
+  if (!slot)
+    return false;
 
   const auto* backendHandle = ResolveBody(*slot, body);
-  if (!backendHandle) return false;
+  if (!backendHandle)
+    return false;
 
   return slot->backend->AddImpulse(*backendHandle, impulse);
 }
@@ -267,7 +291,8 @@ bool PhysicsService::AddImpulse(PhysicsWorldHandle world, PhysicsBodyHandle body
 bool PhysicsService::Raycast(PhysicsWorldHandle world, Vector3 origin, Vector3 direction,
                              float maxDistance, PhysicsRaycastHit& output) const {
   const auto* slot = ResolveWorld(world);
-  if (!slot) return false;
+  if (!slot)
+    return false;
 
   PhysicsRaycastHit backendHit{};
 
@@ -277,7 +302,8 @@ bool PhysicsService::Raycast(PhysicsWorldHandle world, Vector3 origin, Vector3 d
 
   const PhysicsBodyHandle publicBody = FindPublicBody(*slot, backendHit.body);
 
-  if (!publicBody.IsValid()) return false;
+  if (!publicBody.IsValid())
+    return false;
 
   backendHit.body = publicBody;
   output = backendHit;
@@ -288,7 +314,8 @@ bool PhysicsService::RaycastFiltered(PhysicsWorldHandle world, Vector3 origin, V
                                      float maxDistance, const PhysicsRaycastFilter& filter,
                                      PhysicsRaycastHit& output) const {
   const auto* slot = ResolveWorld(world);
-  if (!slot) return false;
+  if (!slot)
+    return false;
 
   PhysicsRaycastHit backendHit{};
 
@@ -298,7 +325,8 @@ bool PhysicsService::RaycastFiltered(PhysicsWorldHandle world, Vector3 origin, V
 
   const PhysicsBodyHandle publicBody = FindPublicBody(*slot, backendHit.body);
 
-  if (!publicBody.IsValid()) return false;
+  if (!publicBody.IsValid())
+    return false;
 
   backendHit.body = publicBody;
   output = backendHit;
@@ -308,10 +336,12 @@ bool PhysicsService::RaycastFiltered(PhysicsWorldHandle world, Vector3 origin, V
 bool PhysicsService::SetCollisionFilter(PhysicsWorldHandle world, PhysicsBodyHandle body,
                                         std::uint16_t layer, std::uint16_t mask) {
   auto* slot = ResolveWorld(world);
-  if (!slot) return false;
+  if (!slot)
+    return false;
 
   const auto* backendHandle = ResolveBody(*slot, body);
-  if (!backendHandle) return false;
+  if (!backendHandle)
+    return false;
 
   DrainBackendContacts(*slot);
 
@@ -328,18 +358,21 @@ bool PhysicsService::ShapeCast(PhysicsWorldHandle world, const PhysicsShapeDesc&
                                const PhysicsQueryFilter& filter,
                                PhysicsShapeCastHit& output) const {
   const auto* slot = ResolveWorld(world);
-  if (!slot) return false;
+  if (!slot)
+    return false;
   PhysicsQueryFilter backendFilter = filter;
   if (filter.ignoredBody.IsValid()) {
     const auto* ignored = ResolveBody(*slot, filter.ignoredBody);
-    if (!ignored) return false;
+    if (!ignored)
+      return false;
     backendFilter.ignoredBody = *ignored;
   }
   PhysicsShapeCastHit hit{};
   if (!slot->backend->ShapeCast(shape, start, direction, maxDistance, backendFilter, hit))
     return false;
   hit.body = FindPublicBody(*slot, hit.body);
-  if (!hit.body.IsValid()) return false;
+  if (!hit.body.IsValid())
+    return false;
   output = hit;
   return true;
 }
@@ -350,11 +383,13 @@ bool PhysicsService::OverlapShape(PhysicsWorldHandle world, const PhysicsShapeDe
                                   std::uint32_t& count) const {
   count = 0;
   const auto* slot = ResolveWorld(world);
-  if (!slot || (capacity != 0 && !results)) return false;
+  if (!slot || (capacity != 0 && !results))
+    return false;
   PhysicsQueryFilter backendFilter = filter;
   if (filter.ignoredBody.IsValid()) {
     const auto* ignored = ResolveBody(*slot, filter.ignoredBody);
-    if (!ignored) return false;
+    if (!ignored)
+      return false;
     backendFilter.ignoredBody = *ignored;
   }
   std::vector<PhysicsBodyHandle> hits;
@@ -366,23 +401,27 @@ bool PhysicsService::OverlapShape(PhysicsWorldHandle world, const PhysicsShapeDe
   const auto available = static_cast<std::uint32_t>(hits.size());
   if (!slot->backend->OverlapShape(shape, transform, backendFilter, hits.data(), available, count))
     return false;
-  if (count > available) return false;
+  if (count > available)
+    return false;
   for (std::uint32_t i = 0; i < count; ++i) {
     hits[i] = FindPublicBody(*slot, hits[i]);
-    if (!hits[i].IsValid()) return false;
+    if (!hits[i].IsValid())
+      return false;
   }
   std::sort(hits.begin(), hits.begin() + count, [](auto a, auto b) {
     return a.index < b.index || (a.index == b.index && a.generation < b.generation);
   });
   const auto written = std::min(count, capacity);
-  for (std::uint32_t i = 0; i < written; ++i) results[i] = hits[i];
+  for (std::uint32_t i = 0; i < written; ++i)
+    results[i] = hits[i];
   return true;
 }
 
 PhysicsCharacterHandle PhysicsService::CreateCharacter(PhysicsWorldHandle world,
                                                        const PhysicsCharacterDesc& desc) {
   auto* slot = ResolveWorld(world);
-  if (!slot || m_NextCharacterId >= std::numeric_limits<std::uint32_t>::max()) return {};
+  if (!slot || m_NextCharacterId >= std::numeric_limits<std::uint32_t>::max())
+    return {};
   const auto backend = slot->backend->CreateCharacter(desc);
   if (!backend.IsValid()) {
     ++slot->rejectedCreations;
@@ -401,16 +440,19 @@ PhysicsCharacterHandle PhysicsService::CreateCharacter(PhysicsWorldHandle world,
 
 const PhysicsCharacterHandle* PhysicsService::ResolveCharacter(
     const WorldSlot& slot, PhysicsCharacterHandle publicHandle) const {
-  if (!publicHandle.IsValid()) return nullptr;
+  if (!publicHandle.IsValid())
+    return nullptr;
   const auto it = slot.characters.find(BodyKey({publicHandle.index, publicHandle.generation}));
   return it == slot.characters.end() ? nullptr : &it->second;
 }
 
 bool PhysicsService::DestroyCharacter(PhysicsWorldHandle world, PhysicsCharacterHandle character) {
   auto* slot = ResolveWorld(world);
-  if (!slot) return false;
+  if (!slot)
+    return false;
   const auto* backend = ResolveCharacter(*slot, character);
-  if (!backend || !slot->backend->DestroyCharacter(*backend)) return false;
+  if (!backend || !slot->backend->DestroyCharacter(*backend))
+    return false;
   slot->characters.erase(BodyKey({character.index, character.generation}));
   return true;
 }
@@ -469,10 +511,12 @@ bool PhysicsService::GetCharacterGroundNormal(PhysicsWorldHandle world,
 PhysicsConstraintHandle PhysicsService::CreateConstraint(PhysicsWorldHandle world,
                                                          const PhysicsConstraintDesc& desc) {
   auto* slot = ResolveWorld(world);
-  if (!slot || m_NextConstraintId >= std::numeric_limits<std::uint32_t>::max()) return {};
+  if (!slot || m_NextConstraintId >= std::numeric_limits<std::uint32_t>::max())
+    return {};
   const auto* bodyA = ResolveBody(*slot, desc.bodyA);
   const auto* bodyB = ResolveBody(*slot, desc.bodyB);
-  if (!bodyA || !bodyB || desc.bodyA == desc.bodyB) return {};
+  if (!bodyA || !bodyB || desc.bodyA == desc.bodyB)
+    return {};
   PhysicsConstraintDesc backendDesc = desc;
   backendDesc.bodyA = *bodyA;
   backendDesc.bodyB = *bodyB;
@@ -497,7 +541,8 @@ PhysicsConstraintHandle PhysicsService::CreateConstraint(PhysicsWorldHandle worl
 bool PhysicsService::DestroyConstraint(PhysicsWorldHandle world,
                                        PhysicsConstraintHandle constraint) {
   auto* slot = ResolveWorld(world);
-  if (!slot) return false;
+  if (!slot)
+    return false;
   const auto it = slot->constraints.find(BodyKey({constraint.index, constraint.generation}));
   if (it == slot->constraints.end() || !slot->backend->DestroyConstraint(it->second.backend))
     return false;
@@ -509,7 +554,8 @@ bool PhysicsService::SetConstraintMotor(PhysicsWorldHandle world,
                                         PhysicsConstraintHandle constraint,
                                         const PhysicsMotorDesc& motor) {
   auto* slot = ResolveWorld(world);
-  if (!slot) return false;
+  if (!slot)
+    return false;
   const auto it = slot->constraints.find(BodyKey({constraint.index, constraint.generation}));
   return it != slot->constraints.end() &&
          slot->backend->SetConstraintMotor(it->second.backend, motor);
@@ -522,8 +568,10 @@ void PhysicsService::Step(float fixedDeltaTime) {
 
   for (auto& slot : m_Worlds) {
     if (slot.backend) {
-      if (slot.paused && slot.pendingSingleSteps == 0) continue;
-      if (slot.paused) --slot.pendingSingleSteps;
+      if (slot.paused && slot.pendingSingleSteps == 0)
+        continue;
+      if (slot.paused)
+        --slot.pendingSingleSteps;
       const auto start = std::chrono::steady_clock::now();
       slot.backend->Step(fixedDeltaTime);
       DrainBackendContacts(slot);
@@ -562,7 +610,8 @@ std::uint64_t PhysicsService::BodyKey(PhysicsBodyHandle handle) {
 }
 
 PhysicsBodyHandle PhysicsService::RegisterBody(WorldSlot& slot, PhysicsBodyHandle backendHandle) {
-  if (!backendHandle.IsValid()) return {};
+  if (!backendHandle.IsValid())
+    return {};
 
   if (m_NextBodyId == 0 || m_NextBodyId >= std::numeric_limits<std::uint32_t>::max()) {
     return {};
@@ -572,7 +621,8 @@ PhysicsBodyHandle PhysicsService::RegisterBody(WorldSlot& slot, PhysicsBodyHandl
 
   try {
     const auto [it, inserted] = slot.bodies.emplace(BodyKey(publicHandle), backendHandle);
-    if (!inserted) return {};
+    if (!inserted)
+      return {};
     try {
       if (!slot.publicByBackend.emplace(BodyKey(backendHandle), publicHandle).second) {
         slot.bodies.erase(it);
@@ -590,7 +640,8 @@ PhysicsBodyHandle PhysicsService::RegisterBody(WorldSlot& slot, PhysicsBodyHandl
 
 const PhysicsBodyHandle* PhysicsService::ResolveBody(const WorldSlot& slot,
                                                      PhysicsBodyHandle publicHandle) const {
-  if (!publicHandle.IsValid()) return nullptr;
+  if (!publicHandle.IsValid())
+    return nullptr;
 
   const auto it = slot.bodies.find(BodyKey(publicHandle));
   return it == slot.bodies.end() ? nullptr : &it->second;
@@ -607,7 +658,8 @@ void PhysicsService::DrainBackendContacts(WorldSlot& slot) {
   while (slot.backend->PollContactEvent(event)) {
     const auto a = FindPublicBody(slot, event.bodyA);
     const auto b = FindPublicBody(slot, event.bodyB);
-    if (!a.IsValid() || !b.IsValid()) continue;
+    if (!a.IsValid() || !b.IsValid())
+      continue;
     event.bodyA = a;
     event.bodyB = b;
     slot.contactEvents.Push(event);

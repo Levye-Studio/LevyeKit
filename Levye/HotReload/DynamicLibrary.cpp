@@ -14,14 +14,17 @@
 #endif
 
 namespace Levye {
-DynamicLibrary::~DynamicLibrary() { Unload(); }
+DynamicLibrary::~DynamicLibrary() {
+  Unload();
+}
 
 DynamicLibrary::DynamicLibrary(DynamicLibrary&& other) noexcept : m_Handle(other.m_Handle) {
   other.m_Handle = nullptr;
 }
 
 DynamicLibrary& DynamicLibrary::operator=(DynamicLibrary&& other) noexcept {
-  if (this == &other) return *this;
+  if (this == &other)
+    return *this;
 
   /*
    * Release any library currently owned by this object before taking
@@ -63,7 +66,8 @@ bool DynamicLibrary::Load(const std::string& path) {
       SetThreadErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX, &previousMode) != 0;
   m_Handle = reinterpret_cast<void*>(LoadLibraryW(nativePath.c_str()));
   const DWORD loadError = m_Handle ? ERROR_SUCCESS : GetLastError();
-  if (changedMode) SetThreadErrorMode(previousMode, nullptr);
+  if (changedMode)
+    SetThreadErrorMode(previousMode, nullptr);
 
   if (!m_Handle) {
     Logger::Error("Failed to load dynamic library: " + path + " (Windows error " +
@@ -85,7 +89,8 @@ bool DynamicLibrary::Load(const std::string& path) {
 
     Logger::Error("Failed to load dynamic library: " + path);
 
-    if (error) Logger::Error(error);
+    if (error)
+      Logger::Error(error);
 
     return false;
   }
@@ -96,7 +101,8 @@ bool DynamicLibrary::Load(const std::string& path) {
 }
 
 void DynamicLibrary::Unload() {
-  if (!m_Handle) return;
+  if (!m_Handle)
+    return;
 
 #if defined(_WIN32)
 
@@ -118,7 +124,8 @@ void DynamicLibrary::Unload() {
   if (dlclose(m_Handle) != 0) {
     const char* error = dlerror();
 
-    if (error) Logger::Error(error);
+    if (error)
+      Logger::Error(error);
   }
 
 #endif
@@ -131,7 +138,8 @@ void DynamicLibrary::Unload() {
 }
 
 void* DynamicLibrary::GetSymbol(const std::string& name) const {
-  if (!m_Handle) return nullptr;
+  if (!m_Handle)
+    return nullptr;
 
 #if defined(_WIN32)
 
@@ -175,5 +183,7 @@ void* DynamicLibrary::GetSymbol(const std::string& name) const {
 #endif
 }
 
-bool DynamicLibrary::IsLoaded() const { return m_Handle != nullptr; }
+bool DynamicLibrary::IsLoaded() const {
+  return m_Handle != nullptr;
+}
 }  // namespace Levye

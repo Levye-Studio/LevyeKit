@@ -246,7 +246,8 @@ void InputScene::Draw() {
       40, 205, 18, RAYWHITE);
   for (int i = 0; i < Levye::Input::GetTouchEventCount(); ++i) {
     Levye::TouchPoint touch;
-    if (!Levye::Input::GetTouchEvent(i, touch)) continue;
+    if (!Levye::Input::GetTouchEvent(i, touch))
+      continue;
     const bool released = Levye::Input::IsTouchReleased(touch);
     const Color color = released                                  ? ORANGE
                         : touch.phase == Levye::TouchPhase::Began ? GREEN

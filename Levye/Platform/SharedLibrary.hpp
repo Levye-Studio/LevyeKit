@@ -12,7 +12,7 @@ namespace Levye {
  * so the rest of LevyeKit does not need platform-specific filename checks.
  */
 class SharedLibrary {
-public:
+ public:
   /**
    * @brief Returns the shared-library extension for the current platform.
    *
@@ -42,4 +42,4 @@ public:
   static std::filesystem::path MakeFilename(std::string_view name);
 };
 
-} // namespace Levye
+}  // namespace Levye

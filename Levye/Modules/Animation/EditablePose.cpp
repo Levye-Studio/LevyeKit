@@ -11,11 +11,14 @@ constexpr float MinScale = 1.0e-7f;
 
 bool Finite(const AnimationBoneTransform& value) {
   for (float v : value.translation)
-    if (!std::isfinite(v)) return false;
+    if (!std::isfinite(v))
+      return false;
   for (float v : value.rotation)
-    if (!std::isfinite(v)) return false;
+    if (!std::isfinite(v))
+      return false;
   for (float v : value.scale)
-    if (!std::isfinite(v) || std::abs(v) < MinScale) return false;
+    if (!std::isfinite(v) || std::abs(v) < MinScale)
+      return false;
   const float lengthSquared =
       value.rotation[0] * value.rotation[0] + value.rotation[1] * value.rotation[1] +
       value.rotation[2] * value.rotation[2] + value.rotation[3] * value.rotation[3];
@@ -67,7 +70,8 @@ bool Relative(const Transform& parent, Transform& child) {
 }  // namespace
 
 bool EditablePose::Initialize(const ModelSkeleton& skeleton) {
-  if (!skeleton.bones || skeleton.boneCount == 0 || skeleton.boneCount > 65535) return false;
+  if (!skeleton.bones || skeleton.boneCount == 0 || skeleton.boneCount > 65535)
+    return false;
   std::vector<Bone> bones(skeleton.boneCount);
   for (unsigned int i = 0; i < skeleton.boneCount; ++i) {
     const int parent = skeleton.bones[i].parent;
@@ -81,7 +85,8 @@ bool EditablePose::Initialize(const ModelSkeleton& skeleton) {
   for (unsigned int i = 0; i < skeleton.boneCount; ++i) {
     int current = static_cast<int>(i);
     for (unsigned int steps = 0; current >= 0; ++steps) {
-      if (steps >= skeleton.boneCount) return false;
+      if (steps >= skeleton.boneCount)
+        return false;
       current = bones[static_cast<std::size_t>(current)].parent;
     }
   }
@@ -92,7 +97,8 @@ bool EditablePose::Initialize(const ModelSkeleton& skeleton) {
 }
 
 bool EditablePose::Matches(const ModelSkeleton& skeleton) const {
-  if (!skeleton.bones || skeleton.boneCount != m_Bones.size()) return false;
+  if (!skeleton.bones || skeleton.boneCount != m_Bones.size())
+    return false;
   for (unsigned int i = 0; i < skeleton.boneCount; ++i) {
     if (skeleton.bones[i].parent != m_Bones[i].parent ||
         std::strncmp(skeleton.bones[i].name, m_Bones[i].name.data(), 32) != 0)
@@ -106,25 +112,31 @@ int EditablePose::Parent(int bone) const noexcept {
 }
 
 int EditablePose::Find(const char* name) const noexcept {
-  if (!name) return -1;
+  if (!name)
+    return -1;
   for (int i = 0; i < BoneCount(); ++i)
-    if (std::strcmp(m_Bones[static_cast<std::size_t>(i)].name.data(), name) == 0) return i;
+    if (std::strcmp(m_Bones[static_cast<std::size_t>(i)].name.data(), name) == 0)
+      return i;
   return -1;
 }
 
 bool EditablePose::Name(int bone, char* output, int capacity) const noexcept {
-  if (!output || capacity <= 0 || bone < 0 || bone >= BoneCount()) return false;
+  if (!output || capacity <= 0 || bone < 0 || bone >= BoneCount())
+    return false;
   const char* name = m_Bones[static_cast<std::size_t>(bone)].name.data();
   const auto length = std::strlen(name);
-  if (length >= static_cast<std::size_t>(capacity)) return false;
+  if (length >= static_cast<std::size_t>(capacity))
+    return false;
   std::memcpy(output, name, length + 1);
   return true;
 }
 
 bool EditablePose::SetSample(const std::vector<Transform>& model) {
-  if (model.size() != m_Bones.size()) return false;
+  if (model.size() != m_Bones.size())
+    return false;
   for (const auto& transform : model)
-    if (!Finite(FromRaylib(transform))) return false;
+    if (!Finite(FromRaylib(transform)))
+      return false;
   std::vector<Transform> local = model;
   for (int i = 0; i < BoneCount(); ++i) {
     const int parent = Parent(i);
@@ -139,17 +151,21 @@ bool EditablePose::SetSample(const std::vector<Transform>& model) {
 
 std::vector<Transform> EditablePose::ModelPose() const {
   std::vector<Transform> result;
-  if (!m_Sampled) return result;
+  if (!m_Sampled)
+    return result;
   result.resize(m_Bones.size());
   for (int i = 0; i < BoneCount(); ++i)
-    if (!ModelTransform(i, result[static_cast<std::size_t>(i)])) return {};
+    if (!ModelTransform(i, result[static_cast<std::size_t>(i)]))
+      return {};
   return result;
 }
 
 bool EditablePose::ModelTransform(int bone, Transform& output) const {
-  if (!m_Sampled || bone < 0 || bone >= BoneCount()) return false;
+  if (!m_Sampled || bone < 0 || bone >= BoneCount())
+    return false;
   std::vector<int> chain;
-  for (int current = bone; current >= 0; current = Parent(current)) chain.push_back(current);
+  for (int current = bone; current >= 0; current = Parent(current))
+    chain.push_back(current);
   output = m_Local[static_cast<std::size_t>(chain.back())];
   for (auto it = chain.rbegin() + 1; it != chain.rend(); ++it)
     output = Compose(output, m_Local[static_cast<std::size_t>(*it)]);
@@ -157,12 +173,14 @@ bool EditablePose::ModelTransform(int bone, Transform& output) const {
 }
 
 bool EditablePose::Get(int bone, AnimationBoneSpace space, AnimationBoneTransform& output) const {
-  if (!m_Sampled || bone < 0 || bone >= BoneCount()) return false;
+  if (!m_Sampled || bone < 0 || bone >= BoneCount())
+    return false;
   Transform value{};
   if (space == AnimationBoneSpace::Local)
     value = m_Local[static_cast<std::size_t>(bone)];
   else if (space == AnimationBoneSpace::Model) {
-    if (!ModelTransform(bone, value)) return false;
+    if (!ModelTransform(bone, value))
+      return false;
   } else
     return false;
   output = FromRaylib(value);
@@ -170,7 +188,8 @@ bool EditablePose::Get(int bone, AnimationBoneSpace space, AnimationBoneTransfor
 }
 
 bool EditablePose::Set(int bone, AnimationBoneSpace space, const AnimationBoneTransform& value) {
-  if (!m_Sampled || bone < 0 || bone >= BoneCount() || !Finite(value)) return false;
+  if (!m_Sampled || bone < 0 || bone >= BoneCount() || !Finite(value))
+    return false;
   Transform local = ToRaylib(value);
   if (space == AnimationBoneSpace::Model) {
     const int parent = Parent(bone);
@@ -179,7 +198,8 @@ bool EditablePose::Set(int bone, AnimationBoneSpace space, const AnimationBoneTr
       if (!ModelTransform(parent, worldParent) || std::abs(worldParent.scale.x) < MinScale ||
           std::abs(worldParent.scale.y) < MinScale || std::abs(worldParent.scale.z) < MinScale)
         return false;
-      if (!Relative(worldParent, local)) return false;
+      if (!Relative(worldParent, local))
+        return false;
     }
   } else if (space != AnimationBoneSpace::Local)
     return false;

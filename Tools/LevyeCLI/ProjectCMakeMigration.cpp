@@ -15,12 +15,14 @@ namespace fs = std::filesystem;
 
 bool ReadText(const fs::path& path, std::string& result) {
   std::ifstream input(path, std::ios::binary);
-  if (!input) return false;
+  if (!input)
+    return false;
 
   std::ostringstream stream;
   stream << input.rdbuf();
 
-  if (input.bad()) return false;
+  if (input.bad())
+    return false;
   result = stream.str();
   return true;
 }
@@ -34,7 +36,8 @@ bool SafeRegularOrMissing(const fs::path& path, bool& exists) {
     return true;
   }
 
-  if (ec) return false;
+  if (ec)
+    return false;
 
   exists = fs::exists(status);
   return !exists || fs::is_regular_file(status);
@@ -43,14 +46,18 @@ bool SafeRegularOrMissing(const fs::path& path, bool& exists) {
 bool SafeSourcePath(const fs::path& sourceRoot, const fs::path& relative) {
   fs::path current = sourceRoot;
   std::error_code ec;
-  if (!fs::is_directory(fs::symlink_status(current, ec)) || ec) return false;
+  if (!fs::is_directory(fs::symlink_status(current, ec)) || ec)
+    return false;
   for (const auto& part : relative) {
     current /= part;
     ec.clear();
     const auto status = fs::symlink_status(current, ec);
-    if (ec || fs::is_symlink(status)) return false;
-    if (current == sourceRoot / relative) return fs::is_regular_file(status);
-    if (!fs::is_directory(status)) return false;
+    if (ec || fs::is_symlink(status))
+      return false;
+    if (current == sourceRoot / relative)
+      return fs::is_regular_file(status);
+    if (!fs::is_directory(status))
+      return false;
   }
   return false;
 }
@@ -87,7 +94,8 @@ bool FindGameLibrary(const std::string& content, std::size_t& begin, std::size_t
       const char c = content[i];
 
       if (comment) {
-        if (c == '\n') comment = false;
+        if (c == '\n')
+          comment = false;
         continue;
       }
 
@@ -111,7 +119,8 @@ bool FindGameLibrary(const std::string& content, std::size_t& begin, std::size_t
         continue;
       }
 
-      if (!quoted && c == '(') ++depth;
+      if (!quoted && c == '(')
+        ++depth;
 
       if (!quoted && c == ')') {
         --depth;
@@ -122,7 +131,8 @@ bool FindGameLibrary(const std::string& content, std::size_t& begin, std::size_t
       }
     }
 
-    if (close == std::string::npos || quoted || depth != 0) return false;
+    if (close == std::string::npos || quoted || depth != 0)
+      return false;
 
     const auto body = content.substr(open + 1, close - open - 1);
 
@@ -133,7 +143,8 @@ bool FindGameLibrary(const std::string& content, std::size_t& begin, std::size_t
     tokens >> target >> kind;
 
     if (target == "Game") {
-      if (found || kind != "SHARED") return false;
+      if (found || kind != "SHARED")
+        return false;
       // Only accept a literal source list for the Game target.
       if (body.find('#') != std::string::npos || body.find('"') != std::string::npos ||
           body.find('(') != std::string::npos || body.find(')') != std::string::npos) {
@@ -155,7 +166,8 @@ bool FindGameLibrary(const std::string& content, std::size_t& begin, std::size_t
         sources.push_back(source.substr(7));
       }
 
-      if (sources.empty()) return false;
+      if (sources.empty())
+        return false;
     }
 
     search = content.cbegin() + static_cast<std::ptrdiff_t>(close + 1);
@@ -316,7 +328,8 @@ bool ProjectCMakeMigration::Prepare(const fs::path& projectRoot, CMakeMigrationP
           std::string::npos;
   plan.rootCMake.replace(begin, end - begin,
                          androidNeedsSources ? gameLibrary : sourceInclude + gameLibrary);
-  if (androidNeedsSources) plan.rootCMake.insert(android, sourceInclude);
+  if (androidNeedsSources)
+    plan.rootCMake.insert(android, sourceInclude);
   constexpr std::string_view oldAndroidIncludes =
       "target_include_directories(${PROJECT_NAME}Android PRIVATE \"${LEVYE_ROOT}\")";
   const auto includes = plan.rootCMake.find(oldAndroidIncludes);
@@ -334,7 +347,8 @@ bool ProjectCMakeMigration::Prepare(const fs::path& projectRoot, CMakeMigrationP
 bool ProjectCMakeMigration::EnsureSourceManifest(const fs::path& projectRoot, std::string& error) {
   CMakeMigrationPlan plan;
 
-  if (!Prepare(projectRoot, plan, error)) return false;
+  if (!Prepare(projectRoot, plan, error))
+    return false;
 
   if (plan.updateRoot || plan.createManifest || plan.updateManifest) {
     error = "Use the transactional migration to apply CMake changes.";

@@ -10,7 +10,7 @@ namespace Levye {
  * resolve to the same host-owned asset.
  */
 class AssetPath {
-public:
+ public:
   /**
    * @brief Normalizes an asset path for use as a resource cache key.
    *
@@ -20,7 +20,7 @@ public:
    * @param path Asset path to normalize.
    * @return Normalized path string, or an empty string when path is empty.
    */
-  static std::string Normalize(const std::string &path);
+  static std::string Normalize(const std::string& path);
 
   /**
    * @brief Resolves an asset path relative to a configured asset root.
@@ -32,6 +32,6 @@ public:
    * @param path Asset path supplied by game code.
    * @return Resolved normalized filesystem path.
    */
-  static std::string Resolve(const std::string &root, const std::string &path);
+  static std::string Resolve(const std::string& root, const std::string& path);
 };
-} // namespace Levye
+}  // namespace Levye

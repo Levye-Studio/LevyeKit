@@ -6,10 +6,13 @@
 namespace Levye {
 
 AnimationResource::Batch::~Batch() {
-  if (animations) UnloadModelAnimations(animations, count);
+  if (animations)
+    UnloadModelAnimations(animations, count);
 }
 
-AnimationResource::~AnimationResource() { Clear(); }
+AnimationResource::~AnimationResource() {
+  Clear();
+}
 
 AnimationResourceHandle AnimationResource::MakeHandle(std::uint32_t index,
                                                       std::uint32_t generation) noexcept {
@@ -18,12 +21,15 @@ AnimationResourceHandle AnimationResource::MakeHandle(std::uint32_t index,
 
 const AnimationResource::Slot* AnimationResource::Find(
     AnimationResourceHandle handle) const noexcept {
-  if (!handle) return nullptr;
+  if (!handle)
+    return nullptr;
   const auto low = static_cast<std::uint32_t>(handle);
   const auto generation = static_cast<std::uint32_t>(handle >> 32);
-  if (!low || !generation) return nullptr;
+  if (!low || !generation)
+    return nullptr;
   const auto index = static_cast<std::size_t>(low - 1);
-  if (index >= m_Slots.size()) return nullptr;
+  if (index >= m_Slots.size())
+    return nullptr;
   const auto& slot = m_Slots[index];
   return slot.active && slot.generation == generation ? &slot : nullptr;
 }
@@ -49,11 +55,13 @@ void AnimationResource::Retire(std::uint32_t index) noexcept {
 }
 
 std::vector<AnimationResourceHandle> AnimationResource::Load(const std::string& path) {
-  if (path.empty()) return {};
+  if (path.empty())
+    return {};
 
   int count = 0;
   ModelAnimation* raw = LoadModelAnimations(path.c_str(), &count);
-  if (!raw) return {};
+  if (!raw)
+    return {};
   // Even an empty batch must be released through raylib.
   if (count <= 0) {
     UnloadModelAnimations(raw, count);
@@ -105,7 +113,8 @@ std::vector<AnimationResourceHandle> AnimationResource::Load(const std::string& 
 }
 
 bool AnimationResource::Unload(AnimationResourceHandle handle) {
-  if (!Find(handle)) return false;
+  if (!Find(handle))
+    return false;
   const auto index = static_cast<std::uint32_t>(handle) - 1;
   auto& slot = m_Slots[index];
   --slot.batch->live;

@@ -8,13 +8,16 @@ namespace Levye {
 namespace {
 
 PhysicsService* APIGetPhysics(void* context) {
-  if (!context) return nullptr;
+  if (!context)
+    return nullptr;
 
   auto* host = static_cast<HostContext*>(context);
   return host->physics;
 }
 
-bool APIIsAvailable(void* context) { return APIGetPhysics(context) != nullptr; }
+bool APIIsAvailable(void* context) {
+  return APIGetPhysics(context) != nullptr;
+}
 
 PhysicsWorldHandle APICreateWorld(void* context, const PhysicsWorldDesc* desc) {
   auto* physics = APIGetPhysics(context);

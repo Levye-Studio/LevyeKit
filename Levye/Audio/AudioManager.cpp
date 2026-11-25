@@ -6,9 +6,11 @@
 #include <utility>
 
 namespace Levye {
-AudioManager::~AudioManager() { Clear(); }
+AudioManager::~AudioManager() {
+  Clear();
+}
 
-AssetHandle AudioManager::LoadSound(const std::string &path) {
+AssetHandle AudioManager::LoadSound(const std::string& path) {
   const std::string normalizedPath = AssetPath::Normalize(path);
 
   if (normalizedPath.empty())
@@ -28,10 +30,8 @@ AssetHandle AudioManager::LoadSound(const std::string &path) {
 
   const AssetHandle handle{.id = m_NextHandle++, .type = AssetType::Sound};
 
-  SoundAsset asset{.sound = sound,
-                   .path = normalizedPath,
-                   .watcher = FileWatcher{},
-                   .volume = 1.0f};
+  SoundAsset asset{
+      .sound = sound, .path = normalizedPath, .watcher = FileWatcher{}, .volume = 1.0f};
 
   /*
    * Watch the source file so the sound can be replaced at runtime while its
@@ -82,7 +82,7 @@ void AudioManager::SetSoundVolume(AssetHandle handle, float volume) {
   if (iterator == m_Sounds.end())
     return;
 
-  SoundAsset &asset = iterator->second;
+  SoundAsset& asset = iterator->second;
 
   asset.volume = volume;
 
@@ -105,7 +105,7 @@ void AudioManager::UnloadSound(AssetHandle handle) {
   m_Sounds.erase(iterator);
 }
 
-AssetHandle AudioManager::LoadMusic(const std::string &path) {
+AssetHandle AudioManager::LoadMusic(const std::string& path) {
   const std::string normalizedPath = AssetPath::Normalize(path);
 
   if (normalizedPath.empty())
@@ -156,7 +156,7 @@ void AudioManager::PlayMusic(AssetHandle handle) {
   if (iterator == m_Music.end())
     return;
 
-  MusicAsset &asset = iterator->second;
+  MusicAsset& asset = iterator->second;
 
   ::PlayMusicStream(asset.music);
   asset.playing = true;
@@ -172,7 +172,7 @@ void AudioManager::PauseMusic(AssetHandle handle) {
   if (iterator == m_Music.end())
     return;
 
-  MusicAsset &asset = iterator->second;
+  MusicAsset& asset = iterator->second;
 
   if (!asset.playing)
     return;
@@ -191,7 +191,7 @@ void AudioManager::ResumeMusic(AssetHandle handle) {
   if (iterator == m_Music.end())
     return;
 
-  MusicAsset &asset = iterator->second;
+  MusicAsset& asset = iterator->second;
 
   ::ResumeMusicStream(asset.music);
 
@@ -208,7 +208,7 @@ void AudioManager::StopMusic(AssetHandle handle) {
   if (iterator == m_Music.end())
     return;
 
-  MusicAsset &asset = iterator->second;
+  MusicAsset& asset = iterator->second;
 
   ::StopMusicStream(asset.music);
 
@@ -225,7 +225,7 @@ void AudioManager::SetMusicVolume(AssetHandle handle, float volume) {
   if (iterator == m_Music.end())
     return;
 
-  MusicAsset &asset = iterator->second;
+  MusicAsset& asset = iterator->second;
 
   asset.volume = volume;
 
@@ -233,7 +233,7 @@ void AudioManager::SetMusicVolume(AssetHandle handle, float volume) {
 }
 
 void AudioManager::Update() {
-  for (auto &[id, asset] : m_Music) {
+  for (auto& [id, asset] : m_Music) {
     (void)id;
 
     if (::IsMusicStreamPlaying(asset.music)) {
@@ -242,7 +242,7 @@ void AudioManager::Update() {
   }
 }
 
-bool AudioManager::ReloadSound(SoundAsset &asset) {
+bool AudioManager::ReloadSound(SoundAsset& asset) {
   /*
    * Load the replacement before destroying the known-good sound. If loading
    * fails, the existing resource remains valid and its handle is unchanged.
@@ -262,7 +262,7 @@ bool AudioManager::ReloadSound(SoundAsset &asset) {
   return true;
 }
 
-bool AudioManager::ReloadMusic(MusicAsset &asset) {
+bool AudioManager::ReloadMusic(MusicAsset& asset) {
   const float playbackPosition = ::GetMusicTimePlayed(asset.music);
 
   Music replacement = ::LoadMusicStream(asset.path.c_str());
@@ -294,7 +294,7 @@ bool AudioManager::ReloadMusic(MusicAsset &asset) {
 }
 
 void AudioManager::CheckForChanges() {
-  for (auto &[id, asset] : m_Sounds) {
+  for (auto& [id, asset] : m_Sounds) {
     (void)id;
 
     if (!asset.watcher.Poll())
@@ -307,7 +307,7 @@ void AudioManager::CheckForChanges() {
     }
   }
 
-  for (auto &[id, asset] : m_Music) {
+  for (auto& [id, asset] : m_Music) {
     (void)id;
 
     if (!asset.watcher.Poll())
@@ -338,8 +338,7 @@ void AudioManager::UnloadMusic(AssetHandle handle) {
 }
 
 void AudioManager::Clear() {
-
-  for (auto &[id, asset] : m_Music) {
+  for (auto& [id, asset] : m_Music) {
     (void)id;
 
     ::UnloadMusicStream(asset.music);
@@ -348,7 +347,7 @@ void AudioManager::Clear() {
   m_Music.clear();
   m_MusicPathLookup.clear();
 
-  for (auto &[id, asset] : m_Sounds) {
+  for (auto& [id, asset] : m_Sounds) {
     (void)id;
 
     ::UnloadSound(asset.sound);
@@ -357,4 +356,4 @@ void AudioManager::Clear() {
   m_Sounds.clear();
   m_PathLookup.clear();
 }
-} // namespace Levye
+}  // namespace Levye

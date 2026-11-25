@@ -11,14 +11,14 @@ namespace Levye {
  * and fixed-step interpolation to reloadable game code through HostServices.
  */
 class Time {
-public:
+ public:
   /**
    * @brief Returns the scaled time elapsed since the previous frame.
    *
    * @return Scaled frame delta time in seconds.
    */
   static float Delta() {
-    const HostServices *host = Services::Get();
+    const HostServices* host = Services::Get();
 
     if (!host || !host->GetDeltaTime)
       return 0.0f;
@@ -34,7 +34,7 @@ public:
    * @return Unscaled frame delta time in seconds.
    */
   static float UnscaledDelta() {
-    const HostServices *host = Services::Get();
+    const HostServices* host = Services::Get();
 
     if (!host || !host->GetUnscaledDeltaTime)
       return 0.0f;
@@ -48,7 +48,7 @@ public:
    * @return Scaled game time in seconds.
    */
   static double Now() {
-    const HostServices *host = Services::Get();
+    const HostServices* host = Services::Get();
 
     if (!host || !host->GetTime)
       return 0.0;
@@ -62,7 +62,7 @@ public:
    * @return Unscaled game time in seconds.
    */
   static double UnscaledNow() {
-    const HostServices *host = Services::Get();
+    const HostServices* host = Services::Get();
 
     if (!host || !host->GetUnscaledTime)
       return 0.0;
@@ -76,7 +76,7 @@ public:
    * @param scale New time scale.
    */
   static void SetScale(float scale) {
-    const HostServices *host = Services::Get();
+    const HostServices* host = Services::Get();
 
     if (!host || !host->SetTimeScale)
       return;
@@ -90,7 +90,7 @@ public:
    * @return Current time scale, or 1 when host services are unavailable.
    */
   static float Scale() {
-    const HostServices *host = Services::Get();
+    const HostServices* host = Services::Get();
 
     if (!host || !host->GetTimeScale)
       return 1.0f;
@@ -104,7 +104,7 @@ public:
    * @param paused true to pause scaled game time.
    */
   static void SetPaused(bool paused) {
-    const HostServices *host = Services::Get();
+    const HostServices* host = Services::Get();
 
     if (!host || !host->SetPaused)
       return;
@@ -118,7 +118,7 @@ public:
    * @return true when game time is paused.
    */
   static bool IsPaused() {
-    const HostServices *host = Services::Get();
+    const HostServices* host = Services::Get();
 
     if (!host || !host->IsPaused)
       return false;
@@ -135,7 +135,7 @@ public:
    * @return Fixed-step interpolation value.
    */
   static float InterpolationAlpha() {
-    const HostServices *host = Services::Get();
+    const HostServices* host = Services::Get();
 
     if (!host || !host->GetInterpolationAlpha)
       return 0.0f;
@@ -144,4 +144,4 @@ public:
   }
 };
 
-} // namespace Levye
+}  // namespace Levye

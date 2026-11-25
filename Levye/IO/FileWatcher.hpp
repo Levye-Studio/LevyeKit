@@ -16,7 +16,7 @@ namespace Levye {
  * and changes that occur during a read.
  */
 class FileWatcher {
-public:
+ public:
   /**
    * @brief Creates an empty file watcher.
    */
@@ -28,9 +28,8 @@ public:
    * @param path File to watch.
    * @param debounce Minimum time a detected change must remain stable.
    */
-  explicit FileWatcher(
-      const std::string &path,
-      std::chrono::milliseconds debounce = std::chrono::milliseconds{200});
+  explicit FileWatcher(const std::string& path,
+                       std::chrono::milliseconds debounce = std::chrono::milliseconds{200});
 
   /**
    * @brief Begins watching a file.
@@ -41,7 +40,7 @@ public:
    * @param path File to watch.
    * @return true if the file state could be read successfully.
    */
-  bool Watch(const std::string &path);
+  bool Watch(const std::string& path);
 
   /**
    * @brief Checks whether the watched file has changed and stabilized.
@@ -56,25 +55,25 @@ public:
   /**
    * @brief Returns the path currently being watched.
    */
-  const std::string &GetPath() const;
+  const std::string& GetPath() const;
 
   /**
    * @brief Returns whether this watcher has a valid file to monitor.
    */
   bool IsWatching() const;
 
-private:
+ private:
   struct FileState {
     std::filesystem::file_time_type writeTime{};
     std::uintmax_t size = 0;
 
-    bool operator==(const FileState &) const = default;
+    bool operator==(const FileState&) const = default;
   };
 
   /**
    * @brief Reads the current state of the watched file.
    */
-  bool ReadState(FileState &state) const;
+  bool ReadState(FileState& state) const;
 
   std::string m_Path;
 
@@ -88,4 +87,4 @@ private:
 
   std::chrono::milliseconds m_Debounce{200};
 };
-} // namespace Levye
+}  // namespace Levye

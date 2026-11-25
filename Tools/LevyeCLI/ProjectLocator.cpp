@@ -2,12 +2,11 @@
 
 namespace Levye {
 
-std::optional<std::filesystem::path>
-ProjectLocator::Find(const std::filesystem::path &startDirectory) {
+std::optional<std::filesystem::path> ProjectLocator::Find(
+    const std::filesystem::path& startDirectory) {
   std::error_code error;
 
-  std::filesystem::path current =
-      std::filesystem::absolute(startDirectory, error);
+  std::filesystem::path current = std::filesystem::absolute(startDirectory, error);
 
   if (error)
     return std::nullopt;
@@ -41,4 +40,4 @@ ProjectLocator::Find(const std::filesystem::path &startDirectory) {
   return std::nullopt;
 }
 
-} // namespace Levye
+}  // namespace Levye

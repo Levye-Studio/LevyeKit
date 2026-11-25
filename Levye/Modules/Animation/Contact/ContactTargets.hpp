@@ -16,7 +16,8 @@ namespace Levye {
   const std::array values = {m.m0, m.m1, m.m2,  m.m3,  m.m4,  m.m5,  m.m6,  m.m7,
                              m.m8, m.m9, m.m10, m.m11, m.m12, m.m13, m.m14, m.m15};
   for (float value : values)
-    if (!std::isfinite(value)) return false;
+    if (!std::isfinite(value))
+      return false;
   return true;
 }
 
@@ -85,7 +86,9 @@ struct ContactController {
   bool hasOrientation = false;
   bool boundToSurface = false;
 
-  void Reset() noexcept { *this = {}; }
+  void Reset() noexcept {
+    *this = {};
+  }
   void Release() noexcept {
     if (state == ContactState::Acquiring || state == ContactState::Locked)
       state = ContactState::Releasing;
@@ -150,7 +153,8 @@ struct ContactController {
     if (state == ContactState::Inactive) {
       targetWorld = animationTargetWorld;
       weight = 0;
-      if (accepted) state = ContactState::Acquiring;
+      if (accepted)
+        state = ContactState::Acquiring;
     }
     if (state == ContactState::Acquiring) {
       if (!accepted) {
@@ -247,7 +251,8 @@ struct ContactController {
     return false;
   const Vector3 model = Vector3Transform(Vector3Subtract(contact.targetWorld, drawPosition),
                                          MatrixInvert(modelTransform));
-  if (!std::isfinite(model.x) || !std::isfinite(model.y) || !std::isfinite(model.z)) return false;
+  if (!std::isfinite(model.x) || !std::isfinite(model.y) || !std::isfinite(model.z))
+    return false;
   candidate.target[0] = model.x;
   candidate.target[1] = model.y;
   candidate.target[2] = model.z;

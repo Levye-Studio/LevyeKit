@@ -7,7 +7,8 @@ std::optional<RuntimePaths> RuntimePaths::Resolve(
     const std::filesystem::path& executableDirectory) {
   namespace fs = std::filesystem;
 
-  if (executableDirectory.empty() || !executableDirectory.is_absolute()) return std::nullopt;
+  if (executableDirectory.empty() || !executableDirectory.is_absolute())
+    return std::nullopt;
 
   const auto parent = executableDirectory.parent_path();
   const auto module = SharedLibrary::MakeFilename("Game");

@@ -15,7 +15,9 @@
 namespace Sandbox {
 
 namespace {
-Transform At(Vector3 position) { return {position, QuaternionIdentity(), {1, 1, 1}}; }
+Transform At(Vector3 position) {
+  return {position, QuaternionIdentity(), {1, 1, 1}};
+}
 void Copy(Quaternion q, float out[4]) {
   out[0] = q.x;
   out[1] = q.y;
@@ -71,21 +73,32 @@ bool OrientationScene::Initialize() {
 }
 
 void OrientationScene::Update(float deltaTime) {
-  if (!m_Ready || !std::isfinite(deltaTime) || deltaTime < 0) return;
-  if (Levye::Input::IsPressed("OrientationFlat")) m_Surface = 0;
-  if (Levye::Input::IsPressed("OrientationSlope")) m_Surface = 1;
-  if (Levye::Input::IsPressed("OrientationRotate")) m_Surface = 2;
+  if (!m_Ready || !std::isfinite(deltaTime) || deltaTime < 0)
+    return;
+  if (Levye::Input::IsPressed("OrientationFlat"))
+    m_Surface = 0;
+  if (Levye::Input::IsPressed("OrientationSlope"))
+    m_Surface = 1;
+  if (Levye::Input::IsPressed("OrientationRotate"))
+    m_Surface = 2;
   if (Levye::Input::IsPressed("OrientationFlat") || Levye::Input::IsPressed("OrientationSlope") ||
       Levye::Input::IsPressed("OrientationRotate"))
-    for (auto& contact : m_Contacts) contact.Reset();
-  if (Levye::Input::IsPressed("OrientationWeightDown")) m_Weight = std::max(0.0f, m_Weight - 0.1f);
-  if (Levye::Input::IsPressed("OrientationWeightUp")) m_Weight = std::min(1.0f, m_Weight + 0.1f);
-  if (Levye::Input::IsPressed("OrientationWeightZero")) m_Weight = 0;
-  if (Levye::Input::IsPressed("OrientationWeightFull")) m_Weight = 1;
-  if (Levye::Input::IsPressed("OrientationConstraints")) m_Constrained = !m_Constrained;
+    for (auto& contact : m_Contacts)
+      contact.Reset();
+  if (Levye::Input::IsPressed("OrientationWeightDown"))
+    m_Weight = std::max(0.0f, m_Weight - 0.1f);
+  if (Levye::Input::IsPressed("OrientationWeightUp"))
+    m_Weight = std::min(1.0f, m_Weight + 0.1f);
+  if (Levye::Input::IsPressed("OrientationWeightZero"))
+    m_Weight = 0;
+  if (Levye::Input::IsPressed("OrientationWeightFull"))
+    m_Weight = 1;
+  if (Levye::Input::IsPressed("OrientationConstraints"))
+    m_Constrained = !m_Constrained;
   if (Levye::Input::IsPressed("OrientationFreeze")) {
     m_FreezePosition = !m_FreezePosition;
-    if (m_FreezePosition) m_FrozenTargets = m_Targets;
+    if (m_FreezePosition)
+      m_FrozenTargets = m_Targets;
   }
   m_Time += deltaTime;
 
@@ -109,7 +122,8 @@ void OrientationScene::Update(float deltaTime) {
   skeleton.boneCount = 7;
   skeleton.bones = bones;
   Levye::EditablePose pose;
-  if (!pose.Initialize(skeleton) || !pose.SetSample(sample)) return;
+  if (!pose.Initialize(skeleton) || !pose.SetSample(sample))
+    return;
   Levye::AnimationIKChainRequest ik[2]{};
   Levye::AnimationOrientationRequest orientation[2]{};
   Levye::AnimationOrientationResult results[2]{};
@@ -139,7 +153,8 @@ void OrientationScene::Update(float deltaTime) {
     surface.valid = m_Surface == 2;
     surface.surfaceId = hit.surfaceId;
     surface.worldFromSurface = MatrixRotateZ(slope);
-    if (!m_Contacts[i].Update(hit.position, hit, config, deltaTime, &surface)) return;
+    if (!m_Contacts[i].Update(hit.position, hit, config, deltaTime, &surface))
+      return;
     const Vector3 target = m_FreezePosition ? m_FrozenTargets[i]
                            : m_Contacts[i].state == Levye::ContactState::Inactive
                                ? hit.position
@@ -175,7 +190,8 @@ void OrientationScene::Update(float deltaTime) {
     m_Results[i] = results[i];
     for (int j = 0; j < 3; ++j) {
       Levye::AnimationBoneTransform bone{};
-      if (!pose.Get(1 + 3 * i + j, Levye::AnimationBoneSpace::Model, bone)) return;
+      if (!pose.Get(1 + 3 * i + j, Levye::AnimationBoneSpace::Model, bone))
+        return;
       m_Joints[i][j] = {bone.translation[0], bone.translation[1], bone.translation[2]};
       if (j == 2)
         m_Applied[i] = {bone.rotation[0], bone.rotation[1], bone.rotation[2], bone.rotation[3]};
@@ -184,7 +200,8 @@ void OrientationScene::Update(float deltaTime) {
 }
 
 void OrientationScene::Draw() const {
-  if (!m_Ready) return;
+  if (!m_Ready)
+    return;
   Camera3D camera{{3.5f, 2.8f, 4.7f}, {0, 0.7f, 0}, {0, 1, 0}, 45, CAMERA_PERSPECTIVE};
   BeginMode3D(camera);
   DrawGrid(12, 1);
@@ -200,7 +217,8 @@ void OrientationScene::Draw() const {
     const auto& joints = m_Joints[i];
     DrawCylinderEx(joints[0], joints[1], 0.075f, 0.06f, 8, SKYBLUE);
     DrawCylinderEx(joints[1], joints[2], 0.06f, 0.045f, 8, SKYBLUE);
-    for (Vector3 point : joints) DrawSphere(point, 0.085f, WHITE);
+    for (Vector3 point : joints)
+      DrawSphere(point, 0.085f, WHITE);
     Pad(joints[2], m_Applied[i], i == 0 ? ORANGE : SKYBLUE, false);
     Axes(joints[2], m_Applied[i], 0.42f, 255);
     const Vector3 desiredPoint = Vector3Add(m_Targets[i], {0, 0, 0.62f});

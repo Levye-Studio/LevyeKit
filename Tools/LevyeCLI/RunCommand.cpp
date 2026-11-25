@@ -24,14 +24,18 @@ namespace {
  * @param path Filesystem path to quote.
  * @return Quoted path string.
  */
-std::string QuotePath(const std::filesystem::path& path) { return "\"" + path.string() + "\""; }
+std::string QuotePath(const std::filesystem::path& path) {
+  return "\"" + path.string() + "\"";
+}
 
 #if defined(__APPLE__)
 bool CaptureCommand(const std::string& command, std::string& output) {
   FILE* pipe = popen((command + " 2>&1").c_str(), "r");
-  if (!pipe) return false;
+  if (!pipe)
+    return false;
   std::array<char, 4096> buffer{};
-  while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe)) output += buffer.data();
+  while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe))
+    output += buffer.data();
   const int status = pclose(pipe);
   return status != -1 && WIFEXITED(status) && WEXITSTATUS(status) == 0;
 }

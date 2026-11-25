@@ -3,7 +3,8 @@
 #include <Levye/LevyeKit.hpp>
 namespace Sandbox {
 void MenuScene::Update() {
-  if (Levye::Input::IsPressed("Confirm")) Levye::Screen::Set("Game");
+  if (Levye::Input::IsPressed("Confirm"))
+    Levye::Screen::Set("Game");
 #if defined(__ANDROID__)
   for (int index = 0; index < Levye::Input::GetTouchEventCount(); ++index) {
     Levye::TouchPoint touch;

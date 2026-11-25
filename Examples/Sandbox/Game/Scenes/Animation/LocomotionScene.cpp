@@ -42,7 +42,9 @@ Matrix BodyRootMatrix(Vector3 position, float yaw, Quaternion tilt) {
   return result;
 }
 
-Transform At(Vector3 position) { return {position, QuaternionIdentity(), {1, 1, 1}}; }
+Transform At(Vector3 position) {
+  return {position, QuaternionIdentity(), {1, 1, 1}};
+}
 
 const char* IKName(Levye::AnimationIKChainStatus status) {
   switch (status) {
@@ -75,13 +77,15 @@ const char* RegionName(Levye::SupportRegionKind kind) {
 }  // namespace
 
 bool LocomotionScene::Initialize() {
-  if (m_Ready) return true;
+  if (m_Ready)
+    return true;
   return SetPreset(2);
 }
 
 bool LocomotionScene::SetPreset(int count) {
   const auto limbs = Levye::GaitPreset(count);
-  if (!m_Gait.Configure(limbs)) return false;
+  if (!m_Gait.Configure(limbs))
+    return false;
   m_Targets.assign(limbs.size(), {});
   m_Joints.assign(limbs.size(), {});
   m_Results.assign(limbs.size(), {});
@@ -132,17 +136,24 @@ Levye::ContactSurfaceHit LocomotionScene::QueryTerrain(Vector3 prediction, int l
 }
 
 void LocomotionScene::Update(float deltaTime) {
-  if (!m_Ready || !std::isfinite(deltaTime) || deltaTime < 0) return;
-  if (Levye::Input::IsPressed("LocomotionBiped")) (void)SetPreset(2);
-  if (Levye::Input::IsPressed("LocomotionQuadruped")) (void)SetPreset(4);
-  if (Levye::Input::IsPressed("LocomotionHexapod")) (void)SetPreset(6);
+  if (!m_Ready || !std::isfinite(deltaTime) || deltaTime < 0)
+    return;
+  if (Levye::Input::IsPressed("LocomotionBiped"))
+    (void)SetPreset(2);
+  if (Levye::Input::IsPressed("LocomotionQuadruped"))
+    (void)SetPreset(4);
+  if (Levye::Input::IsPressed("LocomotionHexapod"))
+    (void)SetPreset(6);
   if (Levye::Input::IsPressed("LocomotionWalk")) {
     m_Walking = !m_Walking;
     m_Settling = !m_Walking;
   }
-  if (Levye::Input::IsPressed("LocomotionPause")) m_Gait.SetPaused(!m_Gait.IsPaused());
-  if (Levye::Input::IsPressed("LocomotionSpeedDown")) m_Cadence = std::max(0.4f, m_Cadence - 0.15f);
-  if (Levye::Input::IsPressed("LocomotionSpeedUp")) m_Cadence = std::min(2.5f, m_Cadence + 0.15f);
+  if (Levye::Input::IsPressed("LocomotionPause"))
+    m_Gait.SetPaused(!m_Gait.IsPaused());
+  if (Levye::Input::IsPressed("LocomotionSpeedDown"))
+    m_Cadence = std::max(0.4f, m_Cadence - 0.15f);
+  if (Levye::Input::IsPressed("LocomotionSpeedUp"))
+    m_Cadence = std::min(2.5f, m_Cadence + 0.15f);
   if (Levye::Input::IsPressed("LocomotionStrideDown"))
     m_StrideLength = std::max(0.1f, m_StrideLength - 0.05f);
   if (Levye::Input::IsPressed("LocomotionStrideUp"))
@@ -151,14 +162,16 @@ void LocomotionScene::Update(float deltaTime) {
     m_MoveSpeed = std::max(0.2f, m_MoveSpeed - 0.1f);
   if (Levye::Input::IsPressed("LocomotionMoveSpeedUp"))
     m_MoveSpeed = std::min(1.4f, m_MoveSpeed + 0.1f);
-  if (Levye::Input::IsPressed("LocomotionMarch")) m_MarchInPlace = !m_MarchInPlace;
+  if (Levye::Input::IsPressed("LocomotionMarch"))
+    m_MarchInPlace = !m_MarchInPlace;
   if (Levye::Input::IsPressed("LocomotionStabilization"))
     m_Stabilizer.SetEnabled(!m_Stabilizer.IsEnabled());
   if (Levye::Input::IsPressed("LocomotionStrengthDown"))
     m_StabilizationStrength = std::max(0.0f, m_StabilizationStrength - 0.1f);
   if (Levye::Input::IsPressed("LocomotionStrengthUp"))
     m_StabilizationStrength = std::min(1.0f, m_StabilizationStrength + 0.1f);
-  if (Levye::Input::IsPressed("LocomotionSupportDebug")) m_ShowSupport = !m_ShowSupport;
+  if (Levye::Input::IsPressed("LocomotionSupportDebug"))
+    m_ShowSupport = !m_ShowSupport;
   if (Levye::Input::IsPressed("LocomotionHeightDown"))
     m_StepHeight = std::max(0.0f, m_StepHeight - 0.05f);
   if (Levye::Input::IsPressed("LocomotionHeightUp"))
@@ -173,7 +186,8 @@ void LocomotionScene::Update(float deltaTime) {
                         0,
                         (Levye::Input::IsDown("LocomotionBack") ? 1.0f : 0.0f) -
                             (Levye::Input::IsDown("LocomotionForward") ? 1.0f : 0.0f)};
-  if (Vector3LengthSqr(localVelocity) > 1) localVelocity = Vector3Normalize(localVelocity);
+  if (Vector3LengthSqr(localVelocity) > 1)
+    localVelocity = Vector3Normalize(localVelocity);
   const Vector3 desiredVelocity =
       Vector3Scale(Vector3RotateByAxisAngle(localVelocity, {0, 1, 0}, m_RootYaw), m_MoveSpeed);
   m_RootVelocity = Levye::SmoothTarget(m_RootVelocity, desiredVelocity, deltaTime, 8.0f);
@@ -181,16 +195,20 @@ void LocomotionScene::Update(float deltaTime) {
   const bool moving = Vector3LengthSqr(m_RootVelocity) > 0.0036f;
   if (m_Walking && !moving && !m_MarchInPlace) {
     for (const auto& state : m_Gait.States())
-      if (state.state == Levye::GaitPhase::Swing) m_Settling = true;
+      if (state.state == Levye::GaitPhase::Swing)
+        m_Settling = true;
   }
-  if (m_Walking && (moving || m_MarchInPlace)) m_Settling = false;
+  if (m_Walking && (moving || m_MarchInPlace))
+    m_Settling = false;
   const float frequency = (m_Walking && (moving || m_MarchInPlace)) || m_Settling ? m_Cadence : 0;
-  if (!m_Gait.Advance(deltaTime, frequency)) return;
+  if (!m_Gait.Advance(deltaTime, frequency))
+    return;
   if (m_Settling) {
     bool allStance = true;
     for (const auto& state : m_Gait.States())
       allStance = state.state == Levye::GaitPhase::Stance && allStance;
-    if (allStance) m_Settling = false;
+    if (allStance)
+      m_Settling = false;
   }
   const auto& limbs = m_Gait.Limbs();
   const int count = static_cast<int>(limbs.size());
@@ -216,7 +234,8 @@ void LocomotionScene::Update(float deltaTime) {
   skeleton.boneCount = static_cast<int>(bones.size());
   skeleton.bones = bones.data();
   Levye::EditablePose pose;
-  if (!pose.Initialize(skeleton) || !pose.SetSample(sample)) return;
+  if (!pose.Initialize(skeleton) || !pose.SetSample(sample))
+    return;
   const Matrix intentRootWorld = RootMatrix(m_RootPosition, m_RootYaw);
   std::vector<Levye::AnimationIKChainRequest> requests(limbs.size());
   Levye::ContactConfig contactConfig{};
@@ -348,7 +367,8 @@ void LocomotionScene::Update(float deltaTime) {
     request.pole[1] = pole.y;
     request.pole[2] = pole.z;
   }
-  if (!Levye::MultiChainIK::Solve(pose, requests.data(), count, m_Results.data())) return;
+  if (!Levye::MultiChainIK::Solve(pose, requests.data(), count, m_Results.data()))
+    return;
   std::vector<Levye::AnimationOrientationRequest> rotations(limbs.size());
   std::vector<Levye::AnimationOrientationResult> rotationResults(limbs.size());
   const Quaternion inverseRoot = QuaternionInvert(m_Balance.bodyOrientationWorld);
@@ -381,7 +401,8 @@ void LocomotionScene::Update(float deltaTime) {
     const int root = 1 + 3 * i;
     for (int joint = 0; joint < 3; ++joint) {
       Levye::AnimationBoneTransform bone{};
-      if (!pose.Get(root + joint, Levye::AnimationBoneSpace::Model, bone)) return;
+      if (!pose.Get(root + joint, Levye::AnimationBoneSpace::Model, bone))
+        return;
       m_Joints[static_cast<std::size_t>(i)][static_cast<std::size_t>(joint)] = Vector3Transform(
           {bone.translation[0], bone.translation[1], bone.translation[2]}, rootWorld);
     }
@@ -396,7 +417,8 @@ void LocomotionScene::Update(float deltaTime) {
 }
 
 void LocomotionScene::Draw() const {
-  if (!m_Ready) return;
+  if (!m_Ready)
+    return;
   Camera3D camera{};
   camera.position = Vector3Add(m_RootPosition, {5.2f, 4.0f, 6.6f});
   camera.target = Vector3Add(m_RootPosition, {0, 0.6f, 0});
@@ -450,7 +472,8 @@ void LocomotionScene::Draw() const {
                           Vector3Scale(Vector3RotateByQuaternion({0, 0, 1}, orientation), 0.28f)),
                BLUE);
     DrawSphereWires(m_Targets[i].targetWorld, 0.13f, 10, 12, m_Reachable[i] ? color : RED);
-    if (!m_Reachable[i]) DrawLine3D(m_Targets[i].targetWorld, m_ClampedTargets[i], RED);
+    if (!m_Reachable[i])
+      DrawLine3D(m_Targets[i].targetWorld, m_ClampedTargets[i], RED);
     if (m_Targets[i].contact.state == Levye::ContactState::Locked)
       DrawSphereWires(m_Targets[i].contact.anchorWorld, 0.19f, 10, 12, GREEN);
     if (swing) {

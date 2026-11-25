@@ -1,11 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 [[ $# == 9 ]] || exit 2
-root="$1"; target="$2"; asset="$3"; manifest="$4"
-app_name="$5"; bundle_id="$6"; version_name="$7"; version_code="$8"; icon="$9"
-fail() { echo "[Levye] $*" >&2; exit 2; }
+root="$1"
+target="$2"
+asset="$3"
+manifest="$4"
+app_name="$5"
+bundle_id="$6"
+version_name="$7"
+version_code="$8"
+icon="$9"
+
+fail() {
+  echo "[Levye] $*" >&2
+  exit 2
+}
+
 [[ "$target" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || fail 'Invalid target'
-case "$asset" in ''|/*|.|..|../*|*/../*|*/..|*/./*|./*|*/.|levye.project|levye.project/*|bin|bin/*|lib|lib/*|Launch.sh|Launch.sh/*|*.desktop) fail 'Invalid asset path';; esac
+case "$asset" in
+  ''|/*|.|..|../*|*/../*|*/..|*/./*|./*|*/.|levye.project|levye.project/*|bin|bin/*|lib|lib/*|Launch.sh|Launch.sh/*|*.desktop)
+    fail 'Invalid asset path'
+    ;;
+esac
 assets="$root/$asset"
 [[ -d "$assets" && ! -L "$assets" ]] || fail 'Missing assets'
 case "$(cd "$assets" && pwd -P)" in "$root"/*) ;; *) fail 'Assets outside project';; esac

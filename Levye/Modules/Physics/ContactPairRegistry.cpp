@@ -36,7 +36,8 @@ void ContactEventQueue::Push(PhysicsContactEvent event) {
     suppressedBegins_.insert(key);
     return;
   }
-  if (event.type == PhysicsContactEventType::Persist) return;
+  if (event.type == PhysicsContactEventType::Persist)
+    return;
 
   const auto eraseUndeliveredCycle = [&](std::deque<QueuedEvent>::iterator begin) {
     const auto cycle = Key(begin->event);
@@ -79,7 +80,8 @@ void ContactEventQueue::Push(PhysicsContactEvent event) {
 }
 
 bool ContactEventQueue::Poll(PhysicsContactEvent& output) {
-  if (events_.empty() && terminalBySequence_.empty()) return false;
+  if (events_.empty() && terminalBySequence_.empty())
+    return false;
   if (!events_.empty() && (terminalBySequence_.empty() ||
                            events_.front().sequence < terminalBySequence_.begin()->first)) {
     output = events_.front().event;
@@ -124,7 +126,8 @@ std::vector<ContactPairRegistry::Event> ContactPairRegistry::Apply(
   std::map<ChangeKey, SubChange> changes;
   std::set<BodyPair> touched;
   for (auto observation : observations) {
-    if (observation.bodyA == observation.bodyB) continue;
+    if (observation.bodyA == observation.bodyB)
+      continue;
     const auto pair = Normalize(observation.bodyA, observation.bodyB);
     if (pair.first != observation.bodyA) {
       std::swap(observation.shapeA, observation.shapeB);
@@ -179,7 +182,8 @@ std::vector<ContactPairRegistry::Event> ContactPairRegistry::Apply(
                                    : PhysicsContactEventType::End,
                         pair, state.position, state.normal, state.isSensor});
     }
-    if (!active) pairs_.erase(pair);
+    if (!active)
+      pairs_.erase(pair);
   }
   return events;
 }
@@ -215,5 +219,7 @@ std::vector<ContactPairRegistry::Event> ContactPairRegistry::EndFilteredPairs(
   return events;
 }
 
-void ContactPairRegistry::Clear() { pairs_.clear(); }
+void ContactPairRegistry::Clear() {
+  pairs_.clear();
+}
 }  // namespace Levye

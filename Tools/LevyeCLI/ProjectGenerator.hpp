@@ -26,13 +26,14 @@ class ProjectGenerator {
    * @param modules Optional modules to enable in the generated manifest.
    * @param android Selects Android as the project default when true.
    * @param ios Selects iOS as the project default when true.
+   * @param web Selects Web as the project default when true.
    * @return True when the complete project was generated successfully.
    */
   static bool Generate(const std::string& name, const std::filesystem::path& outputDirectory,
                        const std::filesystem::path& templateDirectory,
                        const std::filesystem::path& frameworkDirectory,
                        const std::vector<std::string>& modules = {}, bool android = false,
-                       bool ios = false);
+                       bool ios = false, bool web = false);
 
   /**
    * @brief Converts a human-readable project name into a build-safe target.

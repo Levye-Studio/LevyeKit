@@ -10,14 +10,22 @@ namespace {
 constexpr float Pi = 3.14159265358979323846f;
 constexpr float Epsilon = 1.0e-8f;
 
-bool Finite(Vector3 v) { return std::isfinite(v.x) && std::isfinite(v.y) && std::isfinite(v.z); }
+bool Finite(Vector3 v) {
+  return std::isfinite(v.x) && std::isfinite(v.y) && std::isfinite(v.z);
+}
 bool Finite(Quaternion q) {
   return std::isfinite(q.x) && std::isfinite(q.y) && std::isfinite(q.z) && std::isfinite(q.w) &&
          std::isfinite(QuaternionLength(q)) && QuaternionLength(q) > Epsilon;
 }
-Quaternion Read(const float q[4]) { return {q[0], q[1], q[2], q[3]}; }
-float Dot(Quaternion a, Quaternion b) { return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w; }
-Quaternion Negate(Quaternion q) { return {-q.x, -q.y, -q.z, -q.w}; }
+Quaternion Read(const float q[4]) {
+  return {q[0], q[1], q[2], q[3]};
+}
+float Dot(Quaternion a, Quaternion b) {
+  return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+}
+Quaternion Negate(Quaternion q) {
+  return {-q.x, -q.y, -q.z, -q.w};
+}
 float Angle(Quaternion a, Quaternion b) {
   return 2.0f * std::acos(std::clamp(std::abs(Dot(a, b)), 0.0f, 1.0f));
 }
@@ -49,13 +57,16 @@ bool Valid(const EditablePose& pose, const AnimationOrientationRequest& r) {
 }
 bool Ancestor(const EditablePose& pose, int ancestor, int bone) {
   for (int current = bone; current >= 0; current = pose.Parent(current))
-    if (current == ancestor) return true;
+    if (current == ancestor)
+      return true;
   return false;
 }
 Vector3 Fallback(Vector3 normal) {
   Vector3 axis{1, 0, 0};
-  if (std::abs(normal.y) < std::abs(normal.x)) axis = {0, 1, 0};
-  if (std::abs(normal.z) < std::abs(Vector3DotProduct(normal, axis))) axis = {0, 0, 1};
+  if (std::abs(normal.y) < std::abs(normal.x))
+    axis = {0, 1, 0};
+  if (std::abs(normal.z) < std::abs(Vector3DotProduct(normal, axis)))
+    axis = {0, 0, 1};
   return Vector3Normalize(Project(axis, normal));
 }
 }  // namespace
@@ -66,8 +77,10 @@ bool EndEffectorOrientation::Solve(EditablePose& pose, const AnimationOrientatio
   result.id = request.id;
   result.status =
       !request.enabled ? AnimationOrientationStatus::Disabled : AnimationOrientationStatus::Invalid;
-  if (!request.enabled) return true;
-  if (!pose.IsSampled() || !Valid(pose, request)) return false;
+  if (!request.enabled)
+    return true;
+  if (!pose.IsSampled() || !Valid(pose, request))
+    return false;
   AnimationBoneTransform local{}, parent{}, model{};
   if (!pose.Get(request.bone, AnimationBoneSpace::Local, local) ||
       !pose.Get(request.bone, AnimationBoneSpace::Model, model)) {
@@ -122,7 +135,8 @@ bool EndEffectorOrientation::Solve(EditablePose& pose, const AnimationOrientatio
     const Vector3 imaginary{delta.x, delta.y, delta.z};
     const Vector3 projected = Vector3Scale(axis, Vector3DotProduct(imaginary, axis));
     Quaternion twist{projected.x, projected.y, projected.z, delta.w};
-    if (QuaternionLength(twist) <= Epsilon) twist = {0, 0, 0, 1};
+    if (QuaternionLength(twist) <= Epsilon)
+      twist = {0, 0, 0, 1};
     twist = QuaternionNormalize(twist);
     const float signedTwist =
         2.0f * std::atan2(Vector3DotProduct({twist.x, twist.y, twist.z}, axis), twist.w);
@@ -132,7 +146,8 @@ bool EndEffectorOrientation::Solve(EditablePose& pose, const AnimationOrientatio
     const Quaternion swing =
         QuaternionNormalize(QuaternionMultiply(delta, QuaternionInvert(twist)));
     delta = QuaternionNormalize(QuaternionMultiply(swing, limitedTwist));
-    if (delta.w < 0) delta = Negate(delta);
+    if (delta.w < 0)
+      delta = Negate(delta);
     const float angle = Angle({0, 0, 0, 1}, delta);
     if (angle > request.maxAngle)
       delta = QuaternionSlerp({0, 0, 0, 1}, delta, request.maxAngle / angle);
@@ -145,7 +160,8 @@ bool EndEffectorOrientation::Solve(EditablePose& pose, const AnimationOrientatio
           : desired;
   Quaternion current = QuaternionNormalize(Read(local.rotation));
   Quaternion endpoint = desiredLocal;
-  if (Dot(current, endpoint) < 0) endpoint = Negate(endpoint);
+  if (Dot(current, endpoint) < 0)
+    endpoint = Negate(endpoint);
   const Quaternion blended =
       QuaternionNormalize(QuaternionSlerp(current, endpoint, request.weight));
   local.rotation[0] = blended.x;
@@ -167,7 +183,8 @@ bool EndEffectorOrientation::Solve(EditablePose& pose, const AnimationOrientatio
 bool EndEffectorOrientation::SolveBatch(EditablePose& pose,
                                         const AnimationOrientationRequest* requests, int count,
                                         AnimationOrientationResult* results) {
-  if (!pose.IsSampled() || count < 0 || (count > 0 && (!requests || !results))) return false;
+  if (!pose.IsSampled() || count < 0 || (count > 0 && (!requests || !results)))
+    return false;
   for (int i = 0; i < count; ++i) {
     results[i] = {};
     results[i].id = requests[i].id;
@@ -177,7 +194,8 @@ bool EndEffectorOrientation::SolveBatch(EditablePose& pose,
   }
   for (int i = 0; i < count; ++i) {
     for (int j = i + 1; j < count; ++j) {
-      if (!requests[i].enabled || !requests[j].enabled) continue;
+      if (!requests[i].enabled || !requests[j].enabled)
+        continue;
       if (requests[i].id == requests[j].id) {
         results[i].status = AnimationOrientationStatus::Invalid;
         results[j].status = AnimationOrientationStatus::Invalid;
@@ -201,7 +219,8 @@ bool EndEffectorOrientation::SolveBatch(EditablePose& pose,
           (!haveLast || requests[i].id > last) &&
           (index < 0 || requests[i].id < requests[index].id))
         index = i;
-    if (index < 0) break;
+    if (index < 0)
+      break;
     last = requests[index].id;
     haveLast = true;
     (void)Solve(pose, requests[index], results[index]);
@@ -223,21 +242,24 @@ bool EndEffectorOrientation::SurfaceOrientation(Vector3 normal, Vector3 forward,
                                     ? QuaternionFromAxisAngle(Fallback(localUp), Pi)
                                     : QuaternionFromVector3ToVector3(localUp, normal);
   Vector3 currentForward = Project(Vector3RotateByQuaternion(localForward, upRotation), normal);
-  if (Vector3LengthSqr(currentForward) <= Epsilon) return false;
+  if (Vector3LengthSqr(currentForward) <= Epsilon)
+    return false;
   currentForward = Vector3Normalize(currentForward);
   Vector3 targetForward = Project(forward, normal);
   const float forwardLengthSquared = Vector3LengthSqr(forward);
   const float nearParallelThreshold = std::max(Epsilon, forwardLengthSquared * 1.0e-4f);
   if (Vector3LengthSqr(targetForward) <= nearParallelThreshold && previous)
     targetForward = Project(Vector3RotateByQuaternion(localForward, *previous), normal);
-  if (Vector3LengthSqr(targetForward) <= nearParallelThreshold) targetForward = Fallback(normal);
+  if (Vector3LengthSqr(targetForward) <= nearParallelThreshold)
+    targetForward = Fallback(normal);
   targetForward = Vector3Normalize(targetForward);
   const float angle =
       std::atan2(Vector3DotProduct(normal, Vector3CrossProduct(currentForward, targetForward)),
                  Vector3DotProduct(currentForward, targetForward));
   Quaternion candidate =
       QuaternionNormalize(QuaternionMultiply(QuaternionFromAxisAngle(normal, angle), upRotation));
-  if (previous && Dot(candidate, *previous) < 0) candidate = Negate(candidate);
+  if (previous && Dot(candidate, *previous) < 0)
+    candidate = Negate(candidate);
   output = candidate;
   return true;
 }

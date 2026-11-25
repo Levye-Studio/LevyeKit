@@ -32,7 +32,8 @@ bool Inspect(const fs::path& path, bool& exists) {
     return true;
   }
 
-  if (ec) return false;
+  if (ec)
+    return false;
 
   exists = fs::exists(status);
   return !exists || fs::is_regular_file(status);
@@ -40,7 +41,8 @@ bool Inspect(const fs::path& path, bool& exists) {
 
 bool Write(const fs::path& path, const std::string& content) {
   std::ofstream out(path, std::ios::binary | std::ios::trunc);
-  if (!out) return false;
+  if (!out)
+    return false;
 
   out.write(content.data(), static_cast<std::streamsize>(content.size()));
   out.close();
@@ -59,7 +61,8 @@ bool CommitFiles(const fs::path& projectRoot, const std::vector<PendingFile>& fi
                  std::string& error, const TransactionFailureInjection* injection,
                  const std::function<bool(std::string&)>& validate) {
   error.clear();
-  if (files.empty()) return true;
+  if (files.empty())
+    return true;
 
   std::error_code ec;
   const auto rootStatus = fs::symlink_status(projectRoot, ec);
@@ -184,7 +187,8 @@ bool CommitFiles(const fs::path& projectRoot, const std::vector<PendingFile>& fi
         }
         createdDirectories.push_back(*it);
       }
-      if (!success) break;
+      if (!success)
+        break;
 
       if (ShouldFail(injection, TransactionFailurePoint::BeforeBackup, i)) {
         error = "Injected failure before backup.";
@@ -239,7 +243,8 @@ bool CommitFiles(const fs::path& projectRoot, const std::vector<PendingFile>& fi
   }
 
   if (success && validate && !validate(error)) {
-    if (error.empty()) error = "Post-install validation failed.";
+    if (error.empty())
+      error = "Post-install validation failed.";
     success = false;
   }
 
@@ -264,7 +269,8 @@ bool CommitFiles(const fs::path& projectRoot, const std::vector<PendingFile>& fi
         ec.clear();
         fs::rename(it->backup, it->destination, ec);
 
-        if (ec) rollbackOk = false;
+        if (ec)
+          rollbackOk = false;
       } else if (it->movedOriginal) {
         rollbackOk = false;
       }
@@ -277,7 +283,8 @@ bool CommitFiles(const fs::path& projectRoot, const std::vector<PendingFile>& fi
     for (auto it = createdDirectories.rbegin(); it != createdDirectories.rend(); ++it) {
       ec.clear();
       fs::remove(*it, ec);
-      if (ec) rollbackOk = false;
+      if (ec)
+        rollbackOk = false;
     }
     if (!rollbackOk) {
       error += "; rollback incomplete; backups retained at " + work.string();

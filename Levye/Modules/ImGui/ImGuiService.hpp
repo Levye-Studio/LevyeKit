@@ -48,7 +48,9 @@ class ImGuiService {
   /**
    * @brief Returns whether the service is currently initialized.
    */
-  [[nodiscard]] bool IsInitialized() const { return m_Initialized; }
+  [[nodiscard]] bool IsInitialized() const {
+    return m_Initialized;
+  }
 
   /**
    * @brief Updates gameplay input capture preferences.

@@ -8,6 +8,7 @@
 #include <regex>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 
 namespace Levye {
@@ -27,36 +28,46 @@ struct Token {
 
 bool ReadRegular(const fs::path& path, std::string& text) {
   std::error_code ec;
-  if (!fs::is_regular_file(fs::symlink_status(path, ec)) || ec) return false;
+  if (!fs::is_regular_file(fs::symlink_status(path, ec)) || ec)
+    return false;
   std::ifstream input(path, std::ios::binary);
-  if (!input) return false;
+  if (!input)
+    return false;
   text.assign(std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>());
   return !input.bad();
 }
 
 bool SafeSource(const fs::path& root, const fs::path& source) {
-  if (source.empty() || source.is_absolute()) return false;
+  if (source.empty() || source.is_absolute())
+    return false;
   fs::path current = root;
   for (const auto& part : source) {
-    if (part == "." || part == ".." || part.empty()) return false;
+    if (part == "." || part == ".." || part.empty())
+      return false;
     current /= part;
     std::error_code ec;
     const auto status = fs::symlink_status(current, ec);
-    if (ec || fs::is_symlink(status)) return false;
-    if (current == root / source) return fs::is_regular_file(status);
-    if (!fs::is_directory(status)) return false;
+    if (ec || fs::is_symlink(status))
+      return false;
+    if (current == root / source)
+      return fs::is_regular_file(status);
+    if (!fs::is_directory(status))
+      return false;
   }
   return false;
 }
 
 bool SafeDirectory(const fs::path& root, const fs::path& directory) {
-  if (directory.empty() || directory.is_absolute()) return false;
+  if (directory.empty() || directory.is_absolute())
+    return false;
   fs::path current = root;
   for (const auto& part : directory) {
-    if (part == "." || part == ".." || part.empty()) return false;
+    if (part == "." || part == ".." || part.empty())
+      return false;
     current /= part;
     std::error_code ec;
-    if (!fs::is_directory(fs::symlink_status(current, ec)) || ec) return false;
+    if (!fs::is_directory(fs::symlink_status(current, ec)) || ec)
+      return false;
   }
   return true;
 }
@@ -65,7 +76,8 @@ bool SafeName(std::string_view name) {
   if (name.empty() || !(std::isalpha(static_cast<unsigned char>(name[0])) || name[0] == '_'))
     return false;
   for (unsigned char c : name)
-    if (!std::isalnum(c) && c != '_' && c != '-' && c != '.' && c != '+') return false;
+    if (!std::isalnum(c) && c != '_' && c != '-' && c != '.' && c != '+')
+      return false;
   return true;
 }
 
@@ -92,7 +104,8 @@ bool ParseCommands(const std::string& cmake, std::vector<Command>& commands, std
     std::string name = cmake.substr(begin, i - begin);
     std::transform(name.begin(), name.end(), name.begin(),
                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-    while (i < cmake.size() && std::isspace(static_cast<unsigned char>(cmake[i]))) ++i;
+    while (i < cmake.size() && std::isspace(static_cast<unsigned char>(cmake[i])))
+      ++i;
     if (i == cmake.size() || cmake[i] != '(') {
       error = "Unsupported CMake command syntax near " + name + ".";
       return false;
@@ -103,7 +116,8 @@ bool ParseCommands(const std::string& cmake, std::vector<Command>& commands, std
     for (; i < cmake.size(); ++i) {
       const char c = cmake[i];
       if (comment) {
-        if (c == '\n') comment = false;
+        if (c == '\n')
+          comment = false;
         continue;
       }
       if (escaped) {
@@ -122,8 +136,10 @@ bool ParseCommands(const std::string& cmake, std::vector<Command>& commands, std
         comment = true;
         continue;
       }
-      if (!quoted && c == '(') ++depth;
-      if (!quoted && c == ')' && --depth == 0) break;
+      if (!quoted && c == '(')
+        ++depth;
+      if (!quoted && c == ')' && --depth == 0)
+        break;
     }
     if (i == cmake.size() || quoted || depth != 0) {
       error = "Unbalanced CMake command: " + name + ".";
@@ -150,10 +166,12 @@ bool CMakeArguments(const std::string& body, std::vector<std::string>& arguments
     if (body[i] == '"') {
       ++i;
       while (i < body.size() && body[i] != '"') {
-        if (body[i] == '\\') return false;
+        if (body[i] == '\\')
+          return false;
         value += body[i++];
       }
-      if (i == body.size()) return false;
+      if (i == body.size())
+        return false;
       ++i;
       if (i < body.size() && !std::isspace(static_cast<unsigned char>(body[i])) && body[i] != '#')
         return false;
@@ -172,7 +190,8 @@ bool CMakeArguments(const std::string& body, std::vector<std::string>& arguments
 }
 
 bool IsPlainValue(std::string_view value) {
-  if (value.empty()) return false;
+  if (value.empty())
+    return false;
   for (unsigned char c : value) {
     if (!std::isalnum(c) && c != '_' && c != '-' && c != '.' && c != '/' && c != '+' && c != '=' &&
         c != ':')
@@ -202,7 +221,8 @@ bool ParseCpp(const std::string& source, std::vector<Token>& tokens,
     }
     if (source.compare(i, 2, "/*") == 0) {
       const auto end = source.find("*/", i + 2);
-      if (end == std::string::npos) return false;
+      if (end == std::string::npos)
+        return false;
       i = end + 2;
       continue;
     }
@@ -238,7 +258,8 @@ bool ParseCpp(const std::string& source, std::vector<Token>& tokens,
           escaped = false;
         ++i;
       }
-      if (!closed) return false;
+      if (!closed)
+        return false;
     } else {
       ++i;
     }
@@ -297,10 +318,12 @@ bool DrawArguments(std::string_view call, const std::vector<std::vector<Token>>&
   for (std::size_t i = 0; i + 1 < args.size(); ++i) {
     const auto& arg = args[i];
     if (firstString && i == 0) {
-      if (arg.size() != 1 || arg[0].text.size() < 2 || arg[0].text.front() != '"') return false;
+      if (arg.size() != 1 || arg[0].text.size() < 2 || arg[0].text.front() != '"')
+        return false;
     } else {
       const auto offset = arg.size() == 2 && arg[0].text == "-" ? 1u : 0u;
-      if (arg.size() != offset + 1 || !IsNumber(arg[offset])) return false;
+      if (arg.size() != offset + 1 || !IsNumber(arg[offset]))
+        return false;
     }
   }
   return true;
@@ -323,7 +346,8 @@ bool ParseRaylibMain(const std::string& source, std::string_view projectName,
   }
   std::size_t i = 0;
   auto take = [&](std::string_view expected) {
-    if (i >= tokens.size() || tokens[i].text != expected) return false;
+    if (i >= tokens.size() || tokens[i].text != expected)
+      return false;
     ++i;
     return true;
   };
@@ -331,7 +355,8 @@ bool ParseRaylibMain(const std::string& source, std::string_view projectName,
     error = "Expected a standalone int main() entry point.";
     return false;
   }
-  if (i < tokens.size() && tokens[i].text == "void") ++i;
+  if (i < tokens.size() && tokens[i].text == "void")
+    ++i;
   if (!take(")") || !take("{") || !take("InitWindow") || !take("(")) {
     error = "Expected InitWindow at the start of main().";
     return false;
@@ -410,7 +435,8 @@ bool ParseRaylibMain(const std::string& source, std::string_view projectName,
 int CountMains(const std::string& source) {
   std::vector<Token> tokens;
   std::vector<std::string> directives;
-  if (!ParseCpp(source, tokens, directives)) return -1;
+  if (!ParseCpp(source, tokens, directives))
+    return -1;
   int count = 0;
   for (std::size_t i = 1; i + 1 < tokens.size(); ++i)
     if (tokens[i].text == "main" && tokens[i + 1].text == "(" &&
@@ -418,9 +444,44 @@ int CountMains(const std::string& source) {
       ++count;
   return count;
 }
+
+void InspectCapabilities(const fs::path& root, const std::string& cmake,
+                         ConversionAnalysis& result) {
+  auto add = [&](std::string category, std::string detail, bool adapter) {
+    result.findings.push_back({std::move(category), std::move(detail), adapter});
+  };
+  if (cmake.find("FetchContent") != std::string::npos)
+    add("dependency", "FetchContent dependencies require reviewed CMake integration", true);
+  if (cmake.find("add_test(") != std::string::npos ||
+      cmake.find("enable_testing(") != std::string::npos)
+    add("tests", "Existing CMake tests must remain buildable after conversion", true);
+  if (cmake.find("if(ANDROID)") != std::string::npos ||
+      cmake.find("if (ANDROID)") != std::string::npos)
+    add("android", "Android target or source selection needs a platform adapter", true);
+  if (cmake.find("EMSCRIPTEN") != std::string::npos)
+    add("web", "Web target or linker settings need a platform adapter", true);
+  for (const auto& [name, category] :
+       {std::pair{"android", "android"}, std::pair{"ios", "ios"}, std::pair{"web", "web"}}) {
+    std::error_code ec;
+    if (fs::is_directory(fs::symlink_status(root / name, ec)) && !ec)
+      add(category, std::string("Existing ") + name + " integration requires review", true);
+  }
+  std::vector<fs::path> seenAssets;
+  for (const char* name : {"Assets", "assets", "Resources", "resources"}) {
+    std::error_code ec;
+    if (fs::is_directory(fs::symlink_status(root / name, ec)) && !ec) {
+      const auto resolved = fs::canonical(root / name, ec);
+      if (!ec && std::find(seenAssets.begin(), seenAssets.end(), resolved) == seenAssets.end()) {
+        seenAssets.push_back(resolved);
+        add("assets", std::string("Discovered asset directory: ") + name, false);
+      }
+    }
+  }
+}
 }  // namespace
 
-ConversionAnalysis ProjectAnalyzer::Analyze(const fs::path& projectRoot) {
+ConversionAnalysis ProjectAnalyzer::Analyze(const fs::path& projectRoot,
+                                            const fs::path& assetOverride) {
   ConversionAnalysis result;
   std::error_code ec;
   const auto status = fs::symlink_status(projectRoot, ec);
@@ -443,18 +504,30 @@ ConversionAnalysis ProjectAnalyzer::Analyze(const fs::path& projectRoot) {
     result.errors.push_back("Missing or unsafe CMakeLists.txt.");
     return result;
   }
+  InspectCapabilities(result.projectRoot, result.originalCMake, result);
   std::vector<Command> commands;
   std::string error;
   if (!ParseCommands(result.originalCMake, commands, error)) {
     result.errors.push_back(error);
     return result;
   }
-  bool standard20 = false;
+  bool supportedStandard = false;
+  std::unordered_map<std::string, std::vector<std::string>> sourceLists;
   for (const auto& command : commands) {
     std::vector<std::string> args;
     if (!CMakeArguments(command.body, args)) {
       result.errors.push_back("Unsupported arguments in CMake command " + command.name + ".");
       continue;
+    }
+    if ((command.name == "add_executable" || command.name == "add_library") && !args.empty())
+      result.observedTargets.push_back(args.front());
+    if (command.name == "find_package" && !args.empty())
+      result.observedDependencies.push_back(args.front());
+    for (const auto& arg : args) {
+      const fs::path path(arg);
+      if (arg.find('$') == std::string::npos &&
+          (path.extension() == ".cpp" || path.extension() == ".cc" || path.extension() == ".cxx"))
+        result.observedSources.push_back(path);
     }
     if (command.name == "cmake_minimum_required") {
       if (args.size() != 2 || args[0] != "VERSION")
@@ -466,13 +539,28 @@ ConversionAnalysis ProjectAnalyzer::Analyze(const fs::path& projectRoot) {
       else
         result.projectName = args[0];
     } else if (command.name == "set") {
-      if (args.size() != 2 ||
-          (args[0] != "CMAKE_CXX_STANDARD" && args[0] != "CMAKE_CXX_STANDARD_REQUIRED" &&
-           args[0] != "CMAKE_EXPORT_COMPILE_COMMANDS")) {
+      if (args.size() == 2 &&
+          (args[0] == "CMAKE_CXX_STANDARD" || args[0] == "CMAKE_CXX_STANDARD_REQUIRED" ||
+           args[0] == "CMAKE_EXPORT_COMPILE_COMMANDS")) {
+        if (args[0] == "CMAKE_CXX_STANDARD")
+          supportedStandard = args[1] == "17" || args[1] == "20";
+      } else if (args.size() >= 2 && SafeName(args[0])) {
+        bool literalSources = true;
+        for (std::size_t i = 1; i < args.size(); ++i) {
+          const fs::path source(args[i]);
+          if ((source.extension() != ".cpp" && source.extension() != ".cc" &&
+               source.extension() != ".cxx") ||
+              !SafeSource(result.projectRoot, source)) {
+            literalSources = false;
+            break;
+          }
+        }
+        if (literalSources)
+          sourceLists[args[0]] = {args.begin() + 1, args.end()};
+        else
+          result.errors.push_back("Unsupported CMake set() expression: " + args[0]);
+      } else
         result.errors.push_back("Unsupported CMake set() expression.");
-      } else if (args[0] == "CMAKE_CXX_STANDARD") {
-        standard20 = args[1] == "20";
-      }
     } else if (command.name == "find_package") {
       if (!((args.size() == 2 && args[0] == "raylib" && args[1] == "REQUIRED") ||
             (args.size() == 3 && args[0] == "raylib" && args[1] == "6.2" && args[2] == "REQUIRED")))
@@ -498,18 +586,29 @@ ConversionAnalysis ProjectAnalyzer::Analyze(const fs::path& projectRoot) {
           result.errors.push_back("Only STATIC or SHARED libraries are supported.");
         sourceStart = 2;
       }
+      std::vector<std::string> expanded;
       for (std::size_t i = sourceStart; i < args.size(); ++i) {
-        const fs::path source(args[i]);
-        if (args[i].find('$') != std::string::npos || args[i].find('\n') != std::string::npos ||
-            args[i].find('\r') != std::string::npos ||
+        const auto& value = args[i];
+        if (value.size() > 3 && value.starts_with("${") && value.back() == '}' &&
+            sourceLists.contains(value.substr(2, value.size() - 3))) {
+          const auto& sources = sourceLists.at(value.substr(2, value.size() - 3));
+          expanded.insert(expanded.end(), sources.begin(), sources.end());
+        } else
+          expanded.push_back(value);
+      }
+      for (const auto& value : expanded) {
+        const fs::path source(value);
+        if (value.find('$') != std::string::npos || value.find('\n') != std::string::npos ||
+            value.find('\r') != std::string::npos ||
             (source.extension() != ".cpp" && source.extension() != ".cc" &&
              source.extension() != ".cxx") ||
             !SafeSource(result.projectRoot, source))
-          result.errors.push_back("Missing, generated, or escaping source: " + args[i]);
+          result.errors.push_back("Missing, generated, or escaping source: " + value);
         else
           target.sources.push_back(source);
       }
-      if (target.sources.empty()) result.errors.push_back("Target has no supported C++ sources.");
+      if (target.sources.empty())
+        result.errors.push_back("Target has no supported C++ sources.");
       result.targets.push_back(std::move(target));
     } else if (command.name == "target_link_libraries" ||
                command.name == "target_include_directories" ||
@@ -531,7 +630,8 @@ ConversionAnalysis ProjectAnalyzer::Analyze(const fs::path& projectRoot) {
         } else if (command.name == "target_include_directories") {
           std::string path = args[i];
           constexpr std::string_view prefix = "${CMAKE_CURRENT_SOURCE_DIR}/";
-          if (path.starts_with(prefix)) path.erase(0, prefix.size());
+          if (path.starts_with(prefix))
+            path.erase(0, prefix.size());
           if (path.find('$') != std::string::npos || !SafeDirectory(result.projectRoot, path))
             result.errors.push_back("Unsupported include directory: " + args[i]);
           else
@@ -548,11 +648,22 @@ ConversionAnalysis ProjectAnalyzer::Analyze(const fs::path& projectRoot) {
       result.errors.push_back("Unsupported CMake command: " + command.name + ".");
     }
   }
-  if (!standard20) result.errors.push_back("Supported projects must explicitly use C++20.");
-  if (result.projectName.empty()) result.errors.push_back("No supported CMake project name found.");
+  result.findings.push_back(
+      {"sources",
+       "Found " + std::to_string(result.observedSources.size()) + " literal C++ source references",
+       false});
+  result.findings.push_back(
+      {"targets",
+       "Found " + std::to_string(result.observedTargets.size()) + " CMake target declarations",
+       false});
+  if (!supportedStandard)
+    result.errors.push_back("Supported projects must explicitly use C++17 or C++20.");
+  if (result.projectName.empty())
+    result.errors.push_back("No supported CMake project name found.");
   if (result.targets.size() != 1)
     result.errors.push_back("Expected exactly one executable or library target.");
-  if (!result.errors.empty()) return result;
+  if (!result.errors.empty())
+    return result;
 
   auto& target = result.targets.front();
   if (target.name == "Game")
@@ -573,6 +684,13 @@ ConversionAnalysis ProjectAnalyzer::Analyze(const fs::path& projectRoot) {
         result.lifecycle = ConversionLifecycle::GLFWApplication;
     }
     const int count = CountMains(code);
+    if (target.type == ConversionProjectType::Executable && count == 0 &&
+        (code.find("InitWindow(") != std::string::npos ||
+         code.find("CloseWindow(") != std::string::npos ||
+         code.find("BeginDrawing(") != std::string::npos ||
+         code.find("EndDrawing(") != std::string::npos))
+      result.errors.push_back("Additional source owns a raylib lifecycle call: " +
+                              source.generic_string());
     if (count < 0)
       result.errors.push_back("Malformed C++ source: " + source.generic_string());
     else if (count > 0) {
@@ -580,7 +698,8 @@ ConversionAnalysis ProjectAnalyzer::Analyze(const fs::path& projectRoot) {
       result.entryPoint = source;
     }
   }
-  if (mainCount > 1) result.errors.push_back("Multiple main() definitions are unsupported.");
+  if (mainCount > 1)
+    result.errors.push_back("Multiple main() definitions are unsupported.");
   if (target.type == ConversionProjectType::Executable) {
     if (mainCount == 0)
       result.errors.push_back("Executable has no main() definition.");
@@ -590,9 +709,6 @@ ConversionAnalysis ProjectAnalyzer::Analyze(const fs::path& projectRoot) {
                   result.lifecycle == ConversionLifecycle::GLFWApplication
               ? "SDL/GLFW lifecycle requires manual adaptation."
               : "Ordinary C++ executable lifecycle requires manual adaptation.");
-    else if (target.sources.size() != 1)
-      result.errors.push_back(
-          "Automatic raylib lifecycle adaptation currently requires one source file.");
     else if (result.errors.empty()) {
       std::string code;
       ReadRegular(result.projectRoot / result.entryPoint, code);
@@ -602,9 +718,19 @@ ConversionAnalysis ProjectAnalyzer::Analyze(const fs::path& projectRoot) {
         result.lifecycle = ConversionLifecycle::RaylibApplication;
     }
   } else {
-    if (mainCount != 0) result.errors.push_back("Library contains a main() entry point.");
+    if (mainCount != 0)
+      result.errors.push_back("Library contains a main() entry point.");
     result.lifecycle = ConversionLifecycle::NoEntryPoint;
   }
+  if (!assetOverride.empty()) {
+    if (!SafeDirectory(result.projectRoot, assetOverride))
+      result.errors.push_back(
+          "--assets must name an existing, project-relative directory without symlinks.");
+    else
+      result.assetDirectory = assetOverride;
+    return result;
+  }
+  bool foundAssets = false;
   for (const char* directory : {"Assets", "assets", "Resources", "resources"}) {
     fs::path candidate;
     for (const auto& entry : fs::directory_iterator(result.projectRoot, ec)) {
@@ -617,7 +743,8 @@ ConversionAnalysis ProjectAnalyzer::Analyze(const fs::path& projectRoot) {
       result.errors.push_back("Cannot inspect project asset directories.");
       break;
     }
-    if (candidate.empty()) continue;
+    if (candidate.empty())
+      continue;
     ec.clear();
     const auto fileStatus = fs::symlink_status(candidate, ec);
     if (fileStatus.type() == fs::file_type::not_found ||
@@ -634,8 +761,12 @@ ConversionAnalysis ProjectAnalyzer::Analyze(const fs::path& projectRoot) {
     if (!ec && !fs::is_directory(fileStatus))
       result.errors.push_back("Asset path is not a directory: " + std::string(directory));
     if (!ec && fs::is_directory(fileStatus)) {
-      result.assetDirectory = directory;
-      break;
+      if (foundAssets)
+        result.errors.push_back("Multiple asset directories found; choose one before conversion.");
+      else {
+        result.assetDirectory = directory;
+        foundAssets = true;
+      }
     }
   }
   return result;

@@ -23,7 +23,9 @@ namespace {
  * @param path Filesystem path to quote.
  * @return Quoted path string.
  */
-std::string QuotePath(const std::filesystem::path& path) { return "\"" + path.string() + "\""; }
+std::string QuotePath(const std::filesystem::path& path) {
+  return "\"" + path.string() + "\"";
+}
 
 }  // namespace
 
@@ -41,14 +43,16 @@ bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
   {
     auto project = ProjectLoader::Load(projectDirectory / "levye.project");
 
-    if (!project) return false;
+    if (!project)
+      return false;
 
     platform = ResolveProjectPlatform(platform, project->defaultPlatform);
 
     if (platform == ProjectPlatform::Desktop) {
       std::string prepared;
       bool changed = false;
-      if (!PreparePlatformManifest(projectDirectory, platform, prepared, changed)) return false;
+      if (!PreparePlatformManifest(projectDirectory, platform, prepared, changed))
+        return false;
       if (changed) {
         std::string error;
         if (!CommitFiles(projectDirectory, {{projectDirectory / "levye.project", prepared, true}},
@@ -77,7 +81,8 @@ bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
       return false;
     }
 
-    if (platform == ProjectPlatform::Web) return WebBuild::Execute(projectDirectory, configuration);
+    if (platform == ProjectPlatform::Web)
+      return WebBuild::Execute(projectDirectory, configuration);
 
     if (platform == ProjectPlatform::IOS) {
 #if !defined(__APPLE__)
@@ -102,7 +107,8 @@ bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
         }
         std::cout << "[Levye] Added [ios] configuration to levye.project.\n";
         project = ProjectLoader::Load(manifestPath);
-        if (!project) return false;
+        if (!project)
+          return false;
       }
       const auto iosBuild = projectDirectory / "Build" / ("ios-" + configurationName);
       const auto iosSource = frameworkRoot / "Platforms/iOS";
@@ -111,7 +117,8 @@ bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
       if (bundleId.empty()) {
         bundleId = "com.levyekit.game";
         for (unsigned char character : project->target)
-          if (std::isalnum(character)) bundleId += static_cast<char>(std::tolower(character));
+          if (std::isalnum(character))
+            bundleId += static_cast<char>(std::tolower(character));
       }
       if (!std::filesystem::is_regular_file(projectDirectory / "Source/Game.cpp") ||
           !std::filesystem::is_directory(assets)) {
@@ -172,7 +179,8 @@ bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
           return false;
         }
         signingKeystore = project->androidSigningKeystore;
-        if (signingKeystore.is_relative()) signingKeystore = projectDirectory / signingKeystore;
+        if (signingKeystore.is_relative())
+          signingKeystore = projectDirectory / signingKeystore;
         std::error_code pathError;
         signingKeystore = std::filesystem::canonical(signingKeystore, pathError);
         if (pathError || !std::filesystem::is_regular_file(signingKeystore)) {
@@ -184,7 +192,8 @@ bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
 
       const auto readFile = [](const std::filesystem::path& path) -> std::string {
         std::ifstream input(path, std::ios::binary);
-        if (!input) return {};
+        if (!input)
+          return {};
         return {std::istreambuf_iterator<char>{input}, std::istreambuf_iterator<char>{}};
       };
 
@@ -238,7 +247,8 @@ bool BuildCommand::Execute(const std::filesystem::path& projectDirectory,
           return false;
         }
         project = ProjectLoader::Load(manifestPath);
-        if (!project || project->androidPackage.empty()) return false;
+        if (!project || project->androidPackage.empty())
+          return false;
       }
 
       const auto script = frameworkRoot / "Platforms/Android/package-project.sh";

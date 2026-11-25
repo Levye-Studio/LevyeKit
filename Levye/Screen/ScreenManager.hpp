@@ -13,25 +13,25 @@ namespace Levye {
  * updating and screen-specific state remain responsibilities of the game.
  */
 class ScreenManager {
-public:
+ public:
   /**
    * @brief Changes the currently active screen.
    *
    * @param name Logical name of the new screen.
    */
-  void SetScreen(const std::string &name);
+  void SetScreen(const std::string& name);
 
   /**
    * @brief Returns the name of the currently active screen.
    */
-  const std::string &GetScreen() const;
+  const std::string& GetScreen() const;
 
   /**
    * @brief Returns whether the requested screen is currently active.
    *
    * @param name Screen name to compare against.
    */
-  bool IsScreen(const std::string &name) const;
+  bool IsScreen(const std::string& name) const;
 
   /**
    * @brief Returns whether an active screen has been assigned.
@@ -43,7 +43,7 @@ public:
    */
   void Clear();
 
-private:
+ private:
   std::string m_CurrentScreen;
 };
-} // namespace Levye
+}  // namespace Levye

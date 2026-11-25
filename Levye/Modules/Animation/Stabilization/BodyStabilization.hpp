@@ -104,13 +104,19 @@ class BodyStabilizer {
   /** @brief Clears accumulated offsets and tilt. */
   void Reset() noexcept;
   /** @brief Pauses or resumes stabilizer state updates. */
-  void SetPaused(bool paused) noexcept { m_Paused = paused; }
+  void SetPaused(bool paused) noexcept {
+    m_Paused = paused;
+  }
   /** @brief Enables or disables stabilization corrections. */
   void SetEnabled(bool enabled) noexcept;
   /** @brief Reports whether state updates are paused. */
-  [[nodiscard]] bool IsPaused() const noexcept { return m_Paused; }
+  [[nodiscard]] bool IsPaused() const noexcept {
+    return m_Paused;
+  }
   /** @brief Reports whether stabilization corrections are enabled. */
-  [[nodiscard]] bool IsEnabled() const noexcept { return m_Enabled; }
+  [[nodiscard]] bool IsEnabled() const noexcept {
+    return m_Enabled;
+  }
 
   /** @brief Computes body position and tilt suggestions from support contacts. */
   [[nodiscard]] bool Update(float deltaTime, Vector3 currentRootWorld, Vector3 desiredRootWorld,

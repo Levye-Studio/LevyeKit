@@ -114,7 +114,7 @@ LevyeKit provides reusable systems for:
 
 The framework stays intentionally small so games can use raylib directly whenever it already provides the required functionality.
 
-**Status:** LevyeKit **v0.6.0 (in development)** focuses on cross-platform integration and framework modernization. Android ARM64 and iOS simulator workflows, platform-aware CLI commands, unified display and touch input, project-manifest validation, and migration support are implemented. Android emulator and iOS simulator workflows have been exercised on macOS. **Web/HTML5 runtime integration and verification are the next active tasks.** Physical-device testing and current Linux/Windows validation remain outstanding. **v0.5.0 is complete** and introduced the optional Jolt Physics module. See the [Physics guide](Docs/Physics-v0.5.0.md), [Animation guide](Docs/Animation-v0.4.5.md), [Android guide](Platforms/Android/README.md), and [iOS guide](Platforms/iOS/README.md).
+**Status:** LevyeKit **v0.6.0 (in development)** focuses on cross-platform integration and framework modernization. Android ARM64 and iOS simulator workflows, platform-aware CLI commands (including Web project defaults), unified display and touch input, project-manifest validation, and migration support are implemented. Android emulator and iOS simulator workflows have been exercised on macOS. **Web/HTML5 browser rendering and interaction still need runtime verification.** Physical-device testing and current Linux/Windows validation remain outstanding. **v0.5.0 is complete** and introduced the optional Jolt Physics module. See the [Physics guide](Docs/Physics-v0.5.0.md), [Animation guide](Docs/Animation-v0.4.5.md), [Android guide](Platforms/Android/README.md), and [iOS guide](Platforms/iOS/README.md).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -295,6 +295,7 @@ levye generate <type> <name> [options]
 levye g <type> <name> [options]
 levye build [options]
 levye run [options]
+levye export [options]
 levye clean [options]
 levye project
 levye upgrade [--dry-run|--check]
@@ -407,6 +408,27 @@ currently require `Source/Game.cpp` and have no optional modules. Source export
 contains an independently configurable Xcode project; device builds require
 local Apple signing. See the [iOS guide](Platforms/iOS/README.md).
 
+### Web browser
+
+On macOS or Linux with the Web toolchain available:
+
+```sh
+levye new MyWebGame --html
+cd MyWebGame
+levye project
+levye build
+levye run --port 8080
+levye build --release
+levye export
+levye export --zip
+levye clean
+```
+
+`--html` selects Web for one build, run, clean, or export command;
+`levye project --set-default web` makes it persistent. Web builds currently require
+`Source/Game.cpp` and do not support optional modules. The browser runtime
+remains experimental.
+
 ### Android production builds and exports
 
 ```sh
@@ -460,18 +482,20 @@ Display information about the current project:
 levye project
 ```
 
-`levye new --android` stores Android as the project's default platform;
-`levye new` and `levye new --desktop` store Desktop. Bare `levye build` and
-`levye run` use that default. `--desktop`, `--android`, or `--ios` overrides it for one
+`levye new --android`, `--ios`, or `--html` stores the selected platform as the
+project default; `levye new` and `levye new --desktop` store Desktop. Bare
+`levye build`, `levye run`, `levye clean`, and `levye export` use that default.
+`--desktop`, `--android`, `--ios`, or `--html` overrides it for one
 command without changing `levye.project`. To change the persistent default:
 
 ```sh
 levye project --set-default android
 levye project --set-default desktop
 levye project --set-default ios
+levye project --set-default web
 ```
 
-The project command checks that Android or iOS is configured before selecting it.
+The project command checks platform requirements before selecting a default.
 Legacy manifests without `[platform] default` continue to use Desktop.
 
 The CLI searches parent directories for `levye.project`, allowing commands to be used from directories inside a game project.
@@ -509,21 +533,36 @@ when conversion is available, or 1 for an unsupported project or error. Run
 `levye convert [path]` to apply the plan. The path defaults to the current
 directory.
 
-Automatic conversion supports a single C++20 CMake target: a static/shared
-library with literal source files, or a simple one-file raylib executable with
-literal window settings and static drawing calls. The raylib converter moves
-validated drawing calls into `GameAPI.OnDraw`; the host takes over the window
-and frame loop. It leaves the original source untouched. For libraries, it
-keeps the original library as a separate build target and creates a starter
-game module. Assets and existing `.gitignore` contents are preserved. The
-original CMake file is saved as `CMakeLists.levye-original.txt`.
+Use `--assets <relative-path>` when the project uses a differently named asset
+directory or contains more than one candidate. The path must be an existing
+project directory without symlinks.
 
-Complex game loops, extra source files, external dependencies, and computed
+Automatic conversion supports a single C++17 or C++20 CMake target: a
+static/shared library with literal source files, or a simple raylib executable
+with literal window settings and static drawing calls. The raylib converter moves
+validated drawing calls into `GameAPI.OnDraw`; the host takes over the window
+and frame loop. Additional C++ sources without raylib lifecycle calls are
+compiled into the Game module. Literal C++ source lists in a CMake `set()`
+variable are supported. It leaves the original sources untouched. For libraries,
+the converter keeps the original target and creates a starter
+game module. Assets and existing `.gitignore` contents are preserved. The
+original CMake file is saved as `CMakeLists.levye-original.txt`. Applied
+conversions also keep a `.levye-convert-backup` directory containing a SHA-256
+manifest and copies of replaced files. `levye convert --rollback`
+restores those files and removes generated files only when the generated files
+still match their recorded hashes. An interrupted rollback can be repeated;
+the backup remains available afterward. Keep it until the converted project
+has been verified.
+
+Complex game loops, additional lifecycle owners, external dependencies, and computed
 CMake expressions require manual adaptation. The CLI explains why it declined
 conversion. Generated CMake uses `LEVYE_ROOT` from `levye build`, or from a
 user-supplied CMake variable/environment variable when invoking CMake directly.
 Conversion validates generated structure and rolls back failed writes; build
 and runtime behavior still require project-specific verification.
+Read-only analysis reports detected assets, build targets, dependencies, and platform
+integrations. These findings do not imply that a complex project can be
+converted automatically.
 
 Command-specific help is also available:
 
@@ -1265,7 +1304,7 @@ cmake -E touch Examples/Sandbox/Game/Game.cpp
 cmake --build Build/build-animation --target Game -j 4
 ```
 
-The reload count should increase and the persistence diagnostic should remain `PASS`. On F8, both arms should keep following their targets after reload. On F9, acquire both contacts, move the root with A/D, then reload the game module; both contact anchors should stay fixed and the HUD should retain the contact states. On F10, start a gait and verify that phase and planted anchors persist through reload. Automated tests do not replace manual graphical verification. Because Scene 10 enlarges the Sandbox game state, start a fresh Sandbox process before this live reload check.
+The reload count should increase and the persistence diagnostic should remain `PASS`. On F8, both arms should keep following their targets after reload. On F9, acquire both contacts, move the root with A/D, then reload the game module; both contact anchors should stay fixed and the HUD should retain the contact states. On F10, start a gait and verify that phase and planted anchors persist through reload. Because Scene 10 enlarges the Sandbox game state, start a fresh Sandbox process before this live reload check.
 
 #### ABI and compatibility
 
@@ -1739,9 +1778,9 @@ LevyeKit is intended to provide a common foundation across desktop and mobile ta
 | iOS | arm64 simulator | Debug/Release build and CLI launch exercised on macOS; portable source export implemented; physical devices unverified |
 | Web/HTML5 | Browser | Export infrastructure exists; browser behavior and distribution remain experimental |
 
-Start with `levye new MyGame` (or `--android` / `--ios`), then use
+Start with `levye new MyGame` (or `--android`, `--ios`, or `--html`), then use
 `levye build` and `levye run` with the stored default platform. Select a target
-for one command with `--desktop`, `--android`, or `--ios`; add `--release` for a
+for one command with `--desktop`, `--android`, `--ios`, or `--html`; add `--release` for a
 Release build. `levye export --desktop`, `--android`, `--ios`, and `--html`
 provide their respective packaging or source-export workflows. The
 [Android guide](Platforms/Android/README.md) and
@@ -1801,7 +1840,6 @@ Mobile platforms may use a different development workflow because of platform re
 * [x] Optional Dear ImGui module and shared context
 * [x] ImGui UI survives game-module hot reload
 * [x] Keyboard and mouse capture integration
-* [x] Hardware-independent input-capture tests
 * [x] Gamepad input remains available during ImGui capture
 * [x] Final documentation and release preparation
 
@@ -1812,7 +1850,7 @@ Mobile platforms may use a different development workflow because of platform re
 * [x] Named states, priorities, and one-shot returns
 * [x] Typed parameters and conditional transitions
 * [x] Seven Sandbox verification modes
-* [x] Animation regression tests and public API documentation
+* [x] Animation public API documentation
 * [x] CLI module registry and generated-project integration for `animation`
 * [x] Cross-platform build, execution, and hot-reload verification (macOS, Linux, Windows)
 
@@ -1829,7 +1867,6 @@ Mobile platforms may use a different development workflow because of platform re
 * [x] `--force` and `--no-cmake` options; validation of unsafe paths and existing files
 * [x] Compatible legacy CMake project migration
 * [x] Staged file transactions with rollback for recoverable failures
-* [x] Private generator and transaction regression tests passed on macOS
 * [x] New project generation, build, and runtime verification passed on macOS
 * [x] v0.4.6 tagged
 * [ ] Linux and Windows verification
@@ -1838,7 +1875,7 @@ Mobile platforms may use a different development workflow because of platform re
 
 * [x] `levye upgrade` for supported older project layouts
 * [x] `levye convert` for constrained CMake C++ projects
-* [x] macOS CLI regression and disposable project validation
+* [x] macOS CLI and disposable project validation
 * [x] v0.4.7 tagged
 * [ ] Linux and Windows verification
 
@@ -1851,7 +1888,6 @@ Mobile platforms may use a different development workflow because of platform re
 * [x] Virtual characters with slopes, stairs, jumping, and moving platforms
 * [x] Fixed, point, hinge, and slider constraints with supported limits and motors
 * [x] Pause, single-step, and diagnostics
-* [x] Debug and Release Physics tests (15/15 each) on macOS arm64
 * [x] Graphical Physics Sandbox inspection on macOS
 * [ ] Linux and Windows verification
 
@@ -1864,7 +1900,7 @@ Mobile platforms may use a different development workflow because of platform re
 * [x] Safe-area queries and logical mouse/touch coordinate mapping
 * [x] Platform-aware CLI project generation, build/run, defaults, and export workflows
 * [x] Strict recognized manifest-key validation, typo warnings, legacy `[window]` compatibility, and migration
-* [x] CLI regression tests for desktop, Android, and iOS workflows
+* [x] Desktop, Android, and iOS CLI workflows
 * [x] Public interface Doxygen `@brief` documentation and platform guide links
 * [x] Web/HTML export infrastructure implemented (runtime remains experimental)
 * [ ] Web/HTML5 browser runtime integration and verification: rendering, input, assets, audio, and lifecycle

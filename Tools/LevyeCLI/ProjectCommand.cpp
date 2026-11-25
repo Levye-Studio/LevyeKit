@@ -18,7 +18,8 @@ bool UpdateDefault(std::string& content, std::string_view requested) {
   const std::regex section(R"((^|\n)[ \t]*\[platform\][ \t]*(?:#.*)?(?:\r?\n|$))");
   std::smatch match;
   if (!std::regex_search(content, match, section)) {
-    if (!content.empty() && content.back() != '\n') content += '\n';
+    if (!content.empty() && content.back() != '\n')
+      content += '\n';
     content += "\n[platform]\ndefault = \"" + std::string(requested) + "\"\n";
     return true;
   }
@@ -31,7 +32,8 @@ bool UpdateDefault(std::string& content, std::string_view requested) {
       end = line;
       break;
     }
-    if (lineEnd == std::string::npos) break;
+    if (lineEnd == std::string::npos)
+      break;
     line = lineEnd + 1;
   }
   std::string body = content.substr(start, end - start);
@@ -41,7 +43,8 @@ bool UpdateDefault(std::string& content, std::string_view requested) {
     body.replace(static_cast<std::size_t>(value.position(2)),
                  static_cast<std::size_t>(value.length(2)), requested);
   } else {
-    if (!body.empty() && body.back() != '\n') body += '\n';
+    if (!body.empty() && body.back() != '\n')
+      body += '\n';
     body += "default = \"" + std::string(requested) + "\"\n";
   }
   content.replace(start, end - start, body);
@@ -54,7 +57,8 @@ bool ProjectCommand::Execute(const std::filesystem::path& projectDirectory,
                              std::string_view requestedDefault) {
   const auto path = projectDirectory / "levye.project";
   auto project = ProjectLoader::Load(path);
-  if (!project) return false;
+  if (!project)
+    return false;
   std::ifstream input(path, std::ios::binary);
   if (!input) {
     std::cerr << "[Levye] Cannot read levye.project.\n";
@@ -69,17 +73,20 @@ bool ProjectCommand::Execute(const std::filesystem::path& projectDirectory,
     return false;
   }
 
-  bool mobileSupported = std::filesystem::is_regular_file(projectDirectory / "Source/Game.cpp") &&
-                         std::filesystem::is_directory(projectDirectory / project->assetDirectory);
+  bool platformSupported =
+      std::filesystem::is_regular_file(projectDirectory / "Source/Game.cpp") &&
+      std::filesystem::is_directory(projectDirectory / project->assetDirectory);
   for (const char* module : {"serialization", "imgui", "animation", "physics"})
-    if (manifest["modules"][module].value_or(false)) mobileSupported = false;
-  const bool androidSupported = mobileSupported;
-  const bool iosSupported = mobileSupported;
+    if (manifest["modules"][module].value_or(false))
+      platformSupported = false;
+  const bool androidSupported = platformSupported;
+  const bool iosSupported = platformSupported;
+  const bool webSupported = platformSupported;
   if (!requestedDefault.empty()) {
     if (requestedDefault != "desktop" && requestedDefault != "android" &&
-        requestedDefault != "ios") {
+        requestedDefault != "ios" && requestedDefault != "web") {
       std::cerr << "[Levye] Unsupported default platform: " << requestedDefault
-                << ". Choose desktop, android, or ios.\n";
+                << ". Choose desktop, android, ios, or web.\n";
       return false;
     }
     if (requestedDefault == "android" && !androidSupported) {
@@ -88,6 +95,11 @@ bool ProjectCommand::Execute(const std::filesystem::path& projectDirectory,
     }
     if (requestedDefault == "ios" && !iosSupported) {
       std::cerr << "[Levye] iOS requires Source/Game.cpp, the configured asset directory, "
+                   "and no optional modules.\n";
+      return false;
+    }
+    if (requestedDefault == "web" && !webSupported) {
+      std::cerr << "[Levye] Web requires Source/Game.cpp, the configured asset directory, "
                    "and no optional modules.\n";
       return false;
     }
@@ -112,7 +124,8 @@ bool ProjectCommand::Execute(const std::filesystem::path& projectDirectory,
       if (!CommitFiles(projectDirectory, {{path, content, true}}, error, nullptr,
                        [&path, requestedDefault](std::string& validationError) {
                          const auto updated = ProjectLoader::Load(path);
-                         if (updated && updated->defaultPlatform == requestedDefault) return true;
+                         if (updated && updated->defaultPlatform == requestedDefault)
+                           return true;
                          validationError = "Default platform validation failed.";
                          return false;
                        })) {
@@ -120,7 +133,8 @@ bool ProjectCommand::Execute(const std::filesystem::path& projectDirectory,
         return false;
       }
       project = ProjectLoader::Load(path);
-      if (!project) return false;
+      if (!project)
+        return false;
     }
   }
 
@@ -132,10 +146,11 @@ bool ProjectCommand::Execute(const std::filesystem::path& projectDirectory,
   std::cout << "[Levye] Default platform: "
             << (project->defaultPlatform == "android" ? "Android"
                 : project->defaultPlatform == "ios"   ? "iOS"
+                : project->defaultPlatform == "web"   ? "Web"
                                                       : "Desktop")
             << '\n'
             << "[Levye] Supported platforms: Desktop" << (androidSupported ? ", Android" : "")
-            << (iosSupported ? ", iOS" : "") << '\n'
+            << (iosSupported ? ", iOS" : "") << (webSupported ? ", Web" : "") << '\n'
             << "[Levye] Configuration: Debug\n"
             << "[Levye] Root: " << projectDirectory.string() << '\n';
   return true;

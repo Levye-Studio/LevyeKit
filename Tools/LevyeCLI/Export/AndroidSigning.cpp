@@ -108,7 +108,8 @@ bool GenerateKeystore(const fs::path& keystore, const std::string& alias) {
   std::random_device random;
   for (int attempt = 0; attempt < 32; ++attempt) {
     staged = fs::path(keystore.string() + ".tmp." + std::to_string(random()));
-    if (!fs::exists(staged)) break;
+    if (!fs::exists(staged))
+      break;
     staged.clear();
   }
   if (staged.empty()) {
@@ -142,7 +143,8 @@ bool GenerateKeystore(const fs::path& keystore, const std::string& alias) {
 
   // A hard link installs the new key only when the destination is absent.
   fs::create_hard_link(staged, keystore, error);
-  if (!error) fs::remove(staged, error);
+  if (!error)
+    fs::remove(staged, error);
   if (error) {
     std::cerr << "[Levye] Cannot publish new keystore; generated key remains at: " << staged
               << '\n';
@@ -175,7 +177,8 @@ bool SaveConfiguration(const fs::path& projectDirectory, const fs::path& keystor
     return false;
   }
   std::string content{std::istreambuf_iterator<char>{input}, std::istreambuf_iterator<char>{}};
-  if (input.bad()) return false;
+  if (input.bad())
+    return false;
 
   toml::table manifest;
   try {
@@ -224,7 +227,8 @@ bool SaveConfiguration(const fs::path& projectDirectory, const fs::path& keystor
     return result + '"';
   };
 
-  if (!content.empty() && content.back() != '\n') content += '\n';
+  if (!content.empty() && content.back() != '\n')
+    content += '\n';
   content += "\n[android.signing]\nkeystore = " + quoteToml(keystore.generic_string()) +
              "\nalias = " + quoteToml(alias) + '\n';
 
@@ -327,9 +331,11 @@ bool AndroidSigning::EnsureConfigured(const fs::path& projectDirectory) {
 
     std::error_code pathError;
     const auto projectRoot = fs::weakly_canonical(projectDirectory, pathError);
-    if (pathError) return false;
+    if (pathError)
+      return false;
     const auto signingRoot = fs::weakly_canonical(directory, pathError);
-    if (pathError) return false;
+    if (pathError)
+      return false;
     const auto relative = signingRoot.lexically_relative(projectRoot);
     if (!relative.empty() && !relative.is_absolute() && *relative.begin() != "..") {
       std::cerr << "[Levye] Production keys must be generated outside the project.\n";

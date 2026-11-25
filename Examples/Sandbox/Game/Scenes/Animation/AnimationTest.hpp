@@ -42,8 +42,8 @@ inline void InitializeAnimationTest(AnimationTest& test, const char* path) {
     }
   }
 
-  const bool bound = test.animation &&
-                     Levye::Animation::BindAnimation(test.controller, test.animation, 60.0f);
+  const bool bound =
+      test.animation && Levye::Animation::BindAnimation(test.controller, test.animation, 60.0f);
   const bool playing = bound && Levye::Animation::PlayBound(test.controller, true);
   Levye::Log::Info(playing ? "PASS: persistent animation playback"
                            : "FAIL: persistent animation playback");
@@ -51,7 +51,8 @@ inline void InitializeAnimationTest(AnimationTest& test, const char* path) {
   if (playing) {
     const bool paused = Levye::Animation::Pause(test.controller);
     Levye::AnimationPlaybackState state{};
-    const bool pauseState = Levye::Animation::GetPlaybackState(test.controller, state) && state.paused;
+    const bool pauseState =
+        Levye::Animation::GetPlaybackState(test.controller, state) && state.paused;
     const bool speed = Levye::Animation::SetSpeed(test.controller, 1.5f);
     const bool resumed = Levye::Animation::Resume(test.controller);
     const bool resumeState = Levye::Animation::GetPlaybackState(test.controller, state) &&

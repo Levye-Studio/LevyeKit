@@ -38,7 +38,7 @@ struct MusicAsset {
  * objects directly.
  */
 class AudioManager {
-public:
+ public:
   AudioManager() = default;
 
   /**
@@ -46,8 +46,8 @@ public:
    */
   ~AudioManager();
 
-  AudioManager(const AudioManager &) = delete;
-  AudioManager &operator=(const AudioManager &) = delete;
+  AudioManager(const AudioManager&) = delete;
+  AudioManager& operator=(const AudioManager&) = delete;
 
   /**
    * @brief Loads a sound effect from disk.
@@ -57,7 +57,7 @@ public:
    * @param path Path to the sound file.
    * @return Handle to the sound, or an invalid handle on failure.
    */
-  AssetHandle LoadSound(const std::string &path);
+  AssetHandle LoadSound(const std::string& path);
 
   /**
    * @brief Checks loaded audio assets for source-file changes.
@@ -106,7 +106,7 @@ public:
    * @param path Path to the music file.
    * @return Handle to the music track, or an invalid handle on failure.
    */
-  AssetHandle LoadMusic(const std::string &path);
+  AssetHandle LoadMusic(const std::string& path);
 
   /**
    * @brief Starts or resumes playback of a music track.
@@ -163,14 +163,14 @@ public:
    */
   void Clear();
 
-private:
+ private:
   /**
    * @brief Attempts to reload a sound without invalidating its asset handle.
    *
    * @param asset Sound asset to reload.
    * @return True when the replacement succeeded.
    */
-  bool ReloadSound(SoundAsset &asset);
+  bool ReloadSound(SoundAsset& asset);
 
   /**
    * @brief Attempts to reload a music stream without invalidating its handle.
@@ -178,9 +178,9 @@ private:
    * @param asset Music asset to reload.
    * @return True when the replacement succeeded.
    */
-  bool ReloadMusic(MusicAsset &asset);
+  bool ReloadMusic(MusicAsset& asset);
 
-private:
+ private:
   std::unordered_map<std::uint64_t, SoundAsset> m_Sounds;
 
   std::unordered_map<std::string, AssetHandle> m_PathLookup;
@@ -191,4 +191,4 @@ private:
 
   std::uint64_t m_NextHandle = 1;
 };
-} // namespace Levye
+}  // namespace Levye

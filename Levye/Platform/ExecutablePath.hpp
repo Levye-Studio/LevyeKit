@@ -7,7 +7,7 @@ namespace Levye {
  * @brief Provides filesystem information about the running executable.
  */
 class ExecutablePath {
-public:
+ public:
   /**
    * @brief Returns the absolute path to the running executable.
    *
@@ -22,4 +22,4 @@ public:
    */
   static std::filesystem::path GetDirectory();
 };
-} // namespace Levye
+}  // namespace Levye

@@ -21,14 +21,14 @@ namespace Levye {
  * Texture2D objects directly.
  */
 class TextureManager {
-public:
+ public:
   /**
    * @brief Releases every texture still owned by the manager.
    */
   ~TextureManager();
 
-  TextureManager(const TextureManager &) = delete;
-  TextureManager &operator=(const TextureManager &) = delete;
+  TextureManager(const TextureManager&) = delete;
+  TextureManager& operator=(const TextureManager&) = delete;
 
   TextureManager() = default;
 
@@ -41,7 +41,7 @@ public:
    * @param path Path to the texture file.
    * @return Handle to the loaded texture, or an invalid handle on failure.
    */
-  AssetHandle Load(const std::string &path);
+  AssetHandle Load(const std::string& path);
 
   /**
    * @brief Returns a loaded texture.
@@ -52,7 +52,7 @@ public:
    * @warning The returned pointer is owned by TextureManager and must not
    * be unloaded by game code.
    */
-  const Texture2D *Get(AssetHandle handle) const;
+  const Texture2D* Get(AssetHandle handle) const;
 
   /**
    * @brief Checks loaded texture files for changes.
@@ -75,7 +75,7 @@ public:
    */
   void Clear();
 
-private:
+ private:
   struct TextureAsset {
     Texture2D texture{};
     std::string path;
@@ -83,7 +83,7 @@ private:
     FileWatcher watcher;
   };
 
-private:
+ private:
   /**
    * @brief Attempts to replace an existing GPU texture from its source file.
    *
@@ -92,13 +92,13 @@ private:
    * @param asset Texture asset to reload.
    * @return true when the replacement succeeded.
    */
-  bool Reload(TextureAsset &asset);
+  bool Reload(TextureAsset& asset);
 
-private:
+ private:
   std::unordered_map<std::uint64_t, TextureAsset> m_Textures;
 
   std::unordered_map<std::string, AssetHandle> m_PathLookup;
 
   std::uint64_t m_NextHandle = 1;
 };
-} // namespace Levye
+}  // namespace Levye

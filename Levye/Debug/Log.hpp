@@ -11,14 +11,14 @@ namespace Levye {
  * currently bound HostServices table.
  */
 class Log {
-public:
+ public:
   /**
    * @brief Writes an informational message.
    *
    * @param message Null-terminated message to write.
    */
-  static void Info(const char *message) {
-    const HostServices *host = Services::Get();
+  static void Info(const char* message) {
+    const HostServices* host = Services::Get();
 
     if (!host || !host->LogInfo || !message) {
       return;
@@ -32,8 +32,8 @@ public:
    *
    * @param message Null-terminated message to write.
    */
-  static void Warning(const char *message) {
-    const HostServices *host = Services::Get();
+  static void Warning(const char* message) {
+    const HostServices* host = Services::Get();
 
     if (!host || !host->LogWarning || !message) {
       return;
@@ -47,8 +47,8 @@ public:
    *
    * @param message Null-terminated message to write.
    */
-  static void Error(const char *message) {
-    const HostServices *host = Services::Get();
+  static void Error(const char* message) {
+    const HostServices* host = Services::Get();
 
     if (!host || !host->LogError || !message) {
       return;
@@ -58,4 +58,4 @@ public:
   }
 };
 
-} // namespace Levye
+}  // namespace Levye

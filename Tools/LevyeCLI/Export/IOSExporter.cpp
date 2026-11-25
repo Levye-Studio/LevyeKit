@@ -21,33 +21,42 @@ namespace fs = std::filesystem;
 bool Copy(const fs::path& source, const fs::path& destination) {
   std::error_code error;
   fs::create_directories(destination.parent_path(), error);
-  if (error) return false;
+  if (error)
+    return false;
   fs::copy(source, destination, fs::copy_options::recursive | fs::copy_options::overwrite_existing,
            error);
   return !error;
 }
 
 bool SafeAssets(const fs::path& project, const fs::path& relative) {
-  if (relative.empty() || relative.is_absolute()) return false;
+  if (relative.empty() || relative.is_absolute())
+    return false;
   for (const auto& component : relative)
-    if (component == ".." || component == ".") return false;
+    if (component == ".." || component == ".")
+      return false;
   std::error_code error;
   const auto root = fs::canonical(project, error);
-  if (error) return false;
+  if (error)
+    return false;
   const auto assets = fs::canonical(project / relative, error);
-  if (error || !fs::is_directory(assets)) return false;
-  if (assets.string().rfind(root.string() + fs::path::preferred_separator, 0) != 0) return false;
+  if (error || !fs::is_directory(assets))
+    return false;
+  if (assets.string().rfind(root.string() + fs::path::preferred_separator, 0) != 0)
+    return false;
   for (const auto& entry : fs::recursive_directory_iterator(assets, error)) {
-    if (error || entry.is_symlink()) return false;
+    if (error || entry.is_symlink())
+      return false;
   }
   return !error;
 }
 
 bool NoSymlinks(const fs::path& directory) {
   std::error_code error;
-  if (fs::is_symlink(directory) || !fs::is_directory(directory)) return false;
+  if (fs::is_symlink(directory) || !fs::is_directory(directory))
+    return false;
   for (const auto& entry : fs::recursive_directory_iterator(directory, error)) {
-    if (error || entry.is_symlink()) return false;
+    if (error || entry.is_symlink())
+      return false;
   }
   return !error;
 }
@@ -55,13 +64,16 @@ bool NoSymlinks(const fs::path& directory) {
 bool PortableSources(const fs::path& directory, const fs::path& project, const fs::path& framework,
                      const fs::path& cache) {
   for (const auto& entry : fs::recursive_directory_iterator(directory)) {
-    if (!entry.is_regular_file()) continue;
+    if (!entry.is_regular_file())
+      continue;
     std::ifstream input(entry.path(), std::ios::binary);
-    if (!input) return false;
+    if (!input)
+      return false;
     const std::string content{std::istreambuf_iterator<char>{input},
                               std::istreambuf_iterator<char>{}};
     for (const auto& original : {project, framework, cache})
-      if (!original.empty() && content.find(original.string()) != std::string::npos) return false;
+      if (!original.empty() && content.find(original.string()) != std::string::npos)
+        return false;
   }
   return true;
 }
@@ -75,7 +87,8 @@ bool Write(const fs::path& path, const std::string& text) {
 std::string CMakeLiteral(const std::string& value) {
   std::string escaped;
   for (char character : value) {
-    if (character == '\\' || character == '"' || character == '$') escaped += '\\';
+    if (character == '\\' || character == '"' || character == '$')
+      escaped += '\\';
     escaped += character;
   }
   return "\"" + escaped + "\"";
@@ -93,7 +106,8 @@ bool IOSExporter::Execute(const fs::path& projectDirectory, std::string_view for
   return false;
 #else
   const auto project = ProjectLoader::Load(projectDirectory / "levye.project");
-  if (!project) return false;
+  if (!project)
+    return false;
   if (!NoSymlinks(projectDirectory / "Source") ||
       !fs::is_regular_file(projectDirectory / "Source/Game.cpp") ||
       !SafeAssets(projectDirectory, project->assetDirectory)) {
@@ -106,12 +120,14 @@ bool IOSExporter::Execute(const fs::path& projectDirectory, std::string_view for
   if (!PreparePlatformManifest(projectDirectory, ProjectPlatform::IOS, manifestText, changed))
     return false;
   const auto exportedProject = ProjectLoader::Parse(manifestText);
-  if (!exportedProject) return false;
+  if (!exportedProject)
+    return false;
   std::string bundle = exportedProject->iosBundleId;
   if (bundle.empty()) {
     bundle = "com.levyekit.game";
     for (unsigned char character : exportedProject->target)
-      if (std::isalnum(character)) bundle += static_cast<char>(std::tolower(character));
+      if (std::isalnum(character))
+        bundle += static_cast<char>(std::tolower(character));
   }
   const auto framework = ExecutablePath::GetDirectory().parent_path().parent_path().parent_path();
   fs::path cache;
@@ -180,7 +196,8 @@ bool IOSExporter::Execute(const fs::path& projectDirectory, std::string_view for
         !Copy(toml / "LICENSE", deps / "tomlplusplus/LICENSE"))
       throw std::runtime_error("Cannot copy required source or dependencies.");
     auto manifest = toml::parse(manifestText);
-    if (auto* android = manifest["android"].as_table()) android->erase("signing");
+    if (auto* android = manifest["android"].as_table())
+      android->erase("signing");
     std::ostringstream sanitized;
     sanitized << manifest;
     if (!Write(game / "levye.project", sanitized.str()))
@@ -253,15 +270,18 @@ bool IOSExporter::Execute(const fs::path& projectDirectory, std::string_view for
     if (fs::exists(previous) || fs::is_symlink(destination))
       throw std::runtime_error("Cannot replace existing iOS export safely.");
     const bool replacing = fs::exists(destination);
-    if (replacing) fs::rename(destination, previous);
+    if (replacing)
+      fs::rename(destination, previous);
     try {
       fs::rename(stage, destination);
     } catch (...) {
-      if (replacing) fs::rename(previous, destination);
+      if (replacing)
+        fs::rename(previous, destination);
       throw;
     }
     cleanup.path.clear();
-    if (replacing) fs::remove_all(previous);
+    if (replacing)
+      fs::remove_all(previous);
     std::cout << "[Levye] iOS source exported: " << destination << '\n';
     return true;
   } catch (const std::exception& exception) {

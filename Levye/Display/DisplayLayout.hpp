@@ -23,11 +23,17 @@ class DisplayLayout {
   /** @brief Returns the visible logical canvas size (expanded on wider/taller drawables). */
   [[nodiscard]] DisplaySize GetLogicalSize() const;
   /** @brief Returns the window size used by raylib drawing and pointer input. */
-  [[nodiscard]] DisplaySize GetWindowSize() const { return window_; }
+  [[nodiscard]] DisplaySize GetWindowSize() const {
+    return window_;
+  }
   /** @brief Returns the physical framebuffer size. */
-  [[nodiscard]] DisplaySize GetPhysicalSize() const { return framebuffer_; }
+  [[nodiscard]] DisplaySize GetPhysicalSize() const {
+    return framebuffer_;
+  }
   /** @brief Returns the active scaling policy. */
-  [[nodiscard]] DisplayScaling GetScaling() const { return config_.scaling; }
+  [[nodiscard]] DisplayScaling GetScaling() const {
+    return config_.scaling;
+  }
   /** @brief Returns the current window orientation. */
   [[nodiscard]] DisplayOrientation GetOrientation() const;
   /** @brief Returns the gameplay viewport in framebuffer pixels. */

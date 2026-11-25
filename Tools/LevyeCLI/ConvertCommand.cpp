@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "FileTransaction.hpp"
+#include "ConversionBackup.hpp"
 #include "ProjectAnalyzer.hpp"
 #include "ProjectCMakeMigration.hpp"
 #include "ProjectGenerator.hpp"
@@ -29,9 +30,11 @@ struct ConversionPlan {
 
 bool ReadRegular(const fs::path& path, std::string& text) {
   std::error_code ec;
-  if (!fs::is_regular_file(fs::symlink_status(path, ec)) || ec) return false;
+  if (!fs::is_regular_file(fs::symlink_status(path, ec)) || ec)
+    return false;
   std::ifstream input(path, std::ios::binary);
-  if (!input) return false;
+  if (!input)
+    return false;
   text.assign(std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>());
   return !input.bad();
 }
@@ -86,21 +89,27 @@ bool ValidateDestinations(const fs::path& root, const std::vector<PendingFile>& 
   return true;
 }
 
-std::string CMakeQuoted(const fs::path& path) { return "\"" + path.generic_string() + "\""; }
+std::string CMakeQuoted(const fs::path& path) {
+  return "\"" + path.generic_string() + "\"";
+}
 
 std::string CMakeList(std::string_view command, std::string_view target,
                       const std::vector<std::string>& values) {
-  if (values.empty()) return {};
+  if (values.empty())
+    return {};
   std::string text = "\n" + std::string(command) + "(" + std::string(target) + " PRIVATE";
-  for (const auto& value : values) text += " \"" + value + "\"";
+  for (const auto& value : values)
+    text += " \"" + value + "\"";
   text += ")\n";
   return text;
 }
 
 bool RenderGame(std::string& text, const ConversionAnalysis& analysis) {
-  if (analysis.lifecycle != ConversionLifecycle::RaylibApplication) return true;
+  if (analysis.lifecycle != ConversionLifecycle::RaylibApplication)
+    return true;
   const auto name = text.find("void OnDraw(");
-  if (name == std::string::npos) return false;
+  if (name == std::string::npos)
+    return false;
   const auto open = text.find('{', name);
   const auto close = text.find('}', open);
   if (open == std::string::npos || close == std::string::npos ||
@@ -172,6 +181,18 @@ bool PlanConversion(const ConversionAnalysis& analysis, const fs::path& template
     plan.error = "Current game template has an unsupported drawing callback.";
     return false;
   }
+  if (!library) {
+    std::string additional;
+    for (const auto& source : original.sources)
+      if (source != analysis.entryPoint)
+        additional += "    \"${CMAKE_CURRENT_SOURCE_DIR}/" + source.generic_string() + "\"\n";
+    if (!additional.empty() &&
+        !ReplaceOnce(manifest, "list(APPEND LEVYE_GAME_SOURCES\n)",
+                     "list(APPEND LEVYE_GAME_SOURCES\n" + additional + ")")) {
+      plan.error = "Current source manifest template has an unsupported layout.";
+      return false;
+    }
+  }
   if (analysis.lifecycle == ConversionLifecycle::RaylibApplication) {
     if (analysis.windowHeight > analysis.windowWidth &&
         !ReplaceOnce(config, "orientation = \"landscape\"", "orientation = \"portrait\"")) {
@@ -217,9 +238,11 @@ bool PlanConversion(const ConversionAnalysis& analysis, const fs::path& template
   if (library) {
     cmake += "\n# Preserved original library target.\nadd_library(" + original.name +
              (original.type == ConversionProjectType::StaticLibrary ? " STATIC\n" : " SHARED\n");
-    for (const auto& source : original.sources) cmake += "    " + CMakeQuoted(source) + "\n";
+    for (const auto& source : original.sources)
+      cmake += "    " + CMakeQuoted(source) + "\n";
     cmake += ")\n";
-    for (const auto& setting : original.cmakeSettings) cmake += setting + "\n";
+    for (const auto& setting : original.cmakeSettings)
+      cmake += setting + "\n";
     cmake += "add_dependencies(Game " + original.name + ")\n";
   } else {
     cmake += "\n# Preserved compile settings from the original raylib target.\n";
@@ -252,7 +275,8 @@ bool PlanConversion(const ConversionAnalysis& analysis, const fs::path& template
     plan.error = error;
     return false;
   }
-  if (!ValidateDestinations(root, plan.files, plan.error)) return false;
+  if (!ValidateDestinations(root, plan.files, plan.error))
+    return false;
   return true;
 }
 
@@ -266,7 +290,8 @@ bool ValidateCommitted(const ConversionPlan& plan, const fs::path& root, std::st
   }
   std::string game, manifest, config;
   for (const auto& file : plan.files) {
-    if (file.path.filename() == "levye.project") config = file.content;
+    if (file.path.filename() == "levye.project")
+      config = file.content;
     if (file.path.filename() == "CMakeLists.txt" && file.path.parent_path() == root / "Source")
       manifest = file.content;
     if (file.path.filename() == "Game.cpp" || file.path.filename() == "LevyeConvertedGame.cpp")
@@ -293,17 +318,27 @@ bool ValidateCommitted(const ConversionPlan& plan, const fs::path& root, std::st
 }  // namespace
 
 int ConvertCommand::Execute(const fs::path& projectDirectory, const fs::path& frameworkRoot,
-                            bool dryRun, bool check) {
-  const auto analysis = ProjectAnalyzer::Analyze(projectDirectory);
+                            bool dryRun, bool check, const fs::path& assetOverride) {
+  const auto analysis = ProjectAnalyzer::Analyze(projectDirectory, assetOverride);
   std::cout << "[Levye] Conversion analysis\n"
             << "[Levye] Project: " << analysis.projectRoot << '\n';
   if (analysis.alreadyLevyeKit) {
     std::cout << "[Levye] Already a LevyeKit project. Use levye upgrade.\n";
     return 0;
   }
-  for (const auto& warning : analysis.warnings) std::cout << "[Levye] Warning: " << warning << '\n';
+  for (const auto& finding : analysis.findings)
+    std::cout << "[Levye] " << (finding.requiresAdapter ? "Adapter required" : "Detected") << " ["
+              << finding.category << "]: " << finding.detail << '\n';
+  for (const auto& warning : analysis.warnings)
+    std::cout << "[Levye] Warning: " << warning << '\n';
   if (!analysis.CanConvert()) {
-    for (const auto& error : analysis.errors) std::cerr << "[Levye] Unsupported: " << error << '\n';
+    for (const auto& error : analysis.errors)
+      std::cerr << "[Levye] Unsupported: " << error << '\n';
+    std::cout << "[Levye] Adapter workflow: preserve the original build and sources; "
+                 "identify one game target and its dependencies, then move window, audio, "
+                 "and frame ownership to the LevyeKit host. Map game update and drawing "
+                 "to GameAPI callbacks and verify resource lifetime across reload. "
+                 "Retain native platform integrations through reviewed build adapters.\n";
     return 1;
   }
   const auto& target = analysis.targets.front();
@@ -326,22 +361,52 @@ int ConvertCommand::Execute(const fs::path& projectDirectory, const fs::path& fr
               << file.path.lexically_relative(analysis.projectRoot).generic_string() << '\n';
   for (const auto& path : plan.preserved)
     std::cout << "  PRESERVE  " << path.generic_string() << '\n';
-  for (const auto& note : plan.notes) std::cout << "[Levye] " << note << '\n';
+  for (const auto& note : plan.notes)
+    std::cout << "[Levye] " << note << '\n';
   std::cout << "[Levye] Status: Ready for conversion\n";
-  if (check) return 2;
+  if (check)
+    return 2;
   if (dryRun) {
     std::cout << "[Levye] No files modified.\n";
     return 0;
   }
   std::string error;
+  fs::path backup;
+  if (!SaveConversionBackup(analysis.projectRoot, plan.files, backup, error)) {
+    if (!backup.empty()) {
+      std::error_code cleanupError;
+      fs::remove_all(backup, cleanupError);
+      if (cleanupError)
+        error += "; could not remove incomplete backup: " + backup.string();
+    }
+    std::cerr << "[Levye] Conversion failed: " << error << '\n';
+    return 1;
+  }
   if (!CommitFiles(analysis.projectRoot, plan.files, error, nullptr,
                    [&](std::string& validationError) {
                      return ValidateCommitted(plan, analysis.projectRoot, validationError);
                    })) {
+    if (error.find("rollback incomplete") == std::string::npos) {
+      std::error_code cleanupError;
+      fs::remove_all(backup, cleanupError);
+      if (cleanupError)
+        error += "; could not remove unused backup: " + backup.string();
+    }
     std::cerr << "[Levye] Conversion failed: " << error << '\n';
     return 1;
   }
+  std::cout << "[Levye] Conversion backup: " << backup << '\n';
   std::cout << "[Levye] Conversion completed (structural validation; build not run).\n";
+  return 0;
+}
+
+int ConvertCommand::Rollback(const fs::path& projectDirectory) {
+  std::string error;
+  if (!RollbackConversion(projectDirectory, error)) {
+    std::cerr << "[Levye] Rollback failed: " << error << '\n';
+    return 1;
+  }
+  std::cout << "[Levye] Conversion files restored. Backup retained.\n";
   return 0;
 }
 

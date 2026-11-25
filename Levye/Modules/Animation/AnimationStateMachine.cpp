@@ -28,7 +28,8 @@ bool Compare(T actual, T expected, AnimationComparison comparison) {
 }
 
 bool ValidCondition(const AnimationCondition& condition) {
-  if (!condition.parameter || !*condition.parameter) return false;
+  if (!condition.parameter || !*condition.parameter)
+    return false;
   switch (condition.type) {
     case AnimationParameterType::Bool:
       return condition.comparison == AnimationComparison::Equal ||
@@ -55,9 +56,11 @@ bool AnimationStateMachine::CreatesReturnCycle(const std::string& name,
                                                const AnimationStateDefinition& definition) const {
   std::string next = definition.returnState;
   for (std::size_t steps = 0; !next.empty() && steps <= m_States.size(); ++steps) {
-    if (next == name) return true;
+    if (next == name)
+      return true;
     const auto it = m_States.find(next);
-    if (it == m_States.end()) return false;
+    if (it == m_States.end())
+      return false;
     next = it->second.returnState;
   }
   return !next.empty();
@@ -83,12 +86,15 @@ void AnimationStateMachine::RemoveTransitionsUsing(const std::string& name) {
 }
 
 bool AnimationStateMachine::RemoveState(const std::string& name) {
-  if (m_States.erase(name) == 0) return false;
+  if (m_States.erase(name) == 0)
+    return false;
   RemoveTransitionsUsing(name);
   for (auto& [stateName, definition] : m_States) {
-    if (definition.returnState == name) definition.returnState.clear();
+    if (definition.returnState == name)
+      definition.returnState.clear();
   }
-  if (m_CurrentState == name) m_CurrentState.clear();
+  if (m_CurrentState == name)
+    m_CurrentState.clear();
   return true;
 }
 
@@ -101,11 +107,13 @@ void AnimationStateMachine::RemoveStatesUsing(AnimationResourceHandle animation)
   for (auto it = m_States.begin(); it != m_States.end();) {
     if (it->second.animation == animation) {
       const std::string name = it->first;
-      if (m_CurrentState == name) m_CurrentState.clear();
+      if (m_CurrentState == name)
+        m_CurrentState.clear();
       it = m_States.erase(it);
       RemoveTransitionsUsing(name);
       for (auto& [stateName, definition] : m_States) {
-        if (definition.returnState == name) definition.returnState.clear();
+        if (definition.returnState == name)
+          definition.returnState.clear();
       }
     } else {
       ++it;
@@ -127,13 +135,15 @@ bool AnimationStateMachine::AddTransition(const AnimationTransitionRule& rule) {
     return false;
 
   AnimationTransitionDefinition copy;
-  if (rule.sourceState) copy.sourceState = rule.sourceState;
+  if (rule.sourceState)
+    copy.sourceState = rule.sourceState;
   copy.targetState = rule.targetState;
   copy.priority = rule.priority;
   copy.conditions.reserve(static_cast<std::size_t>(rule.conditionCount));
   for (int i = 0; i < rule.conditionCount; ++i) {
     const AnimationCondition& condition = rule.conditions[i];
-    if (!ValidCondition(condition)) return false;
+    if (!ValidCondition(condition))
+      return false;
     copy.conditions.push_back({condition.parameter, condition.type, condition.comparison,
                                condition.boolValue, condition.floatValue, condition.intValue});
   }
@@ -144,7 +154,8 @@ bool AnimationStateMachine::AddTransition(const AnimationTransitionRule& rule) {
 bool AnimationStateMachine::ConditionsMatch(const AnimationTransitionDefinition& transition) const {
   for (const auto& condition : transition.conditions) {
     const auto it = m_Parameters.find(condition.parameter);
-    if (it == m_Parameters.end() || it->second.type != condition.type) return false;
+    if (it == m_Parameters.end() || it->second.type != condition.type)
+      return false;
     const Parameter& parameter = it->second;
     bool matched = false;
     switch (condition.type) {
@@ -161,7 +172,8 @@ bool AnimationStateMachine::ConditionsMatch(const AnimationTransitionDefinition&
         matched = parameter.triggered;
         break;
     }
-    if (!matched) return false;
+    if (!matched)
+      return false;
   }
   return true;
 }
@@ -169,69 +181,83 @@ bool AnimationStateMachine::ConditionsMatch(const AnimationTransitionDefinition&
 const AnimationTransitionDefinition* AnimationStateMachine::FindTransition(
     bool allowLowerPriority) const {
   const auto* current = FindState(m_CurrentState);
-  if (!current) return nullptr;
+  if (!current)
+    return nullptr;
 
   const AnimationTransitionDefinition* best = nullptr;
   for (const auto& transition : m_Transitions) {
-    if (!transition.sourceState.empty() && transition.sourceState != m_CurrentState) continue;
-    if (transition.targetState == m_CurrentState) continue;
+    if (!transition.sourceState.empty() && transition.sourceState != m_CurrentState)
+      continue;
+    if (transition.targetState == m_CurrentState)
+      continue;
     const auto* target = FindState(transition.targetState);
     if (!target || (!allowLowerPriority && target->priority < current->priority) ||
         !ConditionsMatch(transition))
       continue;
-    if (!best || transition.priority > best->priority) best = &transition;
+    if (!best || transition.priority > best->priority)
+      best = &transition;
   }
   return best;
 }
 
 void AnimationStateMachine::ConsumeTriggers(const AnimationTransitionDefinition& transition) {
   for (const auto& condition : transition.conditions) {
-    if (condition.type != AnimationParameterType::Trigger) continue;
+    if (condition.type != AnimationParameterType::Trigger)
+      continue;
     auto it = m_Parameters.find(condition.parameter);
-    if (it != m_Parameters.end()) it->second.triggered = false;
+    if (it != m_Parameters.end())
+      it->second.triggered = false;
   }
 }
 
 AnimationStateMachine::Parameter* AnimationStateMachine::GetOrCreateParameter(
     const std::string& name, AnimationParameterType type) {
-  if (name.empty()) return nullptr;
+  if (name.empty())
+    return nullptr;
   const auto [it, inserted] = m_Parameters.try_emplace(name);
-  if (inserted) it->second.type = type;
+  if (inserted)
+    it->second.type = type;
   return it->second.type == type ? &it->second : nullptr;
 }
 
 bool AnimationStateMachine::SetBoolParameter(const std::string& name, bool value) {
   Parameter* parameter = GetOrCreateParameter(name, AnimationParameterType::Bool);
-  if (!parameter) return false;
+  if (!parameter)
+    return false;
   parameter->boolValue = value;
   return true;
 }
 
 bool AnimationStateMachine::SetFloatParameter(const std::string& name, float value) {
-  if (!std::isfinite(value)) return false;
+  if (!std::isfinite(value))
+    return false;
   Parameter* parameter = GetOrCreateParameter(name, AnimationParameterType::Float);
-  if (!parameter) return false;
+  if (!parameter)
+    return false;
   parameter->floatValue = value;
   return true;
 }
 
 bool AnimationStateMachine::SetIntParameter(const std::string& name, int value) {
   Parameter* parameter = GetOrCreateParameter(name, AnimationParameterType::Int);
-  if (!parameter) return false;
+  if (!parameter)
+    return false;
   parameter->intValue = value;
   return true;
 }
 
 bool AnimationStateMachine::SetTrigger(const std::string& name) {
   Parameter* parameter = GetOrCreateParameter(name, AnimationParameterType::Trigger);
-  if (!parameter) return false;
+  if (!parameter)
+    return false;
   parameter->triggered = true;
   return true;
 }
 
 bool AnimationStateMachine::ResetTrigger(const std::string& name) {
   const auto it = m_Parameters.find(name);
-  if (it == m_Parameters.end() || it->second.type != AnimationParameterType::Trigger) return false;
+  if (it == m_Parameters.end() || it->second.type != AnimationParameterType::Trigger)
+    return false;
   it->second.triggered = false;
   return true;
 }

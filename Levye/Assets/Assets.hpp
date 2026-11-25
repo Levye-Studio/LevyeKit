@@ -14,7 +14,7 @@ namespace Levye {
  * hot reloads because the underlying resources are owned by the host.
  */
 class Assets {
-public:
+ public:
   // ---------------------------------------------------------------------
   // Textures
   // ---------------------------------------------------------------------
@@ -28,8 +28,8 @@ public:
    * @return Handle representing the texture, or an invalid handle on
    * failure.
    */
-  static AssetHandle LoadTexture(const char *path) {
-    const HostServices *host = Services::Get();
+  static AssetHandle LoadTexture(const char* path) {
+    const HostServices* host = Services::Get();
 
     if (!host || !host->LoadTexture || !path) {
       return {};
@@ -48,8 +48,8 @@ public:
    * @warning The returned pointer is host-owned and must not be unloaded
    * or freed by game code.
    */
-  static const Texture2D *GetTexture(AssetHandle handle) {
-    const HostServices *host = Services::Get();
+  static const Texture2D* GetTexture(AssetHandle handle) {
+    const HostServices* host = Services::Get();
 
     if (!host || !host->GetTexture) {
       return nullptr;
@@ -73,9 +73,8 @@ public:
    * @return Handle representing the shader, or an invalid handle on
    * failure.
    */
-  static AssetHandle LoadShader(const char *vertexPath,
-                                const char *fragmentPath) {
-    const HostServices *host = Services::Get();
+  static AssetHandle LoadShader(const char* vertexPath, const char* fragmentPath) {
+    const HostServices* host = Services::Get();
 
     if (!host || !host->LoadShader) {
       return {};
@@ -94,8 +93,8 @@ public:
    * @warning The returned pointer is host-owned and must not be unloaded
    * by game code.
    */
-  static const Shader *GetShader(AssetHandle handle) {
-    const HostServices *host = Services::Get();
+  static const Shader* GetShader(AssetHandle handle) {
+    const HostServices* host = Services::Get();
 
     if (!host || !host->GetShader) {
       return nullptr;
@@ -117,8 +116,8 @@ public:
    * @param fontSize Font size used when loading the asset.
    * @return Handle representing the font, or an invalid handle on failure.
    */
-  static AssetHandle LoadFont(const char *path, int fontSize) {
-    const HostServices *host = Services::Get();
+  static AssetHandle LoadFont(const char* path, int fontSize) {
+    const HostServices* host = Services::Get();
 
     if (!host || !host->LoadFont || !path || fontSize <= 0) {
       return {};
@@ -137,8 +136,8 @@ public:
    * @warning The returned pointer is host-owned and must not be unloaded
    * by game code.
    */
-  static const Font *GetFont(AssetHandle handle) {
-    const HostServices *host = Services::Get();
+  static const Font* GetFont(AssetHandle handle) {
+    const HostServices* host = Services::Get();
 
     if (!host || !host->GetFont) {
       return nullptr;
@@ -148,4 +147,4 @@ public:
   }
 };
 
-} // namespace Levye
+}  // namespace Levye

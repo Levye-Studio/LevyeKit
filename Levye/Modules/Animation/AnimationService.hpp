@@ -31,7 +31,9 @@ class AnimationService {
   void Shutdown();
 
   /** @brief Returns whether the host service is active. */
-  [[nodiscard]] bool IsInitialized() const noexcept { return m_Initialized; }
+  [[nodiscard]] bool IsInitialized() const noexcept {
+    return m_Initialized;
+  }
 
   /** @brief Creates a generation-safe, host-owned controller handle. */
   [[nodiscard]] AnimationControllerHandle CreateController();
@@ -191,10 +193,14 @@ class AnimationService {
   void Update(float deltaTime);
 
   /** @brief Accesses host-owned animation resources. */
-  [[nodiscard]] AnimationResource& GetResources() noexcept { return m_Resources; }
+  [[nodiscard]] AnimationResource& GetResources() noexcept {
+    return m_Resources;
+  }
 
   /** @brief Accesses host-owned resources without allowing mutation. */
-  [[nodiscard]] const AnimationResource& GetResources() const noexcept { return m_Resources; }
+  [[nodiscard]] const AnimationResource& GetResources() const noexcept {
+    return m_Resources;
+  }
 
  private:
   struct ControllerSlot {

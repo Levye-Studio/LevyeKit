@@ -79,10 +79,13 @@ void DisplayManager::SetScaling(DisplayScaling scaling) {
     pendingScaling_ = scaling;
 }
 
-void DisplayManager::SetSafeInsets(DisplayInsets insets) { layout_.SetSafeInsets(insets); }
+void DisplayManager::SetSafeInsets(DisplayInsets insets) {
+  layout_.SetSafeInsets(insets);
+}
 
 void DisplayManager::BeginGame() {
-  if (!ready_ || drawing_) return;
+  if (!ready_ || drawing_)
+    return;
 
   BeginTextureMode(target_);
   ClearBackground(BLACK);
@@ -90,14 +93,16 @@ void DisplayManager::BeginGame() {
 }
 
 void DisplayManager::EndGame() {
-  if (!drawing_) return;
+  if (!drawing_)
+    return;
 
   EndTextureMode();
   drawing_ = false;
 }
 
 void DisplayManager::Present() {
-  if (!ready_ || drawing_ || !layout_.IsValid()) return;
+  if (!ready_ || drawing_ || !layout_.IsValid())
+    return;
 
   const DisplayRect viewport = layout_.GetWindowViewport();
   const DisplaySize logical = layout_.GetLogicalSize();

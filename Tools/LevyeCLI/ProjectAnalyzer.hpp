@@ -20,6 +20,13 @@ enum class ConversionLifecycle {
   Unknown
 };
 
+/** @brief A read-only capability or migration blocker found in the source tree. */
+struct ConversionFinding {
+  std::string category;
+  std::string detail;
+  bool requiresAdapter = false;
+};
+
 /** @brief Source and build properties collected for one convertible target. */
 struct ConversionTarget {
   std::string name;
@@ -39,6 +46,10 @@ struct ConversionAnalysis {
   std::vector<ConversionTarget> targets;
   std::vector<std::string> warnings;
   std::vector<std::string> errors;
+  std::vector<ConversionFinding> findings;
+  std::vector<std::filesystem::path> observedSources;
+  std::vector<std::string> observedTargets;
+  std::vector<std::string> observedDependencies;
 
   ConversionLifecycle lifecycle = ConversionLifecycle::Unknown;
 
@@ -53,14 +64,17 @@ struct ConversionAnalysis {
   bool alreadyLevyeKit = false;
 
   /** @brief Reports whether analysis found conversion-blocking errors. */
-  bool CanConvert() const { return errors.empty(); }
+  bool CanConvert() const {
+    return errors.empty();
+  }
 };
 
 /** @brief Inspects a CMake project without changing its files. */
 class ProjectAnalyzer {
  public:
   /** @brief Analyzes a project root for supported conversion patterns. */
-  static ConversionAnalysis Analyze(const std::filesystem::path& projectRoot);
+  static ConversionAnalysis Analyze(const std::filesystem::path& projectRoot,
+                                    const std::filesystem::path& assetOverride = {});
 };
 
 }  // namespace Levye

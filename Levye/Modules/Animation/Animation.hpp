@@ -198,7 +198,8 @@ class Animation {
   static void DestroyPose(AnimationPoseHandle pose) {
     const auto* host = Services::Get();
     const auto* api = GetAPI(host);
-    if (api && api->DestroyPose) api->DestroyPose(host->context, pose);
+    if (api && api->DestroyPose)
+      api->DestroyPose(host->context, pose);
   }
 
   /** @brief Checks a generation-safe pose handle. */
@@ -291,7 +292,8 @@ class Animation {
                                                    float weight, float tolerance = 0.001f) {
     const auto* host = Services::Get();
     const auto* api = GetAPI(host);
-    if (!api || !api->SolveTwoBoneIKWeighted) return false;
+    if (!api || !api->SolveTwoBoneIKWeighted)
+      return false;
     const float targetData[3] = {target.x, target.y, target.z};
     const float poleData[3] = {pole.x, pole.y, pole.z};
     return api->SolveTwoBoneIKWeighted(host->context, pose, root, middle, end, targetData, poleData,
@@ -308,7 +310,8 @@ class Animation {
                                                       float tolerance = 0.001f) {
     const auto* host = Services::Get();
     const auto* api = GetAPI(host);
-    if (!api || !api->SolveTwoBoneIKConstrained) return false;
+    if (!api || !api->SolveTwoBoneIKConstrained)
+      return false;
     const float targetData[3] = {target.x, target.y, target.z};
     const float poleData[3] = {pole.x, pole.y, pole.z};
     return api->SolveTwoBoneIKConstrained(host->context, pose, root, middle, end, targetData,
@@ -343,7 +346,8 @@ class Animation {
                                                const Quaternion* previous = nullptr) {
     const auto* host = Services::Get();
     const auto* api = GetAPI(host);
-    if (!api || !api->SurfaceOrientation) return false;
+    if (!api || !api->SurfaceOrientation)
+      return false;
     const float normalData[3] = {normal.x, normal.y, normal.z};
     const float forwardData[3] = {forward.x, forward.y, forward.z};
     const float upData[3] = {localUp.x, localUp.y, localUp.z};
@@ -384,7 +388,8 @@ class Animation {
                                      int priority = 0) {
     const auto* host = Services::Get();
     const AnimationAPI* api = GetAPI(host);
-    if (!api || !api->AddState) return false;
+    if (!api || !api->AddState)
+      return false;
 
     AnimationStateConfig config{};
     config.animation = animation;

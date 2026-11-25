@@ -13,7 +13,7 @@ namespace Levye {
  * which severity levels are written to the console.
  */
 class Logger {
-public:
+ public:
   /**
    * @brief Writes a message using the specified severity level.
    *
@@ -63,8 +63,8 @@ public:
    */
   static void Error(std::string_view message);
 
-private:
+ private:
   static LogLevel s_Level;
 };
 
-} // namespace Levye
+}  // namespace Levye

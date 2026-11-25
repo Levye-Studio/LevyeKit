@@ -40,7 +40,8 @@ bool DesktopExporter::Execute(const std::filesystem::path& projectDirectory,
     if (bundleId.empty()) {
       bundleId = "studio.levye." + project->target;
       for (auto& c : bundleId)
-        if (c == '_') c = '-';
+        if (c == '_')
+          c = '-';
     }
 
     if (!std::regex_match(bundleId, std::regex("[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+")) ||
@@ -81,14 +82,16 @@ bool DesktopExporter::Execute(const std::filesystem::path& projectDirectory,
     if (!BuildCommand::Execute(root, BuildConfiguration::Release, ProjectPlatform::Desktop))
       return false;
 
-    if (auto* android = manifest["android"].as_table()) android->erase("signing");
+    if (auto* android = manifest["android"].as_table())
+      android->erase("signing");
 
     const auto sanitized = lock / "levye.project";
 
     {
       std::ofstream out(sanitized);
       out << manifest;
-      if (!out) return false;
+      if (!out)
+        return false;
     }
 #ifdef _WIN32
     return WindowsPackage::Execute(root, *project, sanitized, appName, bundleId);

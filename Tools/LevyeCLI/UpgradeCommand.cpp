@@ -49,7 +49,8 @@ bool PrepareHost(const fs::path& root, const fs::path& templateRoot,
   if (!ReadRegular(path, current, error) ||
       !ReadRegular(templateRoot / "Source/Main.cpp", desired, error))
     return false;
-  if (current == desired) return true;
+  if (current == desired)
+    return true;
   constexpr std::string_view legacy = R"LEVYE(#include <Levye/Core/Application.hpp>
 #include <Levye/HotReload/GameModule.hpp>
 #include <Levye/Platform/ExecutablePath.hpp>
@@ -246,7 +247,8 @@ bool PrepareMetadata(const std::string& original, std::string& updated, std::str
     version = static_cast<int>(*parsed);
   }
   updated = original;
-  if (version == kTemplateVersion) return true;
+  if (version == kTemplateVersion)
+    return true;
 
   const std::regex header(R"((^|\n)[ \t]*\[project\][ \t]*(?:#.*)?\r?\n)");
   std::smatch match;
@@ -263,7 +265,8 @@ bool PrepareMetadata(const std::string& original, std::string& updated, std::str
       end = lineStart;
       break;
     }
-    if (lineEnd == std::string::npos) break;
+    if (lineEnd == std::string::npos)
+      break;
     lineStart = lineEnd + 1;
   }
   std::string section = updated.substr(start, end - start);
@@ -275,7 +278,8 @@ bool PrepareMetadata(const std::string& original, std::string& updated, std::str
                     static_cast<std::size_t>(versionMatch.length(2)),
                     std::to_string(kTemplateVersion));
   } else {
-    if (!section.empty() && section.back() != '\n') section += '\n';
+    if (!section.empty() && section.back() != '\n')
+      section += '\n';
     section += "template_version = " + std::to_string(kTemplateVersion) + "\n";
   }
   updated.replace(start, end - start, section);
@@ -317,7 +321,8 @@ bool PrepareDisplayMigration(std::string& text, std::string& error) {
     const std::regex header("(^|\\n)[ \\t]*\\[" + std::string(section) +
                             R"(\][ \t]*(?:#.*)?\r?\n)");
     std::smatch found;
-    if (!std::regex_search(text, found, header)) return false;
+    if (!std::regex_search(text, found, header))
+      return false;
     const auto bodyStart = static_cast<std::size_t>(found.position() + found.length());
     const std::regex nextTable(R"((^|\n)[ \t]*\[[^\]\r\n]+\][ \t]*(?:#.*)?\r?(?:\n|$))");
     std::smatch nextMatch;
@@ -329,7 +334,8 @@ bool PrepareDisplayMigration(std::string& text, std::string& error) {
     const std::regex line("(^|\\n)[ \\t]*" + std::string(key) +
                           R"([ \t]*=[ \t]*([^#\r\n]+)[ \t]*(?:#.*)?(?=\r?\n|$))");
     const auto body = text.substr(bodyStart, limit - bodyStart);
-    if (!std::regex_search(body, found, line)) return false;
+    if (!std::regex_search(body, found, line))
+      return false;
     start = bodyStart + static_cast<std::size_t>(found.position()) + (found[1].length() ? 1 : 0);
     end = bodyStart + static_cast<std::size_t>(found.position() + found.length());
     value = found[2].str();
@@ -340,7 +346,8 @@ bool PrepareDisplayMigration(std::string& text, std::string& error) {
   for (const auto& move : moves) {
     std::size_t sourceStart, sourceEnd, targetStart, targetEnd;
     std::string sourceValue, targetValue;
-    if (!field(move.fromSection, move.fromKey, sourceStart, sourceEnd, sourceValue)) continue;
+    if (!field(move.fromSection, move.fromKey, sourceStart, sourceEnd, sourceValue))
+      continue;
     if (std::string_view(move.fromSection) == "ios" && sourceValue == "\"all\"")
       sourceValue = "\"auto\"";
     if (field(move.toSection, move.toKey, targetStart, targetEnd, targetValue)) {
@@ -354,7 +361,8 @@ bool PrepareDisplayMigration(std::string& text, std::string& error) {
         }
         if (const auto source = sourceNode.value<std::int64_t>())
           return targetNode.value<std::int64_t>() == source;
-        if (const auto source = sourceNode.value<bool>()) return targetNode.value<bool>() == source;
+        if (const auto source = sourceNode.value<bool>())
+          return targetNode.value<bool>() == source;
         return false;
       }();
       if (!sameValue) {
@@ -376,14 +384,16 @@ bool PrepareDisplayMigration(std::string& text, std::string& error) {
     movedLine.replace(keyAt, std::char_traits<char>::length(move.fromKey), move.toKey);
     if (std::string_view(move.fromSection) == "ios" && sourceValue == "\"auto\"") {
       const auto oldValue = movedLine.find("\"all\"");
-      if (oldValue != std::string::npos) movedLine.replace(oldValue, 5, "\"auto\"");
+      if (oldValue != std::string::npos)
+        movedLine.replace(oldValue, 5, "\"auto\"");
     }
     text.erase(sourceStart, sourceEnd - sourceStart);
     const std::regex targetHeader("(^|\\n)[ \\t]*\\[" + std::string(move.toSection) +
                                   R"(\][ \t]*(?:#.*)?\r?(?:\n|$))");
     std::smatch targetMatch;
     if (!std::regex_search(text, targetMatch, targetHeader)) {
-      if (!text.empty() && text.back() != '\n') text += '\n';
+      if (!text.empty() && text.back() != '\n')
+        text += '\n';
       text += "\n[" + std::string(move.toSection) + "]\n" + movedLine + "\n";
     } else {
       const auto at = static_cast<std::size_t>(targetMatch.position() + targetMatch.length());
@@ -422,20 +432,24 @@ bool PrepareDisplayMigration(std::string& text, std::string& error) {
 
 bool ValidateInstalled(const fs::path& root, const fs::path& templateRoot, std::string& error) {
   std::string metadata;
-  if (!ReadRegular(root / "levye.project", metadata, error)) return false;
+  if (!ReadRegular(root / "levye.project", metadata, error))
+    return false;
   std::string updated, name, target;
   int version = 0;
   if (!PrepareMetadata(metadata, updated, name, target, version, error) ||
       version != kTemplateVersion) {
-    if (error.empty()) error = "Project template version was not installed.";
+    if (error.empty())
+      error = "Project template version was not installed.";
     return false;
   }
   if (!PrepareDisplayMigration(updated, error) || updated != metadata) {
-    if (error.empty()) error = "Display migration is incomplete.";
+    if (error.empty())
+      error = "Display migration is incomplete.";
     return false;
   }
   std::vector<PendingFile> hostChanges;
-  if (!PrepareHost(root, templateRoot, hostChanges, error)) return false;
+  if (!PrepareHost(root, templateRoot, hostChanges, error))
+    return false;
   if (!hostChanges.empty()) {
     error = "Desktop runtime host migration is incomplete.";
     return false;
@@ -443,24 +457,29 @@ bool ValidateInstalled(const fs::path& root, const fs::path& templateRoot, std::
   CMakeMigrationPlan source;
   if (!ProjectCMakeMigration::Prepare(root, source, error) || source.updateRoot ||
       source.createManifest || source.updateManifest) {
-    if (error.empty()) error = "Source manifest migration is incomplete.";
+    if (error.empty())
+      error = "Source manifest migration is incomplete.";
     return false;
   }
   std::string cmake;
-  if (!ReadRegular(root / "CMakeLists.txt", cmake, error)) return false;
+  if (!ReadRegular(root / "CMakeLists.txt", cmake, error))
+    return false;
   bool layoutChanged = false;
-  if (!SupportsBuildLayout(cmake, target, layoutChanged, error) || layoutChanged) return false;
+  if (!SupportsBuildLayout(cmake, target, layoutChanged, error) || layoutChanged)
+    return false;
   bool modulesChanged = false;
   const std::regex compileCommandsOn(R"(^[ \t]*set\s*\(\s*CMAKE_EXPORT_COMPILE_COMMANDS\s+ON\s*\))",
                                      std::regex::icase | std::regex_constants::multiline);
   if (!ProjectModuleMigration::Prepare(cmake, modulesChanged, error) || modulesChanged ||
       !std::regex_search(cmake, compileCommandsOn)) {
-    if (error.empty()) error = "CMake migration is incomplete.";
+    if (error.empty())
+      error = "CMake migration is incomplete.";
     return false;
   }
   std::vector<PendingFile> missing;
   std::vector<fs::path> preserved;
-  if (!ProjectIDE::Prepare(root, templateRoot, target, missing, preserved, error)) return false;
+  if (!ProjectIDE::Prepare(root, templateRoot, target, missing, preserved, error))
+    return false;
   if (!missing.empty()) {
     error = "IDE configuration is incomplete.";
     return false;
@@ -599,16 +618,20 @@ int UpgradeCommand::Execute(const fs::path& projectDirectory, const fs::path& fr
   }
 
   std::cout << "[Levye] Planned changes:\n";
-  if (changes.empty()) std::cout << "  (none)\n";
+  if (changes.empty())
+    std::cout << "  (none)\n";
   for (const auto& change : changes)
     std::cout << "  " << (change.allowReplace ? "~ " : "+ ")
               << change.path.lexically_relative(projectDirectory).generic_string() << '\n';
   std::cout << "[Levye] Preserved:\n";
-  for (const auto& file : preserved) std::cout << "  " << file.generic_string() << '\n';
+  for (const auto& file : preserved)
+    std::cout << "  " << file.generic_string() << '\n';
   std::cout << "  Game sources and Assets/ contents, target names, custom project settings\n";
 
-  if (check) return changes.empty() ? 0 : 2;
-  if (dryRun) return 0;
+  if (check)
+    return changes.empty() ? 0 : 2;
+  if (dryRun)
+    return 0;
   if (changes.empty()) {
     std::cout << "[Levye] Project is current.\n";
     return 0;
@@ -623,7 +646,8 @@ int UpgradeCommand::Execute(const fs::path& projectDirectory, const fs::path& fr
     return 1;
   }
   for (const auto& change : changes) {
-    if (!change.allowReplace) continue;
+    if (!change.allowReplace)
+      continue;
     const auto backup = backupRoot / change.path.lexically_relative(projectDirectory);
     fs::create_directories(backup.parent_path(), backupError);
     if (backupError || !fs::copy_file(change.path, backup, fs::copy_options::none, backupError)) {

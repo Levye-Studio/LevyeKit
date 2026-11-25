@@ -36,12 +36,13 @@ std::filesystem::path ExecutablePath::Get() {
    * weakly_canonical() resolves relative components and symbolic links
    * where possible without requiring every path component to exist.
    */
-  return std::filesystem::weakly_canonical(
-      std::filesystem::path(buffer.data()));
+  return std::filesystem::weakly_canonical(std::filesystem::path(buffer.data()));
 }
 
 #elif defined(__EMSCRIPTEN__)
-std::filesystem::path ExecutablePath::Get() { return {}; }
+std::filesystem::path ExecutablePath::Get() {
+  return {};
+}
 #elif defined(__linux__)
 
 std::filesystem::path ExecutablePath::Get() {
@@ -51,8 +52,7 @@ std::filesystem::path ExecutablePath::Get() {
    * Linux exposes the running executable through /proc/self/exe.
    * canonical() resolves the symbolic link to the actual executable path.
    */
-  const std::filesystem::path path =
-      std::filesystem::canonical("/proc/self/exe", error);
+  const std::filesystem::path path = std::filesystem::canonical("/proc/self/exe", error);
 
   if (error)
     return {};
@@ -72,8 +72,8 @@ std::filesystem::path ExecutablePath::Get() {
   std::wstring buffer(260, L'\0');
 
   while (true) {
-    const DWORD length = GetModuleFileNameW(nullptr, buffer.data(),
-                                            static_cast<DWORD>(buffer.size()));
+    const DWORD length =
+        GetModuleFileNameW(nullptr, buffer.data(), static_cast<DWORD>(buffer.size()));
 
     if (length == 0) {
       return {};
@@ -106,4 +106,4 @@ std::filesystem::path ExecutablePath::Get() {
 std::filesystem::path ExecutablePath::GetDirectory() {
   return Get().parent_path();
 }
-} // namespace Levye
+}  // namespace Levye

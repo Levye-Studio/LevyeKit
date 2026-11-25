@@ -14,11 +14,13 @@
 namespace Levye::WindowsPackage {
 namespace fs = std::filesystem;
 inline std::wstring Lower(std::wstring s) {
-  for (auto& c : s) c = static_cast<wchar_t>(std::towlower(c));
+  for (auto& c : s)
+    c = static_cast<wchar_t>(std::towlower(c));
   return s;
 }
 inline void Require(bool ok, const char* message) {
-  if (!ok) throw std::runtime_error(message);
+  if (!ok)
+    throw std::runtime_error(message);
 }
 inline std::string Architecture(const fs::path& executable) {
   std::ifstream in(executable, std::ios::binary);
@@ -49,7 +51,8 @@ inline std::string Architecture(const fs::path& executable) {
 }
 inline void SafeDirectory(const fs::path& path) {
   Require(!fs::is_symlink(fs::symlink_status(path)), "Symlink directory is unsupported");
-  if (!fs::exists(path)) fs::create_directory(path);
+  if (!fs::exists(path))
+    fs::create_directory(path);
   Require(fs::is_directory(path) && fs::canonical(path) == fs::absolute(path).lexically_normal(),
           "Invalid or redirected directory");
 }
@@ -57,7 +60,8 @@ inline bool Execute(const fs::path& root, const ProjectConfig& project, const fs
                     const std::string& appName, const std::string& bundleId) {
   const fs::path asset(project.assetDirectory);
   Require(!asset.empty() && !asset.has_root_path(), "Invalid asset path");
-  for (const auto& part : asset) Require(part != "." && part != "..", "Invalid asset path");
+  for (const auto& part : asset)
+    Require(part != "." && part != "..", "Invalid asset path");
   const auto first = Lower(asset.begin()->wstring());
   Require(first != L"bin" && first != L"lib" && first != L"levye.project" && first != L"exports" &&
               first != L"targets" && first != L"build",
@@ -75,7 +79,8 @@ inline bool Execute(const fs::path& root, const ProjectConfig& project, const fs
   if (!project.desktopIcon.empty()) {
     const fs::path icon(project.desktopIcon);
     Require(!icon.has_root_path(), "Invalid desktop icon");
-    for (const auto& part : icon) Require(part != ".." && part != ".", "Invalid desktop icon");
+    for (const auto& part : icon)
+      Require(part != ".." && part != ".", "Invalid desktop icon");
     Require(Lower(icon.extension().wstring()) == L".png" && fs::is_regular_file(assets / icon),
             "Missing PNG desktop icon");
   }

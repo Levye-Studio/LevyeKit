@@ -2,8 +2,7 @@
 
 #include <new>
 
-namespace
-{
+namespace {
 
 /**
  * @brief Persistent state owned by the generated game.
@@ -14,9 +13,8 @@ namespace
  * Changing the layout of this structure while the game is running requires
  * restarting the game.
  */
-struct GameState
-{
-    // Add persistent game data here.
+struct GameState {
+  // Add persistent game data here.
 };
 
 /**
@@ -25,9 +23,8 @@ struct GameState
  * @param state Pointer to the persistent state memory provided by LevyeKit.
  * @return Pointer to the game's persistent state.
  */
-GameState* GetState(void* state)
-{
-    return static_cast<GameState*>(state);
+GameState* GetState(void* state) {
+  return static_cast<GameState*>(state);
 }
 
 /**
@@ -39,18 +36,12 @@ GameState* GetState(void* state)
  * @param services Host services provided by LevyeKit, or nullptr when
  * detaching the game module.
  */
-void BindServices(
-    const Levye::HostServices* services
-)
-{
-    if (services)
-    {
-        Levye::Services::Bind(services);
-    }
-    else
-    {
-        Levye::Services::Unbind();
-    }
+void BindServices(const Levye::HostServices* services) {
+  if (services) {
+    Levye::Services::Bind(services);
+  } else {
+    Levye::Services::Unbind();
+  }
 }
 
 /**
@@ -61,11 +52,8 @@ void BindServices(
  *
  * @param state Host-owned memory where GameState will be constructed.
  */
-void InitializeState(
-    void* state
-)
-{
-    new (state) GameState{};
+void InitializeState(void* state) {
+  new (state) GameState{};
 }
 
 /**
@@ -75,53 +63,35 @@ void InitializeState(
  *
  * @param state Persistent game state.
  */
-void DestroyState(
-    void* state
-)
-{
-    GetState(state)->~GameState();
+void DestroyState(void* state) {
+  GetState(state)->~GameState();
 }
 
 /**
  * @brief Called once after the game module has started.
  */
-void OnLoad(
-    void* state
-)
-{
-    (void)state;
+void OnLoad(void* state) {
+  (void)state;
 
-    Levye::Log::Info(
-        "{{PROJECT_NAME}} started."
-    );
+  Levye::Log::Info("{{PROJECT_NAME}} started.");
 }
 
 /**
  * @brief Called before the current game module is replaced during hot reload.
  */
-void OnBeforeReload(
-    void* state
-)
-{
-    (void)state;
+void OnBeforeReload(void* state) {
+  (void)state;
 
-    Levye::Log::Info(
-        "{{PROJECT_NAME}} preparing for code reload."
-    );
+  Levye::Log::Info("{{PROJECT_NAME}} preparing for code reload.");
 }
 
 /**
  * @brief Called after new game code has been successfully hot reloaded.
  */
-void OnAfterReload(
-    void* state
-)
-{
-    (void)state;
+void OnAfterReload(void* state) {
+  (void)state;
 
-    Levye::Log::Info(
-        "{{PROJECT_NAME}} code reloaded."
-    );
+  Levye::Log::Info("{{PROJECT_NAME}} code reloaded.");
 }
 
 /**
@@ -130,13 +100,9 @@ void OnAfterReload(
  * @param state Persistent game state.
  * @param deltaTime Scaled time elapsed since the previous frame.
  */
-void OnUpdate(
-    void* state,
-    float deltaTime
-)
-{
-    (void)state;
-    (void)deltaTime;
+void OnUpdate(void* state, float deltaTime) {
+  (void)state;
+  (void)deltaTime;
 }
 
 /**
@@ -145,74 +111,53 @@ void OnUpdate(
  * @param state Persistent game state.
  * @param fixedDeltaTime Duration of the current fixed simulation step.
  */
-void OnFixedUpdate(
-    void* state,
-    float fixedDeltaTime
-)
-{
-    (void)state;
-    (void)fixedDeltaTime;
+void OnFixedUpdate(void* state, float fixedDeltaTime) {
+  (void)state;
+  (void)fixedDeltaTime;
 }
 
 /**
  * @brief Draws the current game frame.
  */
-void OnDraw(
-    void* state
-)
-{
-    (void)state;
+void OnDraw(void* state) {
+  (void)state;
 
-    ClearBackground(BLACK);
+  ClearBackground(BLACK);
 
-    DrawText(
-        "{{PROJECT_NAME}}",
-        40,
-        40,
-        32,
-        RAYWHITE
-    );
+  DrawText("{{PROJECT_NAME}}", 40, 40, 32, RAYWHITE);
 }
 
 /**
  * @brief Called once before the application shuts down.
  */
-void OnShutdown(
-    void* state
-)
-{
-    (void)state;
+void OnShutdown(void* state) {
+  (void)state;
 
-    Levye::Log::Info(
-        "{{PROJECT_NAME}} shutting down."
-    );
+  Levye::Log::Info("{{PROJECT_NAME}} shutting down.");
 }
 
-} // namespace
+}  // namespace
 
 LEVYE_GAME_EXPORT
-const Levye::GameAPI* GetGameAPI()
-{
-    static const Levye::GameAPI api = {
-        .version = Levye::GAME_API_VERSION,
+const Levye::GameAPI* GetGameAPI() {
+  static const Levye::GameAPI api = {.version = Levye::GAME_API_VERSION,
 
-        .BindServices = BindServices,
+                                     .BindServices = BindServices,
 
-        .OnLoad = OnLoad,
+                                     .OnLoad = OnLoad,
 
-        .OnBeforeReload = OnBeforeReload,
-        .OnAfterReload = OnAfterReload,
+                                     .OnBeforeReload = OnBeforeReload,
+                                     .OnAfterReload = OnAfterReload,
 
-        .OnUpdate = OnUpdate,
-        .OnFixedUpdate = OnFixedUpdate,
-        .OnDraw = OnDraw,
-        .OnShutdown = OnShutdown,
+                                     .OnUpdate = OnUpdate,
+                                     .OnFixedUpdate = OnFixedUpdate,
+                                     .OnDraw = OnDraw,
+                                     .OnShutdown = OnShutdown,
 
-        .InitializeState = InitializeState,
-        .DestroyState = DestroyState,
+                                     .InitializeState = InitializeState,
+                                     .DestroyState = DestroyState,
 
-        .stateSize = sizeof(GameState)
-    };
+                                     .stateSize = sizeof(GameState)};
 
-    return &api;
+  return &api;
 }

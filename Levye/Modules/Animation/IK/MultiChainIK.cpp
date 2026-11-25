@@ -29,7 +29,8 @@ bool Valid(const EditablePose& pose, const AnimationIKChainRequest& request) {
 
 bool AncestorOrSelf(const EditablePose& pose, int ancestor, int bone) {
   for (int current = bone; current >= 0; current = pose.Parent(current))
-    if (current == ancestor) return true;
+    if (current == ancestor)
+      return true;
   return false;
 }
 
@@ -37,14 +38,16 @@ bool Affects(const EditablePose& pose, const AnimationIKChainRequest& a,
              const AnimationIKChainRequest& b) {
   for (int controlled : {a.root, a.middle})
     for (int referenced : {b.root, b.middle, b.end})
-      if (AncestorOrSelf(pose, controlled, referenced)) return true;
+      if (AncestorOrSelf(pose, controlled, referenced))
+        return true;
   return false;
 }
 }  // namespace
 
 bool MultiChainIK::Solve(EditablePose& pose, const AnimationIKChainRequest* requests, int count,
                          AnimationIKChainResult* results) {
-  if (!pose.IsSampled() || count < 0 || (count > 0 && (!requests || !results))) return false;
+  if (!pose.IsSampled() || count < 0 || (count > 0 && (!requests || !results)))
+    return false;
   for (int i = 0; i < count; ++i) {
     results[i] = {};
     results[i].id = requests[i].id;
@@ -54,7 +57,8 @@ bool MultiChainIK::Solve(EditablePose& pose, const AnimationIKChainRequest* requ
   }
   for (int i = 0; i < count; ++i) {
     for (int j = i + 1; j < count; ++j) {
-      if (!requests[i].enabled || !requests[j].enabled) continue;
+      if (!requests[i].enabled || !requests[j].enabled)
+        continue;
       if (requests[i].id == requests[j].id) {
         results[i].status = AnimationIKChainStatus::Invalid;
         results[j].status = AnimationIKChainStatus::Invalid;
@@ -67,7 +71,8 @@ bool MultiChainIK::Solve(EditablePose& pose, const AnimationIKChainRequest* requ
         return status == AnimationIKChainStatus::Failed ||
                status == AnimationIKChainStatus::Conflict;
       };
-      if (!eligible(results[i].status) || !eligible(results[j].status)) continue;
+      if (!eligible(results[i].status) || !eligible(results[j].status))
+        continue;
       if (Affects(pose, requests[i], requests[j]) || Affects(pose, requests[j], requests[i])) {
         results[i].status = AnimationIKChainStatus::Conflict;
         results[j].status = AnimationIKChainStatus::Conflict;
@@ -82,9 +87,11 @@ bool MultiChainIK::Solve(EditablePose& pose, const AnimationIKChainRequest* requ
       if (results[candidate].status != AnimationIKChainStatus::Failed ||
           (havePreviousId && requests[candidate].id <= previousId))
         continue;
-      if (index < 0 || requests[candidate].id < requests[index].id) index = candidate;
+      if (index < 0 || requests[candidate].id < requests[index].id)
+        index = candidate;
     }
-    if (index < 0) break;
+    if (index < 0)
+      break;
     previousId = requests[index].id;
     havePreviousId = true;
     const auto& request = requests[index];

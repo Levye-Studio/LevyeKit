@@ -127,7 +127,8 @@ bool ProjectModuleMigration::Prepare(std::string& cmake, bool& changed, std::str
     const std::regex definition(
         "target_compile_definitions\\s*\\(\\s*Game\\b[^)]*\\b" + variable + "=1\\b",
         std::regex::icase);
-    if (std::regex_search(cmake, definition)) continue;
+    if (std::regex_search(cmake, definition))
+      continue;
     cmake += "\nif(" + variable +
              ")\n"
              "    target_compile_definitions(Game PRIVATE " +

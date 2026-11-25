@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 
+#include "WebBuild.hpp"
+
 namespace {
 
 bool RemoveDirectory(const std::filesystem::path& path) {
@@ -30,8 +32,20 @@ bool CleanCommand::Execute(const std::filesystem::path& projectDirectory,
                            BuildConfiguration configuration, ProjectPlatform platform) {
   const std::string configurationName{ToString(configuration)};
   const auto project = ProjectLoader::Load(projectDirectory / "levye.project");
-  if (!project) return false;
+  if (!project)
+    return false;
   platform = ResolveProjectPlatform(platform, project->defaultPlatform);
+
+  if (platform == ProjectPlatform::Web) {
+    const std::string suffix = "Web" + configurationName;
+    const bool buildRemoved =
+        RemoveDirectory(WebBuild::BuildDirectory(projectDirectory, configuration));
+    const bool targetsRemoved = RemoveDirectory(projectDirectory / "Targets" / suffix);
+    if (!buildRemoved || !targetsRemoved)
+      return false;
+    std::cout << "[Levye] Cleaned Web " << configurationName << " build.\n";
+    return true;
+  }
   const std::string prefix = platform == ProjectPlatform::Android ? "android-"
                              : platform == ProjectPlatform::IOS   ? "ios-"
                                                                   : "";
@@ -51,7 +65,8 @@ bool CleanCommand::Execute(const std::filesystem::path& projectDirectory,
 
   const bool targetsRemoved = RemoveDirectory(targetDirectory);
 
-  if (!buildRemoved || !targetsRemoved) return false;
+  if (!buildRemoved || !targetsRemoved)
+    return false;
 
   std::cout << "[Levye] Cleaned " << configurationName << " build.\n";
 
@@ -67,7 +82,8 @@ bool CleanCommand::ExecuteAll(const std::filesystem::path& projectDirectory) {
 
   const bool targetsRemoved = RemoveDirectory(targetDirectory);
 
-  if (!buildRemoved || !targetsRemoved) return false;
+  if (!buildRemoved || !targetsRemoved)
+    return false;
 
   std::cout << "[Levye] Cleaned all builds.\n";
 

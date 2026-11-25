@@ -1,13 +1,12 @@
 #include "FileWatcher.hpp"
 
 namespace Levye {
-FileWatcher::FileWatcher(const std::string &path,
-                         std::chrono::milliseconds debounce)
+FileWatcher::FileWatcher(const std::string& path, std::chrono::milliseconds debounce)
     : m_Debounce(debounce) {
   Watch(path);
 }
 
-bool FileWatcher::Watch(const std::string &path) {
+bool FileWatcher::Watch(const std::string& path) {
   m_Path = path;
   m_HasAcceptedState = false;
   m_HasPendingChange = false;
@@ -80,19 +79,20 @@ bool FileWatcher::Poll() {
   return true;
 }
 
-const std::string &FileWatcher::GetPath() const { return m_Path; }
+const std::string& FileWatcher::GetPath() const {
+  return m_Path;
+}
 
 bool FileWatcher::IsCurrentStateStable() const {
   FileState state{};
-  return m_HasAcceptedState && !m_HasPendingChange && ReadState(state) &&
-         state == m_AcceptedState;
+  return m_HasAcceptedState && !m_HasPendingChange && ReadState(state) && state == m_AcceptedState;
 }
 
 bool FileWatcher::IsWatching() const {
   return !m_Path.empty() && m_HasAcceptedState;
 }
 
-bool FileWatcher::ReadState(FileState &state) const {
+bool FileWatcher::ReadState(FileState& state) const {
   if (m_Path.empty())
     return false;
 
@@ -111,4 +111,4 @@ bool FileWatcher::ReadState(FileState &state) const {
 
   return !timeError && !sizeError;
 }
-} // namespace Levye
+}  // namespace Levye

@@ -30,8 +30,12 @@ class AnimationScene {
   /** @brief Releases the model, controllers, and animation resources. */
   void Shutdown();
 
-  [[nodiscard]] bool IsReady() const noexcept { return m_Ready; }
-  [[nodiscard]] int CurrentScene() const noexcept { return m_CurrentScene; }
+  [[nodiscard]] bool IsReady() const noexcept {
+    return m_Ready;
+  }
+  [[nodiscard]] int CurrentScene() const noexcept {
+    return m_CurrentScene;
+  }
   [[nodiscard]] const char* SceneName(int index) const noexcept;
   [[nodiscard]] bool SceneReady(int index) const noexcept;
 

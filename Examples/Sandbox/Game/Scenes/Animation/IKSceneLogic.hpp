@@ -20,7 +20,9 @@ struct Chain {
   int root = -1;
   int middle = -1;
   int end = -1;
-  [[nodiscard]] bool Valid() const noexcept { return root >= 0 && middle >= 0 && end >= 0; }
+  [[nodiscard]] bool Valid() const noexcept {
+    return root >= 0 && middle >= 0 && end >= 0;
+  }
 };
 
 inline float Distance(Vector3 a, Vector3 b) {
@@ -36,9 +38,11 @@ inline Chain FindChain(const std::vector<Bone>& bones, Chain excluded = {}) {
   int bestScore = -1;
   for (int end = 0; end < static_cast<int>(bones.size()); ++end) {
     const int middle = bones[static_cast<std::size_t>(end)].parent;
-    if (middle < 0 || middle >= static_cast<int>(bones.size())) continue;
+    if (middle < 0 || middle >= static_cast<int>(bones.size()))
+      continue;
     const int root = bones[static_cast<std::size_t>(middle)].parent;
-    if (root < 0 || root >= static_cast<int>(bones.size()) || root == end) continue;
+    if (root < 0 || root >= static_cast<int>(bones.size()) || root == end)
+      continue;
     if (root == excluded.root || root == excluded.middle || root == excluded.end ||
         middle == excluded.root || middle == excluded.middle || middle == excluded.end ||
         end == excluded.root || end == excluded.middle || end == excluded.end)
@@ -57,7 +61,8 @@ inline Chain FindChain(const std::vector<Bone>& bones, Chain excluded = {}) {
       score += 100;
     if (endName.find("Palm") != std::string::npos || endName.find("Hand") != std::string::npos)
       score += 20;
-    if (rootName.find(".L") != std::string::npos) score += 10;
+    if (rootName.find(".L") != std::string::npos)
+      score += 10;
     if (score > bestScore) {
       best = {root, middle, end};
       bestScore = score;
@@ -79,11 +84,13 @@ inline bool ResetTarget(const Bone& root, const Bone& middle, const Bone& end, V
   const float margin = std::min(0.05f, 0.1f * std::min(upper, lower));
   const float low = minimum + margin;
   const float high = maximum - margin;
-  if (low >= high) return false;
+  if (low >= high)
+    return false;
 
   Vector3 direction = Vector3Subtract(end.position, root.position);
   const float currentDistance = Vector3Length(direction);
-  if (currentDistance < 1.0e-5f) direction = Vector3Subtract(middle.position, root.position);
+  if (currentDistance < 1.0e-5f)
+    direction = Vector3Subtract(middle.position, root.position);
   direction = Vector3Normalize(direction);
   const float base = std::clamp(currentDistance, low, high);
   const float offset = std::min(0.1f, 0.15f * std::min(upper, lower));
@@ -91,9 +98,12 @@ inline bool ResetTarget(const Bone& root, const Bone& middle, const Bone& end, V
       std::clamp(base + (base > (low + high) * 0.5f ? -offset : offset), low, high);
   Vector3 bend = Vector3Subtract(middle.position, root.position);
   bend = Vector3Subtract(bend, Vector3Scale(direction, Vector3DotProduct(bend, direction)));
-  if (Vector3LengthSqr(bend) < 1.0e-6f) bend = Vector3CrossProduct(direction, {0.0f, 1.0f, 0.0f});
-  if (Vector3LengthSqr(bend) < 1.0e-6f) bend = Vector3CrossProduct(direction, {1.0f, 0.0f, 0.0f});
-  if (Vector3LengthSqr(bend) < 1.0e-6f) return false;
+  if (Vector3LengthSqr(bend) < 1.0e-6f)
+    bend = Vector3CrossProduct(direction, {0.0f, 1.0f, 0.0f});
+  if (Vector3LengthSqr(bend) < 1.0e-6f)
+    bend = Vector3CrossProduct(direction, {1.0f, 0.0f, 0.0f});
+  if (Vector3LengthSqr(bend) < 1.0e-6f)
+    return false;
 
   target = Vector3Add(root.position, Vector3Scale(direction, distance));
   pole = Vector3Add(middle.position, Vector3Scale(Vector3Normalize(bend), 0.6f));
@@ -116,7 +126,8 @@ inline Vector3 ToWorld(Vector3 modelPoint, Matrix modelTransform, Vector3 drawPo
 
 /** Moves the target in model space using units per second. */
 inline void MoveTarget(Vector3& target, float horizontal, float vertical, float depth, float dt) {
-  if (!std::isfinite(dt) || dt <= 0.0f) return;
+  if (!std::isfinite(dt) || dt <= 0.0f)
+    return;
   constexpr float speed = 1.5f;
   target.x += horizontal * speed * dt;
   target.y += vertical * speed * dt;

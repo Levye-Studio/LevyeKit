@@ -27,7 +27,9 @@ class Serialization {
    * @brief Checks whether the host provides the current serialization API
    * version.
    */
-  [[nodiscard]] static bool Available() { return GetAPI() != nullptr; }
+  [[nodiscard]] static bool Available() {
+    return GetAPI() != nullptr;
+  }
 
   /**
    * @brief Creates a host-owned document.
@@ -36,8 +38,7 @@ class Serialization {
       SerializationFormat format = SerializationFormat::YAML) {
     const auto* api = GetAPI();
 
-    return api && api->Create ? api->Create(api->context, format)
-                              : InvalidDocumentHandle;
+    return api && api->Create ? api->Create(api->context, format) : InvalidDocumentHandle;
   }
 
   /**
@@ -64,8 +65,7 @@ class Serialization {
    * Unlike the typed getters, this distinguishes a missing path
    * from a path containing an empty, false, zero, or null value.
    */
-  [[nodiscard]] static bool ContainsPath(DocumentHandle handle,
-                                         const char* path) {
+  [[nodiscard]] static bool ContainsPath(DocumentHandle handle, const char* path) {
     const auto* api = GetAPI();
 
     return api && api->ContainsPath && path != nullptr && *path != '\0' &&
@@ -77,8 +77,7 @@ class Serialization {
    *
    * Example: "player.stats.score"
    */
-  static bool SetInt(DocumentHandle handle, const char* path,
-                     std::int64_t value) {
+  static bool SetInt(DocumentHandle handle, const char* path, std::int64_t value) {
     const auto* api = GetAPI();
 
     return api && api->SetInt && api->SetInt(api->context, handle, path, value);
@@ -88,38 +87,31 @@ class Serialization {
   static bool SetFloat(DocumentHandle handle, const char* path, double value) {
     const auto* api = GetAPI();
 
-    return api && api->SetFloat &&
-           api->SetFloat(api->context, handle, path, value);
+    return api && api->SetFloat && api->SetFloat(api->context, handle, path, value);
   }
 
   /** @brief Writes a boolean value at a document path. */
   static bool SetBool(DocumentHandle handle, const char* path, bool value) {
     const auto* api = GetAPI();
 
-    return api && api->SetBool &&
-           api->SetBool(api->context, handle, path, value);
+    return api && api->SetBool && api->SetBool(api->context, handle, path, value);
   }
 
   /** @brief Copies a string into a host-owned document path. */
-  static bool SetString(DocumentHandle handle, const char* path,
-                        const char* value) {
+  static bool SetString(DocumentHandle handle, const char* path, const char* value) {
     const auto* api = GetAPI();
 
-    return api && api->SetString &&
-           api->SetString(api->context, handle, path, value);
+    return api && api->SetString && api->SetString(api->context, handle, path, value);
   }
 
   /**
    * @brief Reads an integer, returning fallback if unavailable.
    */
-  [[nodiscard]] static std::int64_t GetInt(DocumentHandle handle,
-                                           const char* path,
+  [[nodiscard]] static std::int64_t GetInt(DocumentHandle handle, const char* path,
                                            std::int64_t fallback = 0) {
     const auto* api = GetAPI();
 
-    return api && api->GetInt
-               ? api->GetInt(api->context, handle, path, fallback)
-               : fallback;
+    return api && api->GetInt ? api->GetInt(api->context, handle, path, fallback) : fallback;
   }
 
   /** @brief Reads a floating-point value or returns the caller's fallback. */
@@ -127,9 +119,7 @@ class Serialization {
                                        double fallback = 0.0) {
     const auto* api = GetAPI();
 
-    return api && api->GetFloat
-               ? api->GetFloat(api->context, handle, path, fallback)
-               : fallback;
+    return api && api->GetFloat ? api->GetFloat(api->context, handle, path, fallback) : fallback;
   }
 
   /** @brief Reads a boolean value or returns the caller's fallback. */
@@ -137,9 +127,7 @@ class Serialization {
                                     bool fallback = false) {
     const auto* api = GetAPI();
 
-    return api && api->GetBool
-               ? api->GetBool(api->context, handle, path, fallback)
-               : fallback;
+    return api && api->GetBool ? api->GetBool(api->context, handle, path, fallback) : fallback;
   }
 
   /**
@@ -151,28 +139,30 @@ class Serialization {
    * @note An empty return value can mean either an empty string
    *       or a failed read in the current API.
    */
-  [[nodiscard]] static std::string GetString(DocumentHandle handle,
-                                             const char* path) {
+  [[nodiscard]] static std::string GetString(DocumentHandle handle, const char* path) {
     const auto* api = GetAPI();
 
-    if (!api || !api->GetString || !path) return {};
+    if (!api || !api->GetString || !path)
+      return {};
 
-    const std::uint64_t required =
-        api->GetString(api->context, handle, path, nullptr, 0);
+    const std::uint64_t required = api->GetString(api->context, handle, path, nullptr, 0);
 
-    if (required == 0) return {};
+    if (required == 0)
+      return {};
 
     // Reject a size that cannot fit in this module's container.
     std::vector<char> buffer;
 
-    if (required > buffer.max_size()) return {};
+    if (required > buffer.max_size())
+      return {};
 
     buffer.resize(static_cast<std::size_t>(required));
 
     const std::uint64_t written =
         api->GetString(api->context, handle, path, buffer.data(), required);
 
-    if (written != required || buffer.back() != '\0') return {};
+    if (written != required || buffer.back() != '\0')
+      return {};
 
     return std::string(buffer.data(), buffer.size() - 1);
   }
@@ -201,8 +191,8 @@ class Serialization {
    * @note The two writes are not atomic. If writing the second
    * coordinate fails, the first coordinate may already have changed.
    */
-  [[nodiscard]] static bool SetVector2(DocumentHandle document,
-                                       const std::string& path, Vector2 value) {
+  [[nodiscard]] static bool SetVector2(DocumentHandle document, const std::string& path,
+                                       Vector2 value) {
     // An empty parent path would produce invalid coordinate paths.
     if (path.empty()) {
       return false;
@@ -237,8 +227,7 @@ class Serialization {
    * only "x" can therefore return a combination of the stored x
    * coordinate and the fallback y coordinate.
    */
-  [[nodiscard]] static Vector2 GetVector2(DocumentHandle document,
-                                          const std::string& path,
+  [[nodiscard]] static Vector2 GetVector2(DocumentHandle document, const std::string& path,
                                           Vector2 fallback = {0.0f, 0.0f}) {
     if (path.empty()) {
       return fallback;
@@ -248,11 +237,9 @@ class Serialization {
     // cannot be read.
     const std::string xPath = path + ".x";
     const std::string yPath = path + ".y";
-    const double x =
-        GetFloat(document, xPath.c_str(), static_cast<double>(fallback.x));
+    const double x = GetFloat(document, xPath.c_str(), static_cast<double>(fallback.x));
 
-    const double y =
-        GetFloat(document, yPath.c_str(), static_cast<double>(fallback.y));
+    const double y = GetFloat(document, yPath.c_str(), static_cast<double>(fallback.y));
 
     return {static_cast<float>(x), static_cast<float>(y)};
   }
@@ -284,8 +271,8 @@ class Serialization {
    * @note The writes are not atomic. A failed operation may
    * leave some components updated.
    */
-  [[nodiscard]] static bool SetVector3(DocumentHandle document,
-                                       const std::string& path, Vector3 value) {
+  [[nodiscard]] static bool SetVector3(DocumentHandle document, const std::string& path,
+                                       Vector3 value) {
     if (path.empty()) {
       return false;
     }
@@ -323,10 +310,8 @@ class Serialization {
    * to exist. For strict validation, a future TryGetVector3()
    * method could report whether the complete vector exists.
    */
-  [[nodiscard]] static Vector3 GetVector3(DocumentHandle document,
-                                          const std::string& path,
-                                          Vector3 fallback = {0.0f, 0.0f,
-                                                              0.0f}) {
+  [[nodiscard]] static Vector3 GetVector3(DocumentHandle document, const std::string& path,
+                                          Vector3 fallback = {0.0f, 0.0f, 0.0f}) {
     if (path.empty()) {
       return fallback;
     }
@@ -335,17 +320,13 @@ class Serialization {
     const std::string yPath = path + ".y";
     const std::string zPath = path + ".z";
 
-    const double x =
-        GetFloat(document, xPath.c_str(), static_cast<double>(fallback.x));
+    const double x = GetFloat(document, xPath.c_str(), static_cast<double>(fallback.x));
 
-    const double y =
-        GetFloat(document, yPath.c_str(), static_cast<double>(fallback.y));
+    const double y = GetFloat(document, yPath.c_str(), static_cast<double>(fallback.y));
 
-    const double z =
-        GetFloat(document, zPath.c_str(), static_cast<double>(fallback.z));
+    const double z = GetFloat(document, zPath.c_str(), static_cast<double>(fallback.z));
 
-    return {static_cast<float>(x), static_cast<float>(y),
-            static_cast<float>(z)};
+    return {static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)};
   }
 
   /**
@@ -363,8 +344,7 @@ class Serialization {
   [[nodiscard]] static DocumentHandle Load(const char* path) {
     const auto* api = GetAPI();
 
-    return api && api->Load ? api->Load(api->context, path)
-                            : InvalidDocumentHandle;
+    return api && api->Load ? api->Load(api->context, path) : InvalidDocumentHandle;
   }
 
   /**
@@ -377,8 +357,7 @@ class Serialization {
    *
    * @return True if the array was created.
    */
-  [[nodiscard]] static bool CreateArray(DocumentHandle document,
-                                        const char* path) {
+  [[nodiscard]] static bool CreateArray(DocumentHandle document, const char* path) {
     const SerializationAPI* api = GetAPI();
 
     if (api == nullptr || api->CreateArray == nullptr) {
@@ -397,8 +376,7 @@ class Serialization {
    *
    * Returns zero if the array is empty or unavailable.
    */
-  [[nodiscard]] static std::uint64_t GetArraySize(DocumentHandle document,
-                                                  const char* path) {
+  [[nodiscard]] static std::uint64_t GetArraySize(DocumentHandle document, const char* path) {
     const SerializationAPI* api = GetAPI();
 
     if (api == nullptr || api->GetArraySize == nullptr) {
@@ -419,8 +397,7 @@ class Serialization {
    *
    * @return True if an object was appended.
    */
-  [[nodiscard]] static bool AppendObject(DocumentHandle document,
-                                         const char* path) {
+  [[nodiscard]] static bool AppendObject(DocumentHandle document, const char* path) {
     const SerializationAPI* api = GetAPI();
 
     if (api == nullptr || api->AppendObject == nullptr) {
@@ -435,8 +412,7 @@ class Serialization {
   }
 
   /** @brief Appends an empty nested array to an existing array. */
-  [[nodiscard]] static bool AppendArray(DocumentHandle document,
-                                        const char* path) {
+  [[nodiscard]] static bool AppendArray(DocumentHandle document, const char* path) {
     const auto* api = GetAPI();
 
     return api && api->AppendArray && path != nullptr && *path != '\0' &&
@@ -453,8 +429,7 @@ class Serialization {
                                       std::int64_t value) {
     const SerializationAPI* api = GetAPI();
 
-    if (api == nullptr || api->AppendInt == nullptr || path == nullptr ||
-        *path == '\0') {
+    if (api == nullptr || api->AppendInt == nullptr || path == nullptr || *path == '\0') {
       return false;
     }
 
@@ -464,12 +439,10 @@ class Serialization {
   /**
    * @brief Appends a floating-point value to an existing array.
    */
-  [[nodiscard]] static bool AppendFloat(DocumentHandle document,
-                                        const char* path, double value) {
+  [[nodiscard]] static bool AppendFloat(DocumentHandle document, const char* path, double value) {
     const SerializationAPI* api = GetAPI();
 
-    if (api == nullptr || api->AppendFloat == nullptr || path == nullptr ||
-        *path == '\0') {
+    if (api == nullptr || api->AppendFloat == nullptr || path == nullptr || *path == '\0') {
       return false;
     }
 
@@ -479,12 +452,10 @@ class Serialization {
   /**
    * @brief Appends a boolean to an existing array.
    */
-  [[nodiscard]] static bool AppendBool(DocumentHandle document,
-                                       const char* path, bool value) {
+  [[nodiscard]] static bool AppendBool(DocumentHandle document, const char* path, bool value) {
     const SerializationAPI* api = GetAPI();
 
-    if (api == nullptr || api->AppendBool == nullptr || path == nullptr ||
-        *path == '\0') {
+    if (api == nullptr || api->AppendBool == nullptr || path == nullptr || *path == '\0') {
       return false;
     }
 
@@ -496,12 +467,12 @@ class Serialization {
    *
    * The host copies the string before returning.
    */
-  [[nodiscard]] static bool AppendString(DocumentHandle document,
-                                         const char* path, const char* value) {
+  [[nodiscard]] static bool AppendString(DocumentHandle document, const char* path,
+                                         const char* value) {
     const SerializationAPI* api = GetAPI();
 
-    if (api == nullptr || api->AppendString == nullptr || path == nullptr ||
-        *path == '\0' || value == nullptr) {
+    if (api == nullptr || api->AppendString == nullptr || path == nullptr || *path == '\0' ||
+        value == nullptr) {
       return false;
     }
 
@@ -526,8 +497,7 @@ class Serialization {
 
     // Validate the module and callback before crossing
     // the host/game boundary.
-    if (api == nullptr || api->IsArray == nullptr || path == nullptr ||
-        *path == '\0') {
+    if (api == nullptr || api->IsArray == nullptr || path == nullptr || *path == '\0') {
       return false;
     }
 
@@ -547,8 +517,7 @@ class Serialization {
    * @return True if every serialized field was written successfully.
    */
   template <typename T>
-  [[nodiscard]] static bool Write(DocumentHandle document,
-                                  const std::string& path, T& value) {
+  [[nodiscard]] static bool Write(DocumentHandle document, const std::string& path, T& value) {
     if (!Contains(document) || path.empty()) {
       return false;
     }
@@ -572,8 +541,7 @@ class Serialization {
    * @return True if the serialization function completed successfully.
    */
   template <typename T>
-  [[nodiscard]] static bool Read(DocumentHandle document,
-                                 const std::string& path, T& value) {
+  [[nodiscard]] static bool Read(DocumentHandle document, const std::string& path, T& value) {
     if (!Contains(document) || path.empty()) {
       return false;
     }
@@ -592,10 +560,11 @@ class Serialization {
   [[nodiscard]] static const SerializationAPI* GetAPI() {
     const HostServices* host = Services::Get();
 
-    if (!host || !host->GetModuleAPI) return nullptr;
+    if (!host || !host->GetModuleAPI)
+      return nullptr;
 
-    const void* module = host->GetModuleAPI(
-        host->context, ModuleID::Serialization, SERIALIZATION_API_VERSION);
+    const void* module =
+        host->GetModuleAPI(host->context, ModuleID::Serialization, SERIALIZATION_API_VERSION);
 
     return static_cast<const SerializationAPI*>(module);
   }
@@ -614,15 +583,13 @@ inline bool WriteArchive::Field(const char* name, const bool& value) {
 }
 
 inline bool WriteArchive::Field(const char* name, const std::string& value) {
-  return Serialization::SetString(m_Document, MakePath(name).c_str(),
-                                  value.c_str());
+  return Serialization::SetString(m_Document, MakePath(name).c_str(), value.c_str());
 }
 
 inline bool ReadArchive::Field(const char* name, int& value) const {
   const std::string path = MakePath(name);
 
-  value =
-      static_cast<int>(Serialization::GetInt(m_Document, path.c_str(), value));
+  value = static_cast<int>(Serialization::GetInt(m_Document, path.c_str(), value));
 
   return true;
 }
@@ -630,8 +597,7 @@ inline bool ReadArchive::Field(const char* name, int& value) const {
 inline bool ReadArchive::Field(const char* name, float& value) const {
   const std::string path = MakePath(name);
 
-  value = static_cast<float>(
-      Serialization::GetFloat(m_Document, path.c_str(), value));
+  value = static_cast<float>(Serialization::GetFloat(m_Document, path.c_str(), value));
 
   return true;
 }
@@ -668,8 +634,7 @@ inline bool WriteArchive::WriteElement(const std::string& path, bool value) {
   return Serialization::SetBool(m_Document, path.c_str(), value);
 }
 
-inline bool WriteArchive::WriteElement(const std::string& path,
-                                       const std::string& value) {
+inline bool WriteArchive::WriteElement(const std::string& path, const std::string& value) {
   return Serialization::SetString(m_Document, path.c_str(), value.c_str());
 }
 
@@ -688,16 +653,15 @@ inline bool WriteArchive::Field(const char* name, const Vector3& value) {
 inline bool WriteArchive::Field(const char* name, const Vector4& value) {
   WriteArchive nested(m_Document, MakePath(name));
 
-  return nested.Field("x", value.x) && nested.Field("y", value.y) &&
-         nested.Field("z", value.z) && nested.Field("w", value.w);
+  return nested.Field("x", value.x) && nested.Field("y", value.y) && nested.Field("z", value.z) &&
+         nested.Field("w", value.w);
 }
 
 inline bool WriteArchive::Field(const char* name, const Rectangle& value) {
   WriteArchive nested(m_Document, MakePath(name));
 
   return nested.Field("x", value.x) && nested.Field("y", value.y) &&
-         nested.Field("width", value.width) &&
-         nested.Field("height", value.height);
+         nested.Field("width", value.width) && nested.Field("height", value.height);
 }
 
 inline bool WriteArchive::Field(const char* name, const Color& value) {
@@ -712,31 +676,25 @@ inline bool WriteArchive::Field(const char* name, const Color& value) {
          nested.Field("a", a);
 }
 
-inline bool ReadArchive::ReadElement(const std::string& path,
-                                     int& value) const {
-  value =
-      static_cast<int>(Serialization::GetInt(m_Document, path.c_str(), value));
+inline bool ReadArchive::ReadElement(const std::string& path, int& value) const {
+  value = static_cast<int>(Serialization::GetInt(m_Document, path.c_str(), value));
 
   return true;
 }
 
-inline bool ReadArchive::ReadElement(const std::string& path,
-                                     float& value) const {
-  value = static_cast<float>(
-      Serialization::GetFloat(m_Document, path.c_str(), value));
+inline bool ReadArchive::ReadElement(const std::string& path, float& value) const {
+  value = static_cast<float>(Serialization::GetFloat(m_Document, path.c_str(), value));
 
   return true;
 }
 
-inline bool ReadArchive::ReadElement(const std::string& path,
-                                     bool& value) const {
+inline bool ReadArchive::ReadElement(const std::string& path, bool& value) const {
   value = Serialization::GetBool(m_Document, path.c_str(), value);
 
   return true;
 }
 
-inline bool ReadArchive::ReadElement(const std::string& path,
-                                     std::string& value) const {
+inline bool ReadArchive::ReadElement(const std::string& path, std::string& value) const {
   if (!Serialization::ContainsPath(m_Document, path.c_str())) {
     return true;
   }
@@ -765,16 +723,15 @@ inline bool ReadArchive::Field(const char* name, Vector3& value) const {
 inline bool ReadArchive::Field(const char* name, Vector4& value) const {
   ReadArchive nested(m_Document, MakePath(name));
 
-  return nested.Field("x", value.x) && nested.Field("y", value.y) &&
-         nested.Field("z", value.z) && nested.Field("w", value.w);
+  return nested.Field("x", value.x) && nested.Field("y", value.y) && nested.Field("z", value.z) &&
+         nested.Field("w", value.w);
 }
 
 inline bool ReadArchive::Field(const char* name, Rectangle& value) const {
   ReadArchive nested(m_Document, MakePath(name));
 
   return nested.Field("x", value.x) && nested.Field("y", value.y) &&
-         nested.Field("width", value.width) &&
-         nested.Field("height", value.height);
+         nested.Field("width", value.width) && nested.Field("height", value.height);
 }
 
 inline bool ReadArchive::Field(const char* name, Color& value) const {
@@ -825,8 +782,7 @@ inline bool WriteArchive::AppendElement(const std::string& path, bool value) {
   return Serialization::AppendBool(m_Document, path.c_str(), value);
 }
 
-inline bool WriteArchive::AppendElement(const std::string& path,
-                                        const std::string& value) {
+inline bool WriteArchive::AppendElement(const std::string& path, const std::string& value) {
   return Serialization::AppendString(m_Document, path.c_str(), value.c_str());
 }
 

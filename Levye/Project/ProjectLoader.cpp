@@ -14,10 +14,12 @@ namespace Levye {
 namespace {
 
 int EditDistance(std::string_view left, std::string_view right) {
-  if (left.size() > 64 || right.size() > 64) return 65;
+  if (left.size() > 64 || right.size() > 64)
+    return 65;
   int previous[65]{};
   int current[65]{};
-  for (std::size_t j = 0; j <= right.size(); ++j) previous[j] = static_cast<int>(j);
+  for (std::size_t j = 0; j <= right.size(); ++j)
+    previous[j] = static_cast<int>(j);
   for (std::size_t i = 1; i <= left.size(); ++i) {
     current[0] = static_cast<int>(i);
     for (std::size_t j = 1; j <= right.size(); ++j)
@@ -32,7 +34,8 @@ void WarnUnknown(const toml::table& table, std::string_view section,
                  std::initializer_list<std::string_view> known) {
   for (const auto& [key, ignored] : table) {
     const std::string_view name = key.str();
-    if (std::find(known.begin(), known.end(), name) != known.end()) continue;
+    if (std::find(known.begin(), known.end(), name) != known.end())
+      continue;
     std::string_view suggestion;
     int best = 3;
     for (const auto candidate : known) {
@@ -43,7 +46,8 @@ void WarnUnknown(const toml::table& table, std::string_view section,
       }
     }
     std::cerr << "[LevyeKit] Warning: unknown [" << section << "] key '" << name << "'";
-    if (!suggestion.empty()) std::cerr << "; did you mean '" << suggestion << "'?";
+    if (!suggestion.empty())
+      std::cerr << "; did you mean '" << suggestion << "'?";
     std::cerr << " Custom keys are preserved.\n";
   }
 }
@@ -75,7 +79,8 @@ bool ValidateSchema(const toml::table& root) {
   };
   for (const auto& section : sections) {
     const auto node = root[section.name];
-    if (!node.node()) continue;
+    if (!node.node())
+      continue;
     const auto* values = node.as_table();
     if (!values) {
       std::cerr << "[LevyeKit] [" << section.name << "] must be a table.\n";
@@ -160,7 +165,8 @@ std::optional<ProjectConfig> ProjectLoader::Parse(std::string_view content) {
     return std::nullopt;
   }
 
-  if (!ValidateSchema(table)) return std::nullopt;
+  if (!ValidateSchema(table))
+    return std::nullopt;
 
   ProjectConfig config;
 
@@ -346,7 +352,8 @@ std::optional<ProjectConfig> ProjectLoader::Parse(std::string_view content) {
     return std::nullopt;
   }
   if (auto platform = table["platform"]["default"].value<std::string>()) {
-    if (*platform != "desktop" && *platform != "android" && *platform != "ios") {
+    if (*platform != "desktop" && *platform != "android" && *platform != "ios" &&
+        *platform != "web") {
       std::cerr << "[LevyeKit] Unsupported default platform: " << *platform << '\n';
       return std::nullopt;
     }
@@ -360,7 +367,8 @@ std::optional<ProjectConfig> ProjectLoader::Parse(std::string_view content) {
     }
     auto readString = [&](std::string_view key, std::string& output) {
       const auto entry = (*ios)[key];
-      if (!entry.node()) return true;
+      if (!entry.node())
+        return true;
       const auto value = entry.value<std::string>();
       if (!value || value->empty()) {
         std::cerr << "[LevyeKit] [ios] " << key << " must be a nonempty string.\n";
@@ -405,7 +413,8 @@ std::optional<ProjectConfig> ProjectLoader::Parse(std::string_view content) {
     }
     auto readString = [&](std::string_view key, std::string& output) {
       const auto entry = (*desktop)[key];
-      if (!entry.node()) return true;
+      if (!entry.node())
+        return true;
       const auto value = entry.value<std::string>();
       if (!value || value->empty() || value->find('\0') != std::string::npos) {
         std::cerr << "[LevyeKit] [desktop] " << key << " must be a nonempty string.\n";
@@ -480,7 +489,8 @@ std::optional<ProjectConfig> ProjectLoader::Parse(std::string_view content) {
           << "[LevyeKit] Conflicting [display] and [android] orientations; run levye upgrade.\n";
       return std::nullopt;
     }
-    if (!config.hasDisplayOrientation) config.displayOrientation = *orientation;
+    if (!config.hasDisplayOrientation)
+      config.displayOrientation = *orientation;
   }
   if (auto orientation = table["ios"]["orientation"].value<std::string>()) {
     const std::string legacy = *orientation == "all" ? "auto" : *orientation;
@@ -494,7 +504,8 @@ std::optional<ProjectConfig> ProjectLoader::Parse(std::string_view content) {
           << "[LevyeKit] Conflicting legacy [android] and [ios] orientations; run levye upgrade.\n";
       return std::nullopt;
     }
-    if (!config.hasDisplayOrientation) config.displayOrientation = legacy;
+    if (!config.hasDisplayOrientation)
+      config.displayOrientation = legacy;
   }
   if (!config.hasDisplayOrientation && !table["android"]["orientation"].node() &&
       !table["ios"]["orientation"].node()) {
@@ -507,7 +518,8 @@ std::optional<ProjectConfig> ProjectLoader::Parse(std::string_view content) {
   if (android) {
     auto readString = [&](std::string_view key, std::string& output) -> bool {
       const auto node = (*android)[key];
-      if (!node.node()) return true;
+      if (!node.node())
+        return true;
       const auto value = node.value<std::string>();
       if (!value || value->empty()) {
         std::cerr << "[LevyeKit] [android] " << key << " must be a nonempty string.\n";
@@ -544,7 +556,8 @@ std::optional<ProjectConfig> ProjectLoader::Parse(std::string_view content) {
       }
       auto readSigningString = [&](std::string_view key, std::string& output) -> bool {
         const auto node = (*signing)[key];
-        if (!node.node()) return true;
+        if (!node.node())
+          return true;
         const auto value = node.value<std::string>();
         if (!value || value->empty()) {
           std::cerr << "[LevyeKit] [android.signing] " << key << " must be a nonempty string.\n";

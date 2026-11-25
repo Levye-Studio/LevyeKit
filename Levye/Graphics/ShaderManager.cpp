@@ -4,7 +4,7 @@
 
 namespace Levye {
 namespace {
-std::filesystem::file_time_type GetWriteTime(const std::string &path) {
+std::filesystem::file_time_type GetWriteTime(const std::string& path) {
   if (path.empty())
     return {};
 
@@ -17,21 +17,20 @@ std::filesystem::file_time_type GetWriteTime(const std::string &path) {
 
   return time;
 }
-} // namespace
+}  // namespace
 
-ShaderManager::~ShaderManager() { Clear(); }
+ShaderManager::~ShaderManager() {
+  Clear();
+}
 
-AssetHandle ShaderManager::Load(const std::string &vertexPath,
-                                const std::string &fragmentPath) {
-
+AssetHandle ShaderManager::Load(const std::string& vertexPath, const std::string& fragmentPath) {
   const std::string normalizedVertexPath =
       vertexPath.empty() ? std::string{} : AssetPath::Normalize(vertexPath);
 
   const std::string normalizedFragmentPath =
       fragmentPath.empty() ? std::string{} : AssetPath::Normalize(fragmentPath);
 
-  const std::string key =
-      CreateKey(normalizedVertexPath, normalizedFragmentPath);
+  const std::string key = CreateKey(normalizedVertexPath, normalizedFragmentPath);
 
   const auto existing = m_PathLookup.find(key);
 
@@ -39,11 +38,9 @@ AssetHandle ShaderManager::Load(const std::string &vertexPath,
     return existing->second;
   }
 
-  const char *vertex =
-      normalizedVertexPath.empty() ? nullptr : normalizedVertexPath.c_str();
+  const char* vertex = normalizedVertexPath.empty() ? nullptr : normalizedVertexPath.c_str();
 
-  const char *fragment =
-      normalizedFragmentPath.empty() ? nullptr : normalizedFragmentPath.c_str();
+  const char* fragment = normalizedFragmentPath.empty() ? nullptr : normalizedFragmentPath.c_str();
 
   Shader shader = ::LoadShader(vertex, fragment);
 
@@ -62,14 +59,12 @@ AssetHandle ShaderManager::Load(const std::string &vertexPath,
                   .vertexPath = normalizedVertexPath,
                   .fragmentPath = normalizedFragmentPath,
 
-                  .vertexWatcher = normalizedVertexPath.empty()
-                                       ? FileWatcher{}
-                                       : FileWatcher{normalizedVertexPath},
+                  .vertexWatcher = normalizedVertexPath.empty() ? FileWatcher{}
+                                                                : FileWatcher{normalizedVertexPath},
 
-                  .fragmentWatcher =
-                      normalizedFragmentPath.empty()
-                          ? FileWatcher{}
-                          : FileWatcher{normalizedFragmentPath}});
+                  .fragmentWatcher = normalizedFragmentPath.empty()
+                                         ? FileWatcher{}
+                                         : FileWatcher{normalizedFragmentPath}});
 
   m_PathLookup.emplace(key, handle);
 
@@ -78,7 +73,7 @@ AssetHandle ShaderManager::Load(const std::string &vertexPath,
   return handle;
 }
 
-const Shader *ShaderManager::Get(AssetHandle handle) const {
+const Shader* ShaderManager::Get(AssetHandle handle) const {
   if (!handle.IsType(AssetType::Shader)) {
     return nullptr;
   }
@@ -90,12 +85,10 @@ const Shader *ShaderManager::Get(AssetHandle handle) const {
 
   return &iterator->second.shader;
 }
-bool ShaderManager::Reload(ShaderAsset &asset) {
-  const char *vertex =
-      asset.vertexPath.empty() ? nullptr : asset.vertexPath.c_str();
+bool ShaderManager::Reload(ShaderAsset& asset) {
+  const char* vertex = asset.vertexPath.empty() ? nullptr : asset.vertexPath.c_str();
 
-  const char *fragment =
-      asset.fragmentPath.empty() ? nullptr : asset.fragmentPath.c_str();
+  const char* fragment = asset.fragmentPath.empty() ? nullptr : asset.fragmentPath.c_str();
 
   /*
    * Build the replacement before destroying the currently active program.
@@ -113,8 +106,7 @@ bool ShaderManager::Reload(ShaderAsset &asset) {
 
   asset.shader = replacement;
 
-  Logger::Info("Reloaded shader: " + asset.vertexPath + " | " +
-               asset.fragmentPath);
+  Logger::Info("Reloaded shader: " + asset.vertexPath + " | " + asset.fragmentPath);
 
   return true;
 }
@@ -122,7 +114,7 @@ bool ShaderManager::Reload(ShaderAsset &asset) {
 std::size_t ShaderManager::CheckForChanges() {
   std::size_t reloadCount = 0;
 
-  for (auto &[id, asset] : m_Shaders) {
+  for (auto& [id, asset] : m_Shaders) {
     (void)id;
 
     const bool vertexChanged = asset.vertexWatcher.Poll();
@@ -149,21 +141,20 @@ void ShaderManager::Unload(AssetHandle handle) {
   if (iterator == m_Shaders.end())
     return;
 
-  m_PathLookup.erase(
-      CreateKey(iterator->second.vertexPath, iterator->second.fragmentPath));
+  m_PathLookup.erase(CreateKey(iterator->second.vertexPath, iterator->second.fragmentPath));
 
   ::UnloadShader(iterator->second.shader);
 
   m_Shaders.erase(iterator);
 }
 
-std::string ShaderManager::CreateKey(const std::string &vertexPath,
-                                     const std::string &fragmentPath) {
+std::string ShaderManager::CreateKey(const std::string& vertexPath,
+                                     const std::string& fragmentPath) {
   return vertexPath + "|" + fragmentPath;
 }
 
 void ShaderManager::Clear() {
-  for (auto &[id, asset] : m_Shaders) {
+  for (auto& [id, asset] : m_Shaders) {
     (void)id;
 
     ::UnloadShader(asset.shader);
@@ -172,4 +163,4 @@ void ShaderManager::Clear() {
 
   m_Shaders.clear();
 }
-} // namespace Levye
+}  // namespace Levye

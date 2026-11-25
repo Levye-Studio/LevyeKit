@@ -11,21 +11,41 @@ namespace Sandbox {
 class LocomotionScene {
  public:
   [[nodiscard]] bool Initialize();
-  [[nodiscard]] bool ConfigurePreset(int count) { return SetPreset(count); }
+  [[nodiscard]] bool ConfigurePreset(int count) {
+    return SetPreset(count);
+  }
   void Update(float deltaTime);
   void Draw() const;
-  [[nodiscard]] bool IsReady() const noexcept { return m_Ready; }
-  [[nodiscard]] int LimbCount() const noexcept { return static_cast<int>(m_Results.size()); }
-  [[nodiscard]] float GlobalPhase() const noexcept { return m_Gait.GlobalPhase(); }
-  [[nodiscard]] bool IsWalking() const noexcept { return m_Walking; }
-  [[nodiscard]] Vector3 RootVelocity() const noexcept { return m_RootVelocity; }
-  [[nodiscard]] Vector3 IntentRoot() const noexcept { return m_RootPosition; }
-  [[nodiscard]] Vector3 AppliedBodyOffset() const noexcept { return m_BodyOffset; }
+  [[nodiscard]] bool IsReady() const noexcept {
+    return m_Ready;
+  }
+  [[nodiscard]] int LimbCount() const noexcept {
+    return static_cast<int>(m_Results.size());
+  }
+  [[nodiscard]] float GlobalPhase() const noexcept {
+    return m_Gait.GlobalPhase();
+  }
+  [[nodiscard]] bool IsWalking() const noexcept {
+    return m_Walking;
+  }
+  [[nodiscard]] Vector3 RootVelocity() const noexcept {
+    return m_RootVelocity;
+  }
+  [[nodiscard]] Vector3 IntentRoot() const noexcept {
+    return m_RootPosition;
+  }
+  [[nodiscard]] Vector3 AppliedBodyOffset() const noexcept {
+    return m_BodyOffset;
+  }
   [[nodiscard]] Vector3 DrawnBodyCenter() const noexcept {
     return Vector3Transform({0, 0.84f, 0}, m_RootTransform);
   }
-  [[nodiscard]] const Levye::StabilizationResult& Balance() const noexcept { return m_Balance; }
-  [[nodiscard]] bool StabilizationEnabled() const noexcept { return m_Stabilizer.IsEnabled(); }
+  [[nodiscard]] const Levye::StabilizationResult& Balance() const noexcept {
+    return m_Balance;
+  }
+  [[nodiscard]] bool StabilizationEnabled() const noexcept {
+    return m_Stabilizer.IsEnabled();
+  }
   [[nodiscard]] const Levye::LocomotionTarget* Target(int index) const noexcept {
     return index >= 0 && index < LimbCount() ? &m_Targets[static_cast<std::size_t>(index)]
                                              : nullptr;
@@ -36,13 +56,15 @@ class LocomotionScene {
   [[nodiscard]] int SolvedCount() const noexcept {
     int count = 0;
     for (const auto& result : m_Results)
-      if (result.status == Levye::AnimationIKChainStatus::Solved) ++count;
+      if (result.status == Levye::AnimationIKChainStatus::Solved)
+        ++count;
     return count;
   }
   [[nodiscard]] int ReachableCount() const noexcept {
     int count = 0;
     for (bool reachable : m_Reachable)
-      if (reachable) ++count;
+      if (reachable)
+        ++count;
     return count;
   }
 

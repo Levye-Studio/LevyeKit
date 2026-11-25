@@ -21,11 +21,13 @@ bool PreparePlatformManifest(const std::filesystem::path& projectDirectory,
 
   content.assign(std::istreambuf_iterator<char>{input}, std::istreambuf_iterator<char>{});
 
-  if (input.bad()) return false;
+  if (input.bad())
+    return false;
 
   auto project = ProjectLoader::Parse(content);
 
-  if (!project) return false;
+  if (!project)
+    return false;
   toml::table manifest;
   try {
     manifest = toml::parse(content);
@@ -41,7 +43,8 @@ bool PreparePlatformManifest(const std::filesystem::path& projectDirectory,
     }
   }
   auto append = [&](const std::string& section) {
-    if (!content.empty() && content.back() != '\n') content += '\n';
+    if (!content.empty() && content.back() != '\n')
+      content += '\n';
     content += '\n' + section;
     changed = true;
   };
@@ -71,14 +74,16 @@ bool PreparePlatformManifest(const std::filesystem::path& projectDirectory,
     if (!node.node()) {
       std::string bundle = "com.levyekit.game";
       for (unsigned char character : project->target)
-        if (std::isalnum(character)) bundle += static_cast<char>(std::tolower(character));
+        if (std::isalnum(character))
+          bundle += static_cast<char>(std::tolower(character));
       append("[ios]\nbundle_id = \"" + bundle + "\"\ndeployment_target = \"15.0\"\n");
     }
   } else if (platform == ProjectPlatform::Android) {
     if (!manifest["android"].node()) {
       std::string bundle = "com.levyekit.game";
       for (unsigned char character : project->target)
-        if (std::isalnum(character)) bundle += static_cast<char>(std::tolower(character));
+        if (std::isalnum(character))
+          bundle += static_cast<char>(std::tolower(character));
       append("[android]\npackage = \"" + bundle + "\"\n");
     } else if (project->androidPackage.empty()) {
       std::cerr << "[Levye] Set [android] package in levye.project.\n";
@@ -86,7 +91,8 @@ bool PreparePlatformManifest(const std::filesystem::path& projectDirectory,
     }
   }
   const auto prepared = ProjectLoader::Parse(content);
-  if (!prepared) return false;
+  if (!prepared)
+    return false;
   if (platform == ProjectPlatform::Android) {
     if (prepared->displayOrientation == "auto") {
       std::cerr << "[Levye] Android auto orientation is unavailable: raylib 6.2 retains stale "

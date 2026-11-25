@@ -13,8 +13,12 @@ class OrientationScene {
   [[nodiscard]] bool Initialize();
   void Update(float deltaTime);
   void Draw() const;
-  [[nodiscard]] bool IsReady() const noexcept { return m_Ready; }
-  [[nodiscard]] bool IsPositionFrozen() const noexcept { return m_FreezePosition; }
+  [[nodiscard]] bool IsReady() const noexcept {
+    return m_Ready;
+  }
+  [[nodiscard]] bool IsPositionFrozen() const noexcept {
+    return m_FreezePosition;
+  }
   [[nodiscard]] Vector3 ContactTarget(int index) const noexcept {
     return index >= 0 && index < 2 ? m_Targets[static_cast<std::size_t>(index)] : Vector3{};
   }

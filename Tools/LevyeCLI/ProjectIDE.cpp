@@ -13,9 +13,8 @@ namespace Levye {
 bool ProjectIDE::Prepare(const fs::path& projectDirectory, const fs::path& templateDirectory,
                          std::string_view target, std::vector<PendingFile>& changes,
                          std::vector<fs::path>& preserved, std::string& error) {
-  constexpr std::array<const char*, 5> files = {".clangd", ".vscode/settings.json",
-                                                ".vscode/tasks.json", ".vscode/extensions.json",
-                                                ".vscode/launch.json"};
+  constexpr std::array<const char*, 4> files = {".vscode/settings.json", ".vscode/tasks.json",
+                                                ".vscode/extensions.json", ".vscode/launch.json"};
   for (const char* name : files) {
     const auto source = templateDirectory / name;
     std::error_code ec;

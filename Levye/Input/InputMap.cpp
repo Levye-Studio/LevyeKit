@@ -28,9 +28,13 @@ void InputMap::BindMouseButton(const std::string& action, MouseButton button) {
   }
 }
 
-Vector2 InputMap::GetMouseDelta() const { return m_MouseDelta; }
+Vector2 InputMap::GetMouseDelta() const {
+  return m_MouseDelta;
+}
 
-float InputMap::GetMouseWheel() const { return m_MouseWheel; }
+float InputMap::GetMouseWheel() const {
+  return m_MouseWheel;
+}
 
 void InputMap::BindGamepadButton(const std::string& action, int gamepad, GamepadButton button) {
   auto& buttons = m_Actions[action].gamepadButtons;
@@ -172,12 +176,16 @@ void InputMap::Update() {
     }
     float value = static_cast<float>(positive) - static_cast<float>(negative);
     for (const auto& binding : axis.gamepadBindings) {
-      if (!m_Input.isGamepadAvailable(binding.gamepad)) continue;
+      if (!m_Input.isGamepadAvailable(binding.gamepad))
+        continue;
       float analog = m_Input.getGamepadAxisMovement(binding.gamepad, binding.axis);
-      if (!std::isfinite(analog)) continue;
+      if (!std::isfinite(analog))
+        continue;
       analog = std::clamp(analog, -1.0f, 1.0f);
-      if (std::abs(analog) < binding.deadzone) analog = 0.0f;
-      if (std::abs(analog) > std::abs(value)) value = analog;
+      if (std::abs(analog) < binding.deadzone)
+        analog = 0.0f;
+      if (std::abs(analog) > std::abs(value))
+        value = analog;
     }
     axis.value = value;
   }
@@ -208,11 +216,17 @@ void InputMap::SetInputCapture(bool keyboard, bool mouse) {
   m_MouseCaptured = mouse;
 }
 
-bool InputMap::IsKeyboardCaptured() const { return m_KeyboardCaptured; }
+bool InputMap::IsKeyboardCaptured() const {
+  return m_KeyboardCaptured;
+}
 
-bool InputMap::IsMouseCaptured() const { return m_MouseCaptured; }
+bool InputMap::IsMouseCaptured() const {
+  return m_MouseCaptured;
+}
 
-void InputMap::ClearAction(const std::string& action) { m_Actions.erase(action); }
+void InputMap::ClearAction(const std::string& action) {
+  m_Actions.erase(action);
+}
 
 void InputMap::Clear() {
   m_Actions.clear();

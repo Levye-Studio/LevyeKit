@@ -70,16 +70,14 @@ class SerializationService {
    *
    * @return True when the complete path resolves to an existing node.
    */
-  [[nodiscard]] bool ContainsPath(DocumentHandle handle,
-                                  const char* path) const;
+  [[nodiscard]] bool ContainsPath(DocumentHandle handle, const char* path) const;
 
   /**
    * @brief Writes an integer to a document.
    *
    * @return false if the document or path is invalid.
    */
-  bool SetInt(DocumentHandle handle, const std::string& path,
-              std::int64_t value);
+  bool SetInt(DocumentHandle handle, const std::string& path, std::int64_t value);
 
   /**
    * @brief Writes a floating-point value to a document.
@@ -94,8 +92,7 @@ class SerializationService {
   /**
    * @brief Writes a string value to a document.
    */
-  bool SetString(DocumentHandle handle, const std::string& path,
-                 const std::string& value);
+  bool SetString(DocumentHandle handle, const std::string& path, const std::string& value);
 
   /**
    * @brief Reads an integer, returning the fallback if unavailable.
@@ -106,14 +103,12 @@ class SerializationService {
   /**
    * @brief Reads a floating-point value.
    */
-  double GetFloat(DocumentHandle handle, const std::string& path,
-                  double fallback = 0.0) const;
+  double GetFloat(DocumentHandle handle, const std::string& path, double fallback = 0.0) const;
 
   /**
    * @brief Reads a boolean value.
    */
-  bool GetBool(DocumentHandle handle, const std::string& path,
-               bool fallback = false) const;
+  bool GetBool(DocumentHandle handle, const std::string& path, bool fallback = false) const;
 
   /**
    * @brief Reads a string value.
@@ -145,8 +140,7 @@ class SerializationService {
    *
    * @return Number of elements.
    */
-  [[nodiscard]] std::uint64_t GetArraySize(DocumentHandle handle,
-                                           const char* path) const;
+  [[nodiscard]] std::uint64_t GetArraySize(DocumentHandle handle, const char* path) const;
 
   /**
    * @brief Appends an empty object to an existing array.
@@ -181,8 +175,7 @@ class SerializationService {
    *
    * @return True if the integer was appended.
    */
-  [[nodiscard]] bool AppendInt(DocumentHandle handle, const char* path,
-                               std::int64_t value);
+  [[nodiscard]] bool AppendInt(DocumentHandle handle, const char* path, std::int64_t value);
 
   /**
    * @brief Appends a floating-point value to an existing array.
@@ -193,8 +186,7 @@ class SerializationService {
    *
    * @return True if the value was appended.
    */
-  [[nodiscard]] bool AppendFloat(DocumentHandle handle, const char* path,
-                                 double value);
+  [[nodiscard]] bool AppendFloat(DocumentHandle handle, const char* path, double value);
 
   /**
    * @brief Appends a boolean value to an existing array.
@@ -205,8 +197,7 @@ class SerializationService {
    *
    * @return True if the value was appended.
    */
-  [[nodiscard]] bool AppendBool(DocumentHandle handle, const char* path,
-                                bool value);
+  [[nodiscard]] bool AppendBool(DocumentHandle handle, const char* path, bool value);
 
   /**
    * @brief Appends a string to an existing array.
@@ -245,8 +236,7 @@ class SerializationService {
  private:
   struct DocumentData;
 
-  std::unordered_map<DocumentHandle, std::unique_ptr<DocumentData> >
-      m_Documents;
+  std::unordered_map<DocumentHandle, std::unique_ptr<DocumentData> > m_Documents;
 
   DocumentHandle m_NextHandle = 1;
 };

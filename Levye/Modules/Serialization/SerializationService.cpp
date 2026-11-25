@@ -46,8 +46,7 @@ struct PathToken {
  * A null node may be replaced by a nested map only when no
  * array index needs to be created implicitly.
  */
-bool RemainingTokensAreKeys(const std::vector<PathToken>& tokens,
-                            std::size_t start) {
+bool RemainingTokensAreKeys(const std::vector<PathToken>& tokens, std::size_t start) {
   for (std::size_t i = start; i < tokens.size(); ++i) {
     if (tokens[i].type != PathToken::Type::Key) {
       return false;
@@ -95,8 +94,8 @@ bool ParsePath(std::string_view path, std::vector<PathToken>& tokens) {
 
     const std::size_t keyStart = position;
 
-    while (position < path.size() && path[position] != '.' &&
-           path[position] != '[' && path[position] != ']') {
+    while (position < path.size() && path[position] != '.' && path[position] != '[' &&
+           path[position] != ']') {
       ++position;
     }
 
@@ -120,8 +119,7 @@ bool ParsePath(std::string_view path, std::vector<PathToken>& tokens) {
 
       const std::size_t indexStart = position;
 
-      while (position < path.size() && path[position] >= '0' &&
-             path[position] <= '9') {
+      while (position < path.size() && path[position] >= '0' && path[position] <= '9') {
         ++position;
       }
 
@@ -136,13 +134,12 @@ bool ParsePath(std::string_view path, std::vector<PathToken>& tokens) {
         return false;
       }
 
-      const std::string_view indexText =
-          path.substr(indexStart, position - indexStart);
+      const std::string_view indexText = path.substr(indexStart, position - indexStart);
 
       std::size_t index = 0;
 
-      const auto [ptr, error] = std::from_chars(
-          indexText.data(), indexText.data() + indexText.size(), index);
+      const auto [ptr, error] =
+          std::from_chars(indexText.data(), indexText.data() + indexText.size(), index);
 
       if (error != std::errc{} || ptr != indexText.data() + indexText.size()) {
         return false;
@@ -272,8 +269,7 @@ YAML::Node ResolveReadPath(const YAML::Node& root, const std::string& path) {
  * @return Writable destination node, or an undefined node
  * if traversal fails.
  */
-YAML::Node ResolveWritePath(YAML::Node root,
-                            const std::vector<PathToken>& tokens) {
+YAML::Node ResolveWritePath(YAML::Node root, const std::vector<PathToken>& tokens) {
   if (tokens.empty()) {
     return YAML::Node(YAML::NodeType::Undefined);
   }
@@ -306,8 +302,7 @@ YAML::Node ResolveWritePath(YAML::Node root,
 
         if (!child.IsDefined()) {
           // Create a missing destination or intermediate node.
-          current[token.key] =
-              YAML::Node(isLast ? YAML::NodeType::Null : YAML::NodeType::Map);
+          current[token.key] = YAML::Node(isLast ? YAML::NodeType::Null : YAML::NodeType::Map);
 
           child.reset(current[token.key]);
         } else if (child.IsNull() && !isLast) {
@@ -361,8 +356,7 @@ YAML::Node ResolveWritePath(YAML::Node root,
  *
  * @return True if the path can be written safely.
  */
-bool ValidateWritePath(const YAML::Node& root,
-                       const std::vector<PathToken>& tokens) {
+bool ValidateWritePath(const YAML::Node& root, const std::vector<PathToken>& tokens) {
   if (tokens.empty()) {
     return false;
   }
@@ -459,8 +453,7 @@ bool ValidateWritePath(const YAML::Node& root,
  * @return True if the value was written.
  */
 template <typename T>
-bool WriteValue(YAML::Node root, const std::vector<PathToken>& tokens,
-                const T& value) {
+bool WriteValue(YAML::Node root, const std::vector<PathToken>& tokens, const T& value) {
   try {
     YAML::Node destination = ResolveWritePath(root, tokens);
 
@@ -495,12 +488,12 @@ bool SetValue(YAML::Node root, std::string_view path, const T& value) {
 }
 
 template <typename T>
-T ReadValue(const YAML::Node& root, const std::string& path,
-            const T& fallback) {
+T ReadValue(const YAML::Node& root, const std::string& path, const T& fallback) {
   try {
     YAML::Node node = ResolveReadPath(root, path);
 
-    if (!node || node.IsNull()) return fallback;
+    if (!node || node.IsNull())
+      return fallback;
 
     return node.as<T>();
   } catch (const YAML::Exception&) {
@@ -522,8 +515,7 @@ T ReadValue(const YAML::Node& root, const std::string& path,
  * @return True if the value was appended.
  */
 template <typename T>
-bool AppendValue(const YAML::Node& root, const std::string& path,
-                 const T& value) {
+bool AppendValue(const YAML::Node& root, const std::string& path, const T& value) {
   if (path.empty()) {
     return false;
   }
@@ -552,8 +544,7 @@ SerializationService::~SerializationService() = default;
 
 DocumentHandle SerializationService::Create(SerializationFormat format) {
   // YAML is the only supported backend for now.
-  if (format != SerializationFormat::YAML &&
-      format != SerializationFormat::Auto) {
+  if (format != SerializationFormat::YAML && format != SerializationFormat::Auto) {
     return InvalidDocumentHandle;
   }
 
@@ -572,13 +563,13 @@ bool SerializationService::Destroy(DocumentHandle handle) {
   return m_Documents.erase(handle) != 0;
 }
 
-bool SerializationService::Save(DocumentHandle handle,
-                                const std::string& path) {
+bool SerializationService::Save(DocumentHandle handle, const std::string& path) {
   namespace fs = std::filesystem;
 
   const auto it = m_Documents.find(handle);
 
-  if (it == m_Documents.end() || path.empty()) return false;
+  if (it == m_Documents.end() || path.empty())
+    return false;
 
   const fs::path destination(path);
   fs::path temporary = destination;
@@ -588,29 +579,34 @@ bool SerializationService::Save(DocumentHandle handle,
   try {
     const fs::path directory = destination.parent_path();
 
-    if (!directory.empty()) fs::create_directories(directory);
+    if (!directory.empty())
+      fs::create_directories(directory);
 
     // Serialize the document in memory first.
     YAML::Emitter emitter;
     emitter << it->second->root;
 
-    if (!emitter.good()) return false;
+    if (!emitter.good())
+      return false;
 
     // Write to a temporary file in the same directory.
     {
       std::ofstream file(temporary, std::ios::binary | std::ios::trunc);
 
-      if (!file) return false;
+      if (!file)
+        return false;
 
       file << emitter.c_str() << '\n';
 
       file.flush();
 
-      if (!file) return false;
+      if (!file)
+        return false;
 
       file.close();
 
-      if (!file) return false;
+      if (!file)
+        return false;
     }
 
     // Replace the destination only after writing succeeds.
@@ -636,19 +632,23 @@ bool SerializationService::Save(DocumentHandle handle,
 DocumentHandle SerializationService::Load(const std::string& path) {
   namespace fs = std::filesystem;
 
-  if (path.empty()) return InvalidDocumentHandle;
+  if (path.empty())
+    return InvalidDocumentHandle;
 
   try {
-    if (!fs::is_regular_file(path)) return InvalidDocumentHandle;
+    if (!fs::is_regular_file(path))
+      return InvalidDocumentHandle;
 
     YAML::Node root = YAML::LoadFile(path);
 
     // Our current path-based API expects a mapping at the root.
-    if (!root.IsMap()) return InvalidDocumentHandle;
+    if (!root.IsMap())
+      return InvalidDocumentHandle;
 
     const DocumentHandle handle = Create(SerializationFormat::YAML);
 
-    if (handle == InvalidDocumentHandle) return InvalidDocumentHandle;
+    if (handle == InvalidDocumentHandle)
+      return InvalidDocumentHandle;
 
     // Transfer the loaded YAML tree into the registered document.
     m_Documents.at(handle)->root.reset(root);
@@ -666,8 +666,7 @@ bool SerializationService::Contains(DocumentHandle handle) const {
   return m_Documents.contains(handle);
 }
 
-bool SerializationService::ContainsPath(DocumentHandle handle,
-                                        const char* path) const {
+bool SerializationService::ContainsPath(DocumentHandle handle, const char* path) const {
   if (path == nullptr || *path == '\0') {
     return false;
   }
@@ -688,8 +687,8 @@ bool SerializationService::ContainsPath(DocumentHandle handle,
   }
 }
 
-bool SerializationService::SetInt(DocumentHandle handle,
-                                  const std::string& path, std::int64_t value) {
+bool SerializationService::SetInt(DocumentHandle handle, const std::string& path,
+                                  std::int64_t value) {
   const auto it = m_Documents.find(handle);
 
   if (it == m_Documents.end()) {
@@ -699,8 +698,7 @@ bool SerializationService::SetInt(DocumentHandle handle,
   return SetValue(it->second->root, path, value);
 }
 
-bool SerializationService::SetFloat(DocumentHandle handle,
-                                    const std::string& path, double value) {
+bool SerializationService::SetFloat(DocumentHandle handle, const std::string& path, double value) {
   const auto it = m_Documents.find(handle);
 
   if (it == m_Documents.end()) {
@@ -710,8 +708,7 @@ bool SerializationService::SetFloat(DocumentHandle handle,
   return SetValue(it->second->root, path, value);
 }
 
-bool SerializationService::SetBool(DocumentHandle handle,
-                                   const std::string& path, bool value) {
+bool SerializationService::SetBool(DocumentHandle handle, const std::string& path, bool value) {
   const auto it = m_Documents.find(handle);
 
   if (it == m_Documents.end()) {
@@ -721,8 +718,7 @@ bool SerializationService::SetBool(DocumentHandle handle,
   return SetValue(it->second->root, path, value);
 }
 
-bool SerializationService::SetString(DocumentHandle handle,
-                                     const std::string& path,
+bool SerializationService::SetString(DocumentHandle handle, const std::string& path,
                                      const std::string& value) {
   const auto it = m_Documents.find(handle);
 
@@ -736,8 +732,7 @@ bool SerializationService::SetString(DocumentHandle handle,
 /**
  * @brief Creates or replaces a YAML sequence at the given path.
  */
-bool SerializationService::CreateArray(DocumentHandle handle,
-                                       const char* path) {
+bool SerializationService::CreateArray(DocumentHandle handle, const char* path) {
   if (path == nullptr || *path == '\0') {
     return false;
   }
@@ -754,8 +749,7 @@ bool SerializationService::CreateArray(DocumentHandle handle,
 /**
  * @brief Returns the number of elements in an existing sequence.
  */
-std::uint64_t SerializationService::GetArraySize(DocumentHandle handle,
-                                                 const char* path) const {
+std::uint64_t SerializationService::GetArraySize(DocumentHandle handle, const char* path) const {
   if (path == nullptr || *path == '\0') {
     return 0;
   }
@@ -780,8 +774,7 @@ std::uint64_t SerializationService::GetArraySize(DocumentHandle handle,
   }
 }
 
-bool SerializationService::IsArray(DocumentHandle handle,
-                                   const char* path) const {
+bool SerializationService::IsArray(DocumentHandle handle, const char* path) const {
   if (path == nullptr || *path == '\0') {
     return false;
   }
@@ -805,8 +798,7 @@ bool SerializationService::IsArray(DocumentHandle handle,
 /**
  * @brief Appends an empty mapping to an existing YAML sequence.
  */
-bool SerializationService::AppendObject(DocumentHandle handle,
-                                        const char* path) {
+bool SerializationService::AppendObject(DocumentHandle handle, const char* path) {
   if (path == nullptr || *path == '\0') {
     return false;
   }
@@ -820,8 +812,7 @@ bool SerializationService::AppendObject(DocumentHandle handle,
   return AppendValue(it->second->root, path, YAML::Node(YAML::NodeType::Map));
 }
 
-bool SerializationService::AppendArray(DocumentHandle handle,
-                                       const char* path) {
+bool SerializationService::AppendArray(DocumentHandle handle, const char* path) {
   if (path == nullptr || *path == '\0') {
     return false;
   }
@@ -832,8 +823,7 @@ bool SerializationService::AppendArray(DocumentHandle handle,
     return false;
   }
 
-  return AppendValue(it->second->root, path,
-                     YAML::Node(YAML::NodeType::Sequence));
+  return AppendValue(it->second->root, path, YAML::Node(YAML::NodeType::Sequence));
 }
 
 /**
@@ -843,8 +833,7 @@ bool SerializationService::AppendArray(DocumentHandle handle,
  * The returned YAML::Node still refers to the underlying
  * document, so push_back() modifies the actual sequence.
  */
-bool SerializationService::AppendInt(DocumentHandle handle, const char* path,
-                                     std::int64_t value) {
+bool SerializationService::AppendInt(DocumentHandle handle, const char* path, std::int64_t value) {
   if (path == nullptr || *path == '\0') {
     return false;
   }
@@ -861,8 +850,7 @@ bool SerializationService::AppendInt(DocumentHandle handle, const char* path,
 /**
  * @brief Appends a double-precision floating-point value.
  */
-bool SerializationService::AppendFloat(DocumentHandle handle, const char* path,
-                                       double value) {
+bool SerializationService::AppendFloat(DocumentHandle handle, const char* path, double value) {
   if (path == nullptr || *path == '\0') {
     return false;
   }
@@ -879,8 +867,7 @@ bool SerializationService::AppendFloat(DocumentHandle handle, const char* path,
 /**
  * @brief Appends a boolean value.
  */
-bool SerializationService::AppendBool(DocumentHandle handle, const char* path,
-                                      bool value) {
+bool SerializationService::AppendBool(DocumentHandle handle, const char* path, bool value) {
   if (path == nullptr || *path == '\0') {
     return false;
   }
@@ -912,46 +899,48 @@ bool SerializationService::AppendString(DocumentHandle handle, const char* path,
   return AppendValue(it->second->root, path, value);
 }
 
-std::int64_t SerializationService::GetInt(DocumentHandle handle,
-                                          const std::string& path,
+std::int64_t SerializationService::GetInt(DocumentHandle handle, const std::string& path,
                                           std::int64_t fallback) const {
   const auto it = m_Documents.find(handle);
 
-  if (it == m_Documents.end()) return fallback;
+  if (it == m_Documents.end())
+    return fallback;
 
   return ReadValue(it->second->root, path, fallback);
 }
 
-double SerializationService::GetFloat(DocumentHandle handle,
-                                      const std::string& path,
+double SerializationService::GetFloat(DocumentHandle handle, const std::string& path,
                                       double fallback) const {
   const auto it = m_Documents.find(handle);
 
-  if (it == m_Documents.end()) return fallback;
+  if (it == m_Documents.end())
+    return fallback;
 
   return ReadValue(it->second->root, path, fallback);
 }
 
-bool SerializationService::GetBool(DocumentHandle handle,
-                                   const std::string& path,
+bool SerializationService::GetBool(DocumentHandle handle, const std::string& path,
                                    bool fallback) const {
   const auto it = m_Documents.find(handle);
 
-  if (it == m_Documents.end()) return fallback;
+  if (it == m_Documents.end())
+    return fallback;
 
   return ReadValue(it->second->root, path, fallback);
 }
 
-std::string SerializationService::GetString(DocumentHandle handle,
-                                            const std::string& path,
+std::string SerializationService::GetString(DocumentHandle handle, const std::string& path,
                                             const std::string& fallback) const {
   const auto it = m_Documents.find(handle);
 
-  if (it == m_Documents.end()) return fallback;
+  if (it == m_Documents.end())
+    return fallback;
 
   return ReadValue(it->second->root, path, fallback);
 }
 
-void SerializationService::Clear() { m_Documents.clear(); }
+void SerializationService::Clear() {
+  m_Documents.clear();
+}
 
 }  // namespace Levye

@@ -13,7 +13,6 @@ class SerializationService;
  * Its context pointer refers to the supplied service, which must
  * outlive every call through the table.
  */
-[[nodiscard]] SerializationAPI MakeSerializationAPI(
-    SerializationService& service);
+[[nodiscard]] SerializationAPI MakeSerializationAPI(SerializationService& service);
 
 }  // namespace Levye

@@ -95,8 +95,7 @@ class InputMap {
    * @param gamepad Gamepad index.
    * @param button Gamepad button associated with the action.
    */
-  void BindGamepadButton(const std::string& action, int gamepad,
-                         GamepadButton button);
+  void BindGamepadButton(const std::string& action, int gamepad, GamepadButton button);
 
   /**
    * @brief Adds a pair of keyboard keys to a named axis.
@@ -107,8 +106,7 @@ class InputMap {
    * @param negativeKey Key representing the negative direction.
    * @param positiveKey Key representing the positive direction.
    */
-  void BindKeyAxis(const std::string& axis, KeyboardKey negativeKey,
-                   KeyboardKey positiveKey);
+  void BindKeyAxis(const std::string& axis, KeyboardKey negativeKey, KeyboardKey positiveKey);
 
   /**
    * @brief Adds a gamepad analog axis to a named logical axis.
@@ -119,8 +117,8 @@ class InputMap {
    * @param deadzone Magnitudes below this threshold are zero, without
    * rescaling. Clamped to [0, 1]; non-finite values use 0.15.
    */
-  void BindGamepadAxis(const std::string& axis, int gamepad,
-                       GamepadAxis gamepadAxis, float deadzone = 0.15f);
+  void BindGamepadAxis(const std::string& axis, int gamepad, GamepadAxis gamepadAxis,
+                       float deadzone = 0.15f);
 
   /**
    * @brief Returns the current value of a named logical axis.

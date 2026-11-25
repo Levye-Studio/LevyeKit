@@ -12,7 +12,11 @@ class ConvertCommand {
    * @return 0 for success/current, 2 for a pending check, or 1 on error.
    */
   static int Execute(const std::filesystem::path& projectDirectory,
-                     const std::filesystem::path& frameworkRoot, bool dryRun, bool check);
+                     const std::filesystem::path& frameworkRoot, bool dryRun, bool check,
+                     const std::filesystem::path& assetOverride = {});
+
+  /** @brief Restores a converted project when its generated files are unchanged. */
+  static int Rollback(const std::filesystem::path& projectDirectory);
 };
 
 }  // namespace Levye

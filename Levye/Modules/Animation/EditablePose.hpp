@@ -16,7 +16,9 @@ class EditablePose {
   /** @brief Checks whether the pose hierarchy matches a model skeleton. */
   [[nodiscard]] bool Matches(const ModelSkeleton& skeleton) const;
   /** @brief Returns the number of bones in the pose. */
-  [[nodiscard]] int BoneCount() const noexcept { return static_cast<int>(m_Bones.size()); }
+  [[nodiscard]] int BoneCount() const noexcept {
+    return static_cast<int>(m_Bones.size());
+  }
   /** @brief Returns a bone's parent index, or a negative value for a root. */
   [[nodiscard]] int Parent(int bone) const noexcept;
   /** @brief Finds a bone by name; returns a negative value if absent. */
@@ -30,9 +32,13 @@ class EditablePose {
   /** @brief Sets a bone transform in local or model space. */
   [[nodiscard]] bool Set(int bone, AnimationBoneSpace space, const AnimationBoneTransform& value);
   /** @brief Reports whether an animation sample has been imported. */
-  [[nodiscard]] bool IsSampled() const noexcept { return m_Sampled; }
+  [[nodiscard]] bool IsSampled() const noexcept {
+    return m_Sampled;
+  }
   /** @brief Returns the current local-space transforms. */
-  [[nodiscard]] const std::vector<Transform>& Local() const noexcept { return m_Local; }
+  [[nodiscard]] const std::vector<Transform>& Local() const noexcept {
+    return m_Local;
+  }
   /** @brief Evaluates model-space transforms through the bone hierarchy. */
   [[nodiscard]] std::vector<Transform> ModelPose() const;
 

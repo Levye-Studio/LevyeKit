@@ -46,7 +46,9 @@ class Document {
   /**
    * @brief Returns the underlying host document handle.
    */
-  [[nodiscard]] constexpr DocumentHandle Handle() const { return m_Handle; }
+  [[nodiscard]] constexpr DocumentHandle Handle() const {
+    return m_Handle;
+  }
 
  private:
   DocumentHandle m_Handle = InvalidDocumentHandle;

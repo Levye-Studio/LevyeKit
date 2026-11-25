@@ -173,8 +173,7 @@ class WriteArchive {
       return false;
     }
 
-    const std::string elementPath =
-        path + "[" + std::to_string(count - 1) + "]";
+    const std::string elementPath = path + "[" + std::to_string(count - 1) + "]";
 
     WriteArchive nested(m_Document, elementPath);
 

@@ -4,9 +4,11 @@
 
 
 namespace Levye {
-FontManager::~FontManager() { Clear(); }
+FontManager::~FontManager() {
+  Clear();
+}
 
-AssetHandle FontManager::Load(const std::string &path, int fontSize) {
+AssetHandle FontManager::Load(const std::string& path, int fontSize) {
   if (path.empty() || fontSize <= 0) {
     return {};
   }
@@ -51,7 +53,7 @@ AssetHandle FontManager::Load(const std::string &path, int fontSize) {
   return handle;
 }
 
-const Font *FontManager::Get(AssetHandle handle) const {
+const Font* FontManager::Get(AssetHandle handle) const {
   if (!handle.IsType(AssetType::Font)) {
     return nullptr;
   }
@@ -67,7 +69,7 @@ const Font *FontManager::Get(AssetHandle handle) const {
 std::size_t FontManager::CheckForChanges() {
   std::size_t reloadCount = 0;
 
-  for (auto &[id, asset] : m_Fonts) {
+  for (auto& [id, asset] : m_Fonts) {
     (void)id;
 
     if (!asset.watcher.Poll())
@@ -98,7 +100,7 @@ void FontManager::Unload(AssetHandle handle) {
 }
 
 void FontManager::Clear() {
-  for (auto &[id, asset] : m_Fonts) {
+  for (auto& [id, asset] : m_Fonts) {
     (void)id;
 
     ::UnloadFont(asset.font);
@@ -108,13 +110,12 @@ void FontManager::Clear() {
   m_PathLookup.clear();
 }
 
-bool FontManager::Reload(FontAsset &asset) {
+bool FontManager::Reload(FontAsset& asset) {
   /*
    * Load the replacement first. Never destroy the currently working
    * font until the new resource has been validated.
    */
-  Font replacement =
-      ::LoadFontEx(asset.path.c_str(), asset.fontSize, nullptr, 0);
+  Font replacement = ::LoadFontEx(asset.path.c_str(), asset.fontSize, nullptr, 0);
 
   if (!::IsFontValid(replacement)) {
     Logger::Error("Failed to reload font: " + asset.path);
@@ -131,7 +132,7 @@ bool FontManager::Reload(FontAsset &asset) {
   return true;
 }
 
-std::string FontManager::CreateKey(const std::string &path, int fontSize) {
+std::string FontManager::CreateKey(const std::string& path, int fontSize) {
   return path + "#" + std::to_string(fontSize);
 }
-} // namespace Levye
+}  // namespace Levye

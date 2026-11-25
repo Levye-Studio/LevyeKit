@@ -12,7 +12,9 @@ namespace {
 constexpr float Pi = 3.14159265358979323846f;
 constexpr float Epsilon = 1.0e-6f;
 
-bool Finite(Vector3 v) { return std::isfinite(v.x) && std::isfinite(v.y) && std::isfinite(v.z); }
+bool Finite(Vector3 v) {
+  return std::isfinite(v.x) && std::isfinite(v.y) && std::isfinite(v.z);
+}
 bool Finite(Quaternion q) {
   return std::isfinite(q.x) && std::isfinite(q.y) && std::isfinite(q.z) && std::isfinite(q.w) &&
          std::isfinite(QuaternionLength(q)) && QuaternionLength(q) > Epsilon;
@@ -22,8 +24,10 @@ Vector3 Tangent(Vector3 value, Vector3 up) {
 }
 Vector3 Basis(Vector3 up) {
   Vector3 axis{1, 0, 0};
-  if (std::abs(up.y) < std::abs(up.x)) axis = {0, 1, 0};
-  if (std::abs(up.z) < std::abs(Vector3DotProduct(axis, up))) axis = {0, 0, 1};
+  if (std::abs(up.y) < std::abs(up.x))
+    axis = {0, 1, 0};
+  if (std::abs(up.z) < std::abs(Vector3DotProduct(axis, up)))
+    axis = {0, 0, 1};
   return Vector3Normalize(Tangent(axis, up));
 }
 struct Point {
@@ -43,11 +47,14 @@ Point Closest(Point p, Point a, Point b) {
   const double x = b.x - a.x;
   const double y = b.y - a.y;
   const double lengthSquared = x * x + y * y;
-  if (lengthSquared <= 1.0e-20) return a;
+  if (lengthSquared <= 1.0e-20)
+    return a;
   const double t = std::clamp(((p.x - a.x) * x + (p.y - a.y) * y) / lengthSquared, 0.0, 1.0);
   return {a.x + t * x, a.y + t * y, 0};
 }
-float Alpha(float response, float dt) { return 1.0f - std::exp(-response * dt); }
+float Alpha(float response, float dt) {
+  return 1.0f - std::exp(-response * dt);
+}
 }  // namespace
 
 bool AnalyzeSupport(const SupportContact* contacts, int count, Vector3 up, Vector3 referenceWorld,
@@ -65,12 +72,14 @@ bool AnalyzeSupport(const SupportContact* contacts, int count, Vector3 up, Vecto
   int active = 0;
   for (int i = 0; i < count; ++i) {
     const auto& contact = contacts[i];
-    if (!contact.active) continue;
+    if (!contact.active)
+      continue;
     if (!Finite(contact.positionWorld) || !Finite(contact.normalWorld) ||
         Vector3LengthSqr(contact.normalWorld) < Epsilon || !std::isfinite(contact.confidence) ||
         contact.confidence < 0 || contact.confidence > 1)
       return false;
-    if (contact.confidence == 0) continue;
+    if (contact.confidence == 0)
+      continue;
     points[static_cast<std::size_t>(active)] = {Vector3DotProduct(contact.positionWorld, u),
                                                 Vector3DotProduct(contact.positionWorld, v),
                                                 contact.id};
@@ -91,27 +100,33 @@ bool AnalyzeSupport(const SupportContact* contacts, int count, Vector3 up, Vecto
       referenceWorld,
       Vector3Scale(up, Vector3DotProduct(Vector3Subtract(referenceWorld, centroid), up)));
   std::sort(points.begin(), points.begin() + active, [](Point a, Point b) {
-    if (a.x != b.x) return a.x < b.x;
-    if (a.y != b.y) return a.y < b.y;
+    if (a.x != b.x)
+      return a.x < b.x;
+    if (a.y != b.y)
+      return a.y < b.y;
     return a.id < b.id;
   });
   int unique = 0;
   for (int i = 0; i < active; ++i) {
-    if (unique && DistanceSquared(points[i], points[unique - 1]) < 1.0e-12) continue;
+    if (unique && DistanceSquared(points[i], points[unique - 1]) < 1.0e-12)
+      continue;
     points[unique++] = points[i];
   }
   std::array<Point, 2 * MaxSupportContacts> hull{};
   int size = 0;
   for (int i = 0; i < unique; ++i) {
-    while (size >= 2 && Cross(hull[size - 2], hull[size - 1], points[i]) <= 0) --size;
+    while (size >= 2 && Cross(hull[size - 2], hull[size - 1], points[i]) <= 0)
+      --size;
     hull[size++] = points[i];
   }
   const int lower = size;
   for (int i = unique - 2; i >= 0; --i) {
-    while (size > lower && Cross(hull[size - 2], hull[size - 1], points[i]) <= 0) --size;
+    while (size > lower && Cross(hull[size - 2], hull[size - 1], points[i]) <= 0)
+      --size;
     hull[size++] = points[i];
   }
-  if (size > 1) --size;
+  if (size > 1)
+    --size;
   result.hullCount = size;
   result.kind = size == 1   ? SupportRegionKind::Point
                 : size == 2 ? SupportRegionKind::Segment
@@ -136,7 +151,8 @@ bool AnalyzeSupport(const SupportContact* contacts, int count, Vector3 up, Vecto
       nearestSquared = distance;
       nearest = candidate;
     }
-    if (size >= 3 && Cross(a, b, reference) < -1.0e-10) inside = false;
+    if (size >= 3 && Cross(a, b, reference) < -1.0e-10)
+      inside = false;
   }
   const float boundaryDistance = static_cast<float>(std::sqrt(nearestSquared));
   result.nearestBoundaryDistance = boundaryDistance;
@@ -177,7 +193,8 @@ bool SuggestBodyHeight(Vector3 rootWorld, const SupportRegion& support, Vector3 
     output = result;
     return true;
   }
-  if (!Finite(support.centroidWorld)) return false;
+  if (!Finite(support.centroidWorld))
+    return false;
   const float currentHeight =
       Vector3DotProduct(Vector3Subtract(rootWorld, support.centroidWorld), up);
   std::array<float, 4 + 4 * MaxSupportContacts> candidates{};
@@ -192,7 +209,8 @@ bool SuggestBodyHeight(Vector3 rootWorld, const SupportRegion& support, Vector3 
   add(currentHeight);
   for (int i = 0; i < reachCount; ++i) {
     const auto& reach = reaches[i];
-    if (!reach.active) continue;
+    if (!reach.active)
+      continue;
     if (!Finite(reach.attachmentWorld) || !Finite(reach.contactWorld) ||
         !std::isfinite(reach.minimum) || !std::isfinite(reach.maximum) || reach.minimum < 0 ||
         reach.minimum > reach.maximum)
@@ -202,7 +220,8 @@ bool SuggestBodyHeight(Vector3 rootWorld, const SupportRegion& support, Vector3 
     const float lateralSquared = Vector3LengthSqr(Tangent(delta, up));
     const float center = currentHeight - vertical;
     for (float radius : {reach.minimum, reach.maximum}) {
-      if (radius * radius < lateralSquared) continue;
+      if (radius * radius < lateralSquared)
+        continue;
       const float half = std::sqrt(std::max(0.0f, radius * radius - lateralSquared));
       add(center - half);
       add(center + half);
@@ -218,14 +237,16 @@ bool SuggestBodyHeight(Vector3 rootWorld, const SupportRegion& support, Vector3 
     int violations = 0;
     for (int j = 0; j < reachCount; ++j) {
       const auto& reach = reaches[j];
-      if (!reach.active) continue;
+      if (!reach.active)
+        continue;
       const Vector3 shifted =
           Vector3Add(reach.attachmentWorld, Vector3Scale(up, height - currentHeight));
       const float distance = Vector3Distance(shifted, reach.contactWorld);
       const float error = distance < reach.minimum   ? reach.minimum - distance
                           : distance > reach.maximum ? distance - reach.maximum
                                                      : 0;
-      if (error > 0.0001f) ++violations;
+      if (error > 0.0001f)
+        ++violations;
       loss += error * error;
     }
     const float preference = std::abs(height - preferredHeight);
@@ -256,7 +277,8 @@ void BodyStabilizer::Reset() noexcept {
 }
 
 void BodyStabilizer::SetEnabled(bool enabled) noexcept {
-  if (m_Enabled == enabled) return;
+  if (m_Enabled == enabled)
+    return;
   m_Enabled = enabled;
   m_HorizontalOffset = {};
   m_HeightOffset = 0;
@@ -328,7 +350,8 @@ bool BodyStabilizer::Update(float deltaTime, Vector3 currentRootWorld, Vector3 d
   Vector3 normalSum{};
   float weightSum = 0;
   for (int i = 0; i < contactCount; ++i) {
-    if (!contacts[i].active || contacts[i].confidence <= 0) continue;
+    if (!contacts[i].active || contacts[i].confidence <= 0)
+      continue;
     normalSum = Vector3Add(
         normalSum, Vector3Scale(Vector3Normalize(contacts[i].normalWorld), contacts[i].confidence));
     weightSum += contacts[i].confidence;
@@ -356,7 +379,8 @@ bool BodyStabilizer::Update(float deltaTime, Vector3 currentRootWorld, Vector3 d
   const auto reachesWith = [&](Vector3 shift, Quaternion rotation) {
     for (int i = 0; i < reachCount; ++i) {
       const auto& reach = reaches[i];
-      if (!reach.active) continue;
+      if (!reach.active)
+        continue;
       const Vector3 relative = Vector3Subtract(reach.attachmentWorld, desiredRootWorld);
       const Vector3 transformed = Vector3Add(
           Vector3Add(desiredRootWorld, Vector3Add(shift, Vector3Scale(up, heightOffset))),

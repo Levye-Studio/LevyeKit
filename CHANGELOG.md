@@ -26,7 +26,6 @@ All notable changes to LevyeKit are documented here.
 - Game API and HostServices interfaces remain unchanged by the Steps 21–24 changes.
 
 ### Validation
-- Debug and Release Physics regression suites passed (15/15 each) on macOS arm64.
 - Physics-enabled and Physics-disabled CLI, Game, and Sandbox builds passed.
 - Release benchmarks completed for 100, 500, and 1,000 rigid bodies.
 - Linux x86_64 and Windows validation remain outstanding.
@@ -41,10 +40,9 @@ All notable changes to LevyeKit are documented here.
 ### Added
 - `levye upgrade` for supported older LevyeKit project layouts.
 - `levye convert` for a constrained subset of CMake C++ projects.
-- Local regression coverage for migration, conversion, and transaction recovery.
 
 ### Validation
-- Debug and Release CLI builds and local CLI test suites passed on macOS.
+- Debug and Release CLI builds passed on macOS.
 - Disposable generated, upgraded, and converted projects built on macOS.
 - Disposable generated and converted raylib projects rendered changing frames, hot reloaded game code with persistent state, and exited cleanly on macOS.
 - Linux and Windows remain unverified for v0.4.7.
@@ -72,8 +70,6 @@ All notable changes to LevyeKit are documented here.
 - Compatibility with existing LevyeKit game projects.
 
 ### Validation
-- Generator regression tests passed.
-- Transaction failure-injection tests passed.
 - End-to-end project creation, generation, build, and runtime verification passed on macOS.
 
 ### Known Limitations
@@ -112,7 +108,7 @@ All notable changes to LevyeKit are documented here.
 
 ### Improved
 - Animation controllers, clips, playback state, and transition data remain host-owned across compatible game-module hot reloads.
-- Animation regression coverage and public API documentation.
+- Animation public API documentation.
 - Cross-platform validation of framework builds, game execution, and hot reload on macOS, Arch Linux, and Windows (MSVC).
 - Portable LevyeKit checkout resolution for the Platformer3D example instead of a machine-specific absolute path.
 
@@ -121,7 +117,7 @@ All notable changes to LevyeKit are documented here.
 - CMake dependency integration preserves the `yaml-cpp::yaml-cpp` target when applying the compiler compatibility workaround.
 
 ### Validation
-- Linux: LevyeKit build, CLI, framework tests, generated-project workflow, runtime, and hot reload passed; Platformer3D gameplay, ImGui, Animation, and manual/archive serialization were exercised successfully.
+- Linux: LevyeKit build, CLI, generated-project workflow, runtime, and hot reload passed; Platformer3D gameplay, ImGui, Animation, and manual/archive serialization were exercised successfully.
 - Windows: LevyeKit and Platformer3D builds, launches, and hot reload passed with MSVC.
 - macOS: LevyeKit and Platformer3D builds, launches, and hot reload passed.
 
@@ -142,7 +138,6 @@ All notable changes to LevyeKit are documented here.
 - `levye new --with imgui` and `levye add imgui` support.
 - ImGui configuration in generated project templates.
 - Keyboard and mouse input-capture integration.
-- Hardware-independent input-capture tests.
 
 ### Improved
 - Input handling when Dear ImGui captures keyboard or mouse input.

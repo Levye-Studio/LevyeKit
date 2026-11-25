@@ -43,7 +43,8 @@ Application::Application(const ApplicationConfig& config, GameModule& gameModule
 }
 
 bool Application::Initialize() {
-  if (m_Initialized) return true;
+  if (m_Initialized)
+    return true;
   unsigned int windowFlags = 0;
 
   if (m_Config.resizable) {
@@ -55,7 +56,8 @@ bool Application::Initialize() {
   }
 
 #if !defined(__ANDROID__) && !defined(PLATFORM_IOS) && !defined(__EMSCRIPTEN__)
-  if (m_Config.fullscreen) windowFlags |= FLAG_FULLSCREEN_MODE;
+  if (m_Config.fullscreen)
+    windowFlags |= FLAG_FULLSCREEN_MODE;
 #endif
 
 #if !defined(__EMSCRIPTEN__) && !defined(PLATFORM_IOS)
@@ -74,7 +76,8 @@ bool Application::Initialize() {
 
 #if defined(__ANDROID__) || defined(PLATFORM_IOS)
 #if defined(__ANDROID__)
-  if (m_Config.useLogicalDisplay) LevyeAndroidEnableCutout();
+  if (m_Config.useLogicalDisplay)
+    LevyeAndroidEnableCutout();
 #endif
   // raylib sizes its Android framebuffer from InitWindow's dimensions and
   // applies its own scale matrix when they differ from the native surface.
@@ -90,7 +93,8 @@ bool Application::Initialize() {
   InitWindow(m_Config.width, m_Config.height, m_Config.title.c_str());
 #endif
 
-  if (!IsWindowReady()) return false;
+  if (!IsWindowReady())
+    return false;
 
 #if defined(PLATFORM_IOS)
   // Validate GLES dispatch before creating the logical display's GPU resources.
@@ -155,7 +159,8 @@ bool Application::Initialize() {
 }
 
 void Application::Run() {
-  if (!Initialize()) return;
+  if (!Initialize())
+    return;
 #if defined(PLATFORM_IOS)
   // UIKit owns the frame loop.
   return;
@@ -172,13 +177,15 @@ void Application::Run() {
       },
       this, 0, false);
 #else
-  while (!WindowShouldClose() && !m_QuitRequested) Frame();
+  while (!WindowShouldClose() && !m_QuitRequested)
+    Frame();
   Finish();
 #endif
 }
 
 bool Application::Tick() {
-  if (!m_Initialized || m_QuitRequested || WindowShouldClose()) return false;
+  if (!m_Initialized || m_QuitRequested || WindowShouldClose())
+    return false;
   Frame();
   return true;
 }
@@ -300,7 +307,8 @@ void Application::Frame() {
 }
 
 void Application::Finish() {
-  if (!m_Initialized) return;
+  if (!m_Initialized)
+    return;
   m_Initialized = false;
   m_GameModule.Shutdown();
   /*
@@ -318,5 +326,7 @@ void Application::Finish() {
   CloseWindow();
 }
 
-void Application::RequestQuit() { m_QuitRequested = true; }
+void Application::RequestQuit() {
+  m_QuitRequested = true;
+}
 }  // namespace Levye

@@ -20,11 +20,17 @@ void BindServices(const Levye::HostServices* services) {
     Levye::Services::Unbind();
 }
 
-GameState* GetState(void* state) { return static_cast<GameState*>(state); }
+GameState* GetState(void* state) {
+  return static_cast<GameState*>(state);
+}
 
-void InitializeState(void* state) { new (state) GameState{}; }
+void InitializeState(void* state) {
+  new (state) GameState{};
+}
 
-void DestroyState(void* state) { GetState(state)->~GameState(); }
+void DestroyState(void* state) {
+  GetState(state)->~GameState();
+}
 
 void OnLoad(void* state) {
   auto* game = GetState(state);
@@ -32,7 +38,8 @@ void OnLoad(void* state) {
   Sandbox::InputScene::Bind();
 
 #ifdef LEVYE_WITH_PHYSICS
-  if (!game->physicsScene.Initialize()) Levye::Log::Error("Sandbox physics initialization failed.");
+  if (!game->physicsScene.Initialize())
+    Levye::Log::Error("Sandbox physics initialization failed.");
 #endif
 
   game->core.Initialize();
@@ -100,7 +107,8 @@ void OnUpdate(void* state, float deltaTime) {
         "AnimationScene9", "AnimationScene10", "AnimationScene11"};
     for (int scene = 0; scene < Sandbox::AnimationScene::SceneCount; ++scene) {
       if (Levye::Input::IsPressed(sceneActions[scene])) {
-        if (game->animationScene.SelectScene(scene)) Levye::Screen::Set("Animation");
+        if (game->animationScene.SelectScene(scene))
+          Levye::Screen::Set("Animation");
         return;
       }
     }
@@ -125,7 +133,8 @@ void OnUpdate(void* state, float deltaTime) {
     Sandbox::MenuScene::Update();
     return;
   }
-  if (Levye::Screen::Is("Game")) game->core.Update(deltaTime);
+  if (Levye::Screen::Is("Game"))
+    game->core.Update(deltaTime);
 }
 
 void OnFixedUpdate(void*, float) {}
@@ -153,7 +162,8 @@ void OnDraw(void* state) {
 #endif
     return;
   }
-  if (Levye::Screen::Is("Game")) game->core.Draw();
+  if (Levye::Screen::Is("Game"))
+    game->core.Draw();
 #ifdef LEVYE_WITH_IMGUI
   Sandbox::ImGuiScene::Draw();
 #endif

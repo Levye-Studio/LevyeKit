@@ -12,7 +12,7 @@ namespace Levye {
  * the actual frame duration reported by the host.
  */
 class TimeSystem {
-public:
+ public:
   TimeSystem() = default;
 
   /**
@@ -132,7 +132,7 @@ public:
    */
   float Interpolate(float previous, float current) const;
 
-private:
+ private:
   float m_DeltaTime = 0.0f;
   float m_UnscaledDeltaTime = 0.0f;
 
@@ -150,4 +150,4 @@ private:
 
   static constexpr int MAX_FIXED_STEPS_PER_FRAME = 8;
 };
-} // namespace Levye
+}  // namespace Levye

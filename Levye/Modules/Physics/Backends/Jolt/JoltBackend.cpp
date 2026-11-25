@@ -97,7 +97,9 @@ class CollisionLayerRegistry {
     return filters_[static_cast<std::size_t>(id)];
   }
 
-  void Clear() { filters_.clear(); }
+  void Clear() {
+    filters_.clear();
+  }
 
  private:
   std::vector<CollisionFilter> filters_;
@@ -107,7 +109,9 @@ class LayerInterface final : public JPH::BroadPhaseLayerInterface {
  public:
   explicit LayerInterface(const CollisionLayerRegistry& registry) : registry_(registry) {}
 
-  JPH::uint GetNumBroadPhaseLayers() const override { return BroadPhaseLayers::Count; }
+  JPH::uint GetNumBroadPhaseLayers() const override {
+    return BroadPhaseLayers::Count;
+  }
 
   JPH::BroadPhaseLayer GetBroadPhaseLayer(JPH::ObjectLayer layer) const override {
     return registry_.Get(layer).isStatic ? BroadPhaseLayers::Static : BroadPhaseLayers::Moving;
@@ -166,13 +170,21 @@ class BroadPhaseFilter final : public JPH::ObjectVsBroadPhaseLayerFilter {
 // Math conversions
 // ---------------------------------------------------------
 
-JPH::Vec3 ToJolt(Vector3 value) { return {value.x, value.y, value.z}; }
+JPH::Vec3 ToJolt(Vector3 value) {
+  return {value.x, value.y, value.z};
+}
 
-JPH::RVec3 ToJoltPosition(Vector3 value) { return {value.x, value.y, value.z}; }
+JPH::RVec3 ToJoltPosition(Vector3 value) {
+  return {value.x, value.y, value.z};
+}
 
-JPH::Quat ToJolt(Quaternion value) { return {value.x, value.y, value.z, value.w}; }
+JPH::Quat ToJolt(Quaternion value) {
+  return {value.x, value.y, value.z, value.w};
+}
 
-Vector3 FromJolt(JPH::Vec3Arg value) { return {value.GetX(), value.GetY(), value.GetZ()}; }
+Vector3 FromJolt(JPH::Vec3Arg value) {
+  return {value.GetX(), value.GetY(), value.GetZ()};
+}
 
 Vector3 FromJoltPosition(JPH::RVec3Arg value) {
   return {static_cast<float>(value.GetX()), static_cast<float>(value.GetY()),
@@ -251,7 +263,8 @@ JPH::EMotionType ToMotionType(PhysicsMotionType type) {
 
 JPH::RefConst<JPH::Shape> CreateShape(const PhysicsShapeDesc& desc, bool allowMesh = false,
                                       unsigned int depth = 0) {
-  if (depth > 4) return nullptr;
+  if (depth > 4)
+    return nullptr;
   switch (desc.type) {
     case PhysicsShapeType::Box:
       if (!IsFinite(desc.halfExtents) || desc.halfExtents.x <= 0.0f || desc.halfExtents.y <= 0.0f ||
@@ -277,11 +290,13 @@ JPH::RefConst<JPH::Shape> CreateShape(const PhysicsShapeDesc& desc, bool allowMe
       return new JPH::CapsuleShape(desc.halfHeight, desc.radius);
 
     case PhysicsShapeType::ConvexHull: {
-      if (!desc.vertices || desc.vertexCount < 4 || desc.vertexCount > 256) return nullptr;
+      if (!desc.vertices || desc.vertexCount < 4 || desc.vertexCount > 256)
+        return nullptr;
       JPH::Array<JPH::Vec3> points;
       points.reserve(desc.vertexCount);
       for (std::uint32_t i = 0; i < desc.vertexCount; ++i) {
-        if (!IsFinite(desc.vertices[i])) return nullptr;
+        if (!IsFinite(desc.vertices[i]))
+          return nullptr;
         points.push_back(ToJolt(desc.vertices[i]));
       }
       JPH::ConvexHullShapeSettings settings(points);
@@ -298,7 +313,8 @@ JPH::RefConst<JPH::Shape> CreateShape(const PhysicsShapeDesc& desc, bool allowMe
       vertices.reserve(desc.vertexCount);
       for (std::uint32_t i = 0; i < desc.vertexCount; ++i) {
         const auto point = desc.vertices[i];
-        if (!IsFinite(point)) return nullptr;
+        if (!IsFinite(point))
+          return nullptr;
         vertices.emplace_back(point.x, point.y, point.z);
       }
       JPH::IndexedTriangleList triangles;
@@ -315,7 +331,8 @@ JPH::RefConst<JPH::Shape> CreateShape(const PhysicsShapeDesc& desc, bool allowMe
     }
 
     case PhysicsShapeType::Compound: {
-      if (!desc.children || desc.childCount == 0 || desc.childCount > 32) return nullptr;
+      if (!desc.children || desc.childCount == 0 || desc.childCount > 32)
+        return nullptr;
       JPH::StaticCompoundShapeSettings settings;
       for (std::uint32_t i = 0; i < desc.childCount; ++i) {
         const auto& child = desc.children[i];
@@ -327,7 +344,8 @@ JPH::RefConst<JPH::Shape> CreateShape(const PhysicsShapeDesc& desc, bool allowMe
             std::abs(transform.scale.z - 1.0f) > 0.0001f)
           return nullptr;
         const auto shape = CreateShape(*child.shape, allowMesh, depth + 1);
-        if (!shape) return nullptr;
+        if (!shape)
+          return nullptr;
         settings.AddShape(ToJolt(transform.translation), ToNormalizedJolt(transform.rotation),
                           shape.GetPtr());
       }
@@ -358,7 +376,8 @@ class ContactEventListener final : public JPH::ContactListener {
     std::lock_guard lock(suppressedMutex_);
     const auto pair = Pair(first, second);
     const auto it = suppressedPairs_.find(pair);
-    if (it != suppressedPairs_.end() && --it->second == 0) suppressedPairs_.erase(it);
+    if (it != suppressedPairs_.end() && --it->second == 0)
+      suppressedPairs_.erase(it);
   }
 
   void OnContactAdded(const JPH::Body& body1, const JPH::Body& body2,
@@ -441,7 +460,9 @@ class RaycastSensorFilter final : public JPH::BodyFilter {
  public:
   explicit RaycastSensorFilter(bool includeSensors) : includeSensors_(includeSensors) {}
 
-  bool ShouldCollide(const JPH::BodyID&) const override { return true; }
+  bool ShouldCollide(const JPH::BodyID&) const override {
+    return true;
+  }
 
   bool ShouldCollideLocked(const JPH::Body& body) const override {
     return includeSensors_ || !body.IsSensor();
@@ -455,7 +476,9 @@ class QueryBodyFilter final : public JPH::BodyFilter {
  public:
   QueryBodyFilter(bool includeSensors, JPH::BodyID ignored)
       : includeSensors_(includeSensors), ignored_(ignored) {}
-  bool ShouldCollide(const JPH::BodyID& id) const override { return id != ignored_; }
+  bool ShouldCollide(const JPH::BodyID& id) const override {
+    return id != ignored_;
+  }
   bool ShouldCollideLocked(const JPH::Body& body) const override {
     return body.GetID() != ignored_ && (includeSensors_ || !body.IsSensor());
   }
@@ -482,7 +505,8 @@ class CharacterObjectFilter final : public JPH::ObjectLayerFilter {
 };
 
 bool ValidQueryTransform(const Transform& transform) {
-  if (!IsFinite(transform.translation) || !IsValidRotation(transform.rotation)) return false;
+  if (!IsFinite(transform.translation) || !IsValidRotation(transform.rotation))
+    return false;
   return std::isfinite(transform.scale.x) && std::isfinite(transform.scale.y) &&
          std::isfinite(transform.scale.z) && std::abs(transform.scale.x - 1.0f) <= 0.0001f &&
          std::abs(transform.scale.y - 1.0f) <= 0.0001f &&
@@ -499,7 +523,8 @@ bool ValidMotor(const PhysicsMotorDesc& motor) {
 
 bool ConfigureMotor(JPH::TwoBodyConstraint* constraint, PhysicsConstraintType type,
                     const PhysicsMotorDesc& motor) {
-  if (!ValidMotor(motor)) return false;
+  if (!ValidMotor(motor))
+    return false;
   const auto state = motor.mode == PhysicsMotorMode::Velocity   ? JPH::EMotorState::Velocity
                      : motor.mode == PhysicsMotorMode::Position ? JPH::EMotorState::Position
                                                                 : JPH::EMotorState::Off;
@@ -590,7 +615,8 @@ struct JoltBackend::Impl {
   bool initialized = false;
 
   CharacterSlot* ResolveCharacter(PhysicsCharacterHandle handle) {
-    if (!handle.IsValid() || handle.index >= characters.size()) return nullptr;
+    if (!handle.IsValid() || handle.index >= characters.size())
+      return nullptr;
     auto& slot = characters[handle.index];
     return slot.character && slot.generation == handle.generation ? &slot : nullptr;
   }
@@ -599,7 +625,8 @@ struct JoltBackend::Impl {
   }
 
   ConstraintSlot* ResolveConstraint(PhysicsConstraintHandle handle) {
-    if (!handle.IsValid() || handle.index >= constraints.size()) return nullptr;
+    if (!handle.IsValid() || handle.index >= constraints.size())
+      return nullptr;
     auto& slot = constraints[handle.index];
     return slot.constraint && slot.generation == handle.generation ? &slot : nullptr;
   }
@@ -627,7 +654,8 @@ struct JoltBackend::Impl {
     for (const auto& source : events) {
       const auto a = bodyByID.find(source.pair.first);
       const auto b = bodyByID.find(source.pair.second);
-      if (a == bodyByID.end() || b == bodyByID.end()) continue;
+      if (a == bodyByID.end() || b == bodyByID.end())
+        continue;
       PhysicsContactEvent event{};
       event.type = source.type;
       event.bodyA = a->second;
@@ -662,17 +690,21 @@ struct JoltBackend::Impl {
 
   PhysicsBodyHandle Store(JPH::BodyID id, std::uint16_t layer, std::uint16_t mask, bool isStatic) {
     const bool reuse = !freeSlots.empty();
-    if (!reuse && bodies.size() >= std::numeric_limits<std::uint32_t>::max()) return {};
+    if (!reuse && bodies.size() >= std::numeric_limits<std::uint32_t>::max())
+      return {};
     const auto index = reuse ? freeSlots.back() : static_cast<std::uint32_t>(bodies.size());
     try {
-      if (!reuse) bodies.emplace_back();
+      if (!reuse)
+        bodies.emplace_back();
       const PhysicsBodyHandle handle{index, bodies[index].generation};
       const auto [_, inserted] = bodyByID.emplace(id.GetIndexAndSequenceNumber(), handle);
       if (!inserted) {
-        if (!reuse) bodies.pop_back();
+        if (!reuse)
+          bodies.pop_back();
         return {};
       }
-      if (reuse) freeSlots.pop_back();
+      if (reuse)
+        freeSlots.pop_back();
       auto& slot = bodies[index];
       slot.id = id;
       slot.occupied = true;
@@ -681,7 +713,8 @@ struct JoltBackend::Impl {
       slot.isStatic = isStatic;
       return handle;
     } catch (const std::bad_alloc&) {
-      if (!reuse && bodies.size() == static_cast<std::size_t>(index) + 1) bodies.pop_back();
+      if (!reuse && bodies.size() == static_cast<std::size_t>(index) + 1)
+        bodies.pop_back();
       return {};
     }
   }
@@ -709,9 +742,13 @@ struct JoltBackend::Impl {
 
 JoltBackend::JoltBackend() : impl_(std::make_unique<Impl>()) {}
 
-JoltBackend::~JoltBackend() { Shutdown(); }
+JoltBackend::~JoltBackend() {
+  Shutdown();
+}
 
-PhysicsBackendType JoltBackend::GetType() const { return PhysicsBackendType::Jolt; }
+PhysicsBackendType JoltBackend::GetType() const {
+  return PhysicsBackendType::Jolt;
+}
 
 // ---------------------------------------------------------
 // Initialization
@@ -785,7 +822,8 @@ void JoltBackend::Shutdown() {
   impl_->contactEvents.Clear();
 
   for (auto& slot : impl_->constraints)
-    if (slot.constraint) impl_->physics->RemoveConstraint(slot.constraint.GetPtr());
+    if (slot.constraint)
+      impl_->physics->RemoveConstraint(slot.constraint.GetPtr());
   impl_->constraints.clear();
   impl_->freeConstraints.clear();
 
@@ -1176,12 +1214,15 @@ bool JoltBackend::ShapeCast(const PhysicsShapeDesc& shapeDesc, const Transform& 
       !std::isfinite(maxDistance) || maxDistance <= 0.0f || filter.mask == 0)
     return false;
   const float length = Vector3Length(direction);
-  if (!std::isfinite(length) || length <= 0.000001f) return false;
+  if (!std::isfinite(length) || length <= 0.000001f)
+    return false;
   const auto ignored =
       filter.ignoredBody.IsValid() ? impl_->Resolve(filter.ignoredBody) : JPH::BodyID{};
-  if (filter.ignoredBody.IsValid() && ignored.IsInvalid()) return false;
+  if (filter.ignoredBody.IsValid() && ignored.IsInvalid())
+    return false;
   const auto shape = CreateShape(shapeDesc);
-  if (!shape) return false;
+  if (!shape)
+    return false;
   const Vector3 travel = Vector3Scale(direction, maxDistance / length);
   const auto transform = JPH::RMat44::sRotationTranslation(ToNormalizedJolt(start.rotation),
                                                            ToJoltPosition(start.translation));
@@ -1199,14 +1240,16 @@ bool JoltBackend::ShapeCast(const PhysicsShapeDesc& shapeDesc, const Transform& 
   PhysicsBodyHandle bestHandle{};
   for (const auto& hit : collector.mHits) {
     const auto handle = impl_->Find(hit.mBodyID2);
-    if (!handle.IsValid()) continue;
+    if (!handle.IsValid())
+      continue;
     if (!best || hit.mFraction < best->mFraction ||
         (hit.mFraction == best->mFraction && handle.index < bestHandle.index)) {
       best = &hit;
       bestHandle = handle;
     }
   }
-  if (!best) return false;
+  if (!best)
+    return false;
   output.body = bestHandle;
   output.fraction = best->mFraction;
   output.position = FromJolt(best->mContactPointOn2);
@@ -1225,9 +1268,11 @@ bool JoltBackend::OverlapShape(const PhysicsShapeDesc& shapeDesc, const Transfor
     return false;
   const auto ignored =
       filter.ignoredBody.IsValid() ? impl_->Resolve(filter.ignoredBody) : JPH::BodyID{};
-  if (filter.ignoredBody.IsValid() && ignored.IsInvalid()) return false;
+  if (filter.ignoredBody.IsValid() && ignored.IsInvalid())
+    return false;
   const auto shape = CreateShape(shapeDesc);
-  if (!shape) return false;
+  if (!shape)
+    return false;
   const auto worldTransform = JPH::RMat44::sRotationTranslation(
       ToNormalizedJolt(transform.rotation), ToJoltPosition(transform.translation));
   const auto centerTransform = worldTransform.PreTranslated(shape->GetCenterOfMass());
@@ -1241,14 +1286,16 @@ bool JoltBackend::OverlapShape(const PhysicsShapeDesc& shapeDesc, const Transfor
   unique.reserve(collector.mHits.size());
   for (const auto& hit : collector.mHits) {
     const auto handle = impl_->Find(hit.mBodyID2);
-    if (handle.IsValid()) unique.push_back(handle);
+    if (handle.IsValid())
+      unique.push_back(handle);
   }
   std::sort(unique.begin(), unique.end(), [](auto a, auto b) {
     return a.index < b.index || (a.index == b.index && a.generation < b.generation);
   });
   unique.erase(std::unique(unique.begin(), unique.end()), unique.end());
   count = static_cast<std::uint32_t>(unique.size());
-  for (std::uint32_t i = 0; i < std::min(count, capacity); ++i) results[i] = unique[i];
+  for (std::uint32_t i = 0; i < std::min(count, capacity); ++i)
+    results[i] = unique[i];
   return true;
 }
 
@@ -1264,16 +1311,19 @@ PhysicsCharacterHandle JoltBackend::CreateCharacter(const PhysicsCharacterDesc& 
   settings.mShape = new JPH::CapsuleShape(0.5f * desc.height - desc.radius, desc.radius);
   settings.mMaxSlopeAngle = JPH::DegreesToRadians(desc.maxSlopeAngle);
   const bool reuse = !impl_->freeCharacters.empty();
-  if (!reuse && impl_->characters.size() >= std::numeric_limits<std::uint32_t>::max()) return {};
+  if (!reuse && impl_->characters.size() >= std::numeric_limits<std::uint32_t>::max())
+    return {};
   const auto index =
       reuse ? impl_->freeCharacters.back() : static_cast<std::uint32_t>(impl_->characters.size());
   try {
     JPH::Ref<JPH::CharacterVirtual> character = new JPH::CharacterVirtual(
         &settings, ToJoltPosition(desc.position), JPH::Quat::sIdentity(), impl_->physics.get());
 
-    if (!reuse) impl_->characters.emplace_back();
+    if (!reuse)
+      impl_->characters.emplace_back();
 
-    if (reuse) impl_->freeCharacters.pop_back();
+    if (reuse)
+      impl_->freeCharacters.pop_back();
 
     character->SetCharacterVsCharacterCollision(&impl_->characterCollisions);
 
@@ -1299,7 +1349,8 @@ PhysicsCharacterHandle JoltBackend::CreateCharacter(const PhysicsCharacterDesc& 
 
 bool JoltBackend::DestroyCharacter(PhysicsCharacterHandle handle) {
   auto* slot = impl_->ResolveCharacter(handle);
-  if (!slot) return false;
+  if (!slot)
+    return false;
   impl_->characterCollisions.Remove(slot->character.GetPtr());
   slot->character = nullptr;
   slot->generation =
@@ -1314,7 +1365,8 @@ bool JoltBackend::DestroyCharacter(PhysicsCharacterHandle handle) {
 
 bool JoltBackend::SetCharacterVelocity(PhysicsCharacterHandle handle, Vector3 horizontal) {
   auto* slot = impl_->ResolveCharacter(handle);
-  if (!slot || !IsFinite(horizontal) || horizontal.y != 0) return false;
+  if (!slot || !IsFinite(horizontal) || horizontal.y != 0)
+    return false;
   slot->desiredHorizontal = horizontal;
   return true;
 }
@@ -1331,7 +1383,8 @@ bool JoltBackend::JumpCharacter(PhysicsCharacterHandle handle, float speed) {
 
 bool JoltBackend::SetCharacterPosition(PhysicsCharacterHandle handle, Vector3 position) {
   auto* slot = impl_->ResolveCharacter(handle);
-  if (!slot || !IsFinite(position)) return false;
+  if (!slot || !IsFinite(position))
+    return false;
   slot->character->SetPosition(ToJoltPosition(position));
   slot->verticalSpeed = 0;
   slot->actualVelocity = {};
@@ -1346,14 +1399,16 @@ bool JoltBackend::SetCharacterPosition(PhysicsCharacterHandle handle, Vector3 po
 
 bool JoltBackend::GetCharacterPosition(PhysicsCharacterHandle handle, Vector3& output) const {
   const auto* slot = impl_->ResolveCharacter(handle);
-  if (!slot) return false;
+  if (!slot)
+    return false;
   output = FromJoltPosition(slot->character->GetPosition());
   return true;
 }
 
 bool JoltBackend::GetCharacterVelocity(PhysicsCharacterHandle handle, Vector3& output) const {
   const auto* slot = impl_->ResolveCharacter(handle);
-  if (!slot) return false;
+  if (!slot)
+    return false;
   output = slot->actualVelocity;
   return true;
 }
@@ -1361,7 +1416,8 @@ bool JoltBackend::GetCharacterVelocity(PhysicsCharacterHandle handle, Vector3& o
 bool JoltBackend::GetCharacterGroundState(PhysicsCharacterHandle handle,
                                           PhysicsGroundState& output) const {
   const auto* slot = impl_->ResolveCharacter(handle);
-  if (!slot) return false;
+  if (!slot)
+    return false;
   switch (slot->character->GetGroundState()) {
     case JPH::CharacterBase::EGroundState::OnGround:
       output = PhysicsGroundState::Grounded;
@@ -1377,7 +1433,8 @@ bool JoltBackend::GetCharacterGroundState(PhysicsCharacterHandle handle,
 
 bool JoltBackend::GetCharacterGroundNormal(PhysicsCharacterHandle handle, Vector3& output) const {
   const auto* slot = impl_->ResolveCharacter(handle);
-  if (!slot) return false;
+  if (!slot)
+    return false;
   output = FromJolt(slot->character->GetGroundNormal());
   return true;
 }
@@ -1389,10 +1446,12 @@ PhysicsConstraintHandle JoltBackend::CreateConstraint(const PhysicsConstraintDes
     return {};
   const auto idA = impl_->Resolve(desc.bodyA);
   const auto idB = impl_->Resolve(desc.bodyB);
-  if (idA.IsInvalid() || idB.IsInvalid()) return {};
+  if (idA.IsInvalid() || idB.IsInvalid())
+    return {};
   const bool axisNeeded =
       desc.type == PhysicsConstraintType::Hinge || desc.type == PhysicsConstraintType::Slider;
-  if (axisNeeded && Vector3LengthSqr(desc.axis) < 0.000001f) return {};
+  if (axisNeeded && Vector3LengthSqr(desc.axis) < 0.000001f)
+    return {};
   if (desc.type == PhysicsConstraintType::Hinge &&
       (Vector3LengthSqr(desc.normal) < 0.000001f ||
        std::abs(Vector3DotProduct(Vector3Normalize(desc.axis), Vector3Normalize(desc.normal))) >
@@ -1403,7 +1462,8 @@ PhysicsConstraintHandle JoltBackend::CreateConstraint(const PhysicsConstraintDes
        desc.limitMin > 0 || desc.limitMax < 0 || desc.limitMin >= desc.limitMax ||
        (desc.type == PhysicsConstraintType::Hinge && (desc.limitMin < -PI || desc.limitMax > PI))))
     return {};
-  if (!axisNeeded && desc.motor.mode != PhysicsMotorMode::Off) return {};
+  if (!axisNeeded && desc.motor.mode != PhysicsMotorMode::Off)
+    return {};
   if (desc.type != PhysicsConstraintType::Fixed && desc.type != PhysicsConstraintType::Point &&
       desc.type != PhysicsConstraintType::Hinge && desc.type != PhysicsConstraintType::Slider)
     return {};
@@ -1456,22 +1516,26 @@ PhysicsConstraintHandle JoltBackend::CreateConstraint(const PhysicsConstraintDes
   if (!constraint || (axisNeeded && !ConfigureMotor(constraint.GetPtr(), desc.type, desc.motor)))
     return {};
   const bool reuse = !impl_->freeConstraints.empty();
-  if (!reuse && impl_->constraints.size() >= std::numeric_limits<std::uint32_t>::max()) return {};
+  if (!reuse && impl_->constraints.size() >= std::numeric_limits<std::uint32_t>::max())
+    return {};
   const auto index =
       reuse ? impl_->freeConstraints.back() : static_cast<std::uint32_t>(impl_->constraints.size());
   try {
-    if (!reuse) impl_->constraints.emplace_back();
+    if (!reuse)
+      impl_->constraints.emplace_back();
   } catch (const std::bad_alloc&) {
     return {};
   }
-  if (reuse) impl_->freeConstraints.pop_back();
+  if (reuse)
+    impl_->freeConstraints.pop_back();
   auto& slot = impl_->constraints[index];
   slot.constraint = constraint;
   slot.bodyA = idA;
   slot.bodyB = idB;
   slot.type = desc.type;
   slot.suppressCollision = !desc.collideConnected;
-  if (slot.suppressCollision) impl_->contactListener.Suppress(idA, idB);
+  if (slot.suppressCollision)
+    impl_->contactListener.Suppress(idA, idB);
   impl_->physics->AddConstraint(constraint.GetPtr());
   impl_->physics->GetBodyInterface().InvalidateContactCache(idA);
   return {index, slot.generation};
@@ -1479,9 +1543,11 @@ PhysicsConstraintHandle JoltBackend::CreateConstraint(const PhysicsConstraintDes
 
 bool JoltBackend::DestroyConstraint(PhysicsConstraintHandle handle) {
   auto* slot = impl_->ResolveConstraint(handle);
-  if (!impl_->initialized || !slot) return false;
+  if (!impl_->initialized || !slot)
+    return false;
   impl_->physics->RemoveConstraint(slot->constraint.GetPtr());
-  if (slot->suppressCollision) impl_->contactListener.Unsuppress(slot->bodyA, slot->bodyB);
+  if (slot->suppressCollision)
+    impl_->contactListener.Unsuppress(slot->bodyA, slot->bodyB);
   impl_->physics->GetBodyInterface().InvalidateContactCache(slot->bodyA);
   slot->constraint = nullptr;
   slot->generation =
@@ -1547,14 +1613,16 @@ bool JoltBackend::SetCollisionFilter(PhysicsBodyHandle handle, std::uint16_t lay
   impl_->ApplyObservations();
 
   bodyInterface.SetObjectLayer(id, objectLayer);
-  if (bodyInterface.GetObjectLayer(id) != objectLayer) return false;
+  if (bodyInterface.GetObjectLayer(id) != objectLayer)
+    return false;
 
   // Registry state is host-owned; Jolt may remove its cached subshape contacts later.
   // Those delayed removals cannot emit another End for the terminated pairs.
   impl_->Emit(impl_->contactPairs.EndFilteredPairs(
       id.GetIndexAndSequenceNumber(), [&](std::uint32_t otherID) {
         const auto it = impl_->bodyByID.find(otherID);
-        if (it == impl_->bodyByID.end()) return true;
+        if (it == impl_->bodyByID.end())
+          return true;
         const auto& other = impl_->bodies[it->second.index];
         return (slot.isStatic && other.isStatic) || (mask & other.layer) == 0 ||
                (other.mask & layer) == 0;
@@ -1568,16 +1636,19 @@ bool JoltBackend::SetCollisionFilter(PhysicsBodyHandle handle, std::uint16_t lay
   bodyInterface.InvalidateContactCache(id);
   bool newlyPermitted = false;
   for (const auto& other : impl_->bodies) {
-    if (!other.occupied || other.id == id || (slot.isStatic && other.isStatic)) continue;
+    if (!other.occupied || other.id == id || (slot.isStatic && other.isStatic))
+      continue;
     const bool permitted = (mask & other.layer) != 0 && (other.mask & layer) != 0;
     const bool previouslyPermitted =
         (previousMask & other.layer) != 0 && (other.mask & previousLayer) != 0;
     if (permitted && !previouslyPermitted) {
       newlyPermitted = true;
-      if (!other.isStatic) bodyInterface.ActivateBody(other.id);
+      if (!other.isStatic)
+        bodyInterface.ActivateBody(other.id);
     }
   }
-  if (newlyPermitted && !slot.isStatic) bodyInterface.ActivateBody(id);
+  if (newlyPermitted && !slot.isStatic)
+    bodyInterface.ActivateBody(id);
 
   return true;
 }
@@ -1594,7 +1665,8 @@ void JoltBackend::Step(float fixedDeltaTime) {
   impl_->physics->Update(fixedDeltaTime, 1, impl_->allocator.get(), impl_->jobs.get());
 
   for (auto& slot : impl_->characters) {
-    if (!slot.character) continue;
+    if (!slot.character)
+      continue;
     auto& character = *slot.character;
     const auto previous = character.GetPosition();
     const bool grounded = character.GetGroundState() == JPH::CharacterBase::EGroundState::OnGround;
@@ -1602,7 +1674,8 @@ void JoltBackend::Step(float fixedDeltaTime) {
       slot.verticalSpeed = 0;
     else
       slot.verticalSpeed += impl_->gravity.y * fixedDeltaTime;
-    if (grounded) character.UpdateGroundVelocity();
+    if (grounded)
+      character.UpdateGroundVelocity();
     const auto groundVelocity = grounded ? character.GetGroundVelocity() : JPH::Vec3::sZero();
     if (grounded)
       slot.airborneCarry =
@@ -1624,8 +1697,10 @@ void JoltBackend::Step(float fixedDeltaTime) {
                              JPH::ShapeFilter{}, *impl_->allocator);
     const auto displacement = character.GetPosition() - previous;
     slot.actualVelocity = FromJolt(displacement / fixedDeltaTime);
-    if (slot.verticalSpeed > 0 && slot.actualVelocity.y < 0.01f) slot.verticalSpeed = 0;
-    if (slot.verticalSpeed <= 0) slot.jumping = false;
+    if (slot.verticalSpeed > 0 && slot.actualVelocity.y < 0.01f)
+      slot.verticalSpeed = 0;
+    if (slot.verticalSpeed <= 0)
+      slot.jumping = false;
   }
 
   impl_->contactListener.Take(impl_->observationScratch);

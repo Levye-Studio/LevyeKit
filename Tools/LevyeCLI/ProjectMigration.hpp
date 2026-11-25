@@ -33,7 +33,9 @@ struct ProjectMigrationPlan {
   std::vector<std::string> errors;
 
   /** @brief Reports whether the plan has no blocking errors. */
-  bool CanApply() const { return errors.empty(); }
+  bool CanApply() const {
+    return errors.empty();
+  }
 };
 
 /** @brief Analyzes upgrade and conversion migrations. */

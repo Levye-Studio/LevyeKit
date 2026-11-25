@@ -12,7 +12,7 @@ namespace Levye {
  * can safely remain in persistent game state across compatible code reloads.
  */
 class Audio {
-public:
+ public:
   // ---------------------------------------------------------------------
   // Sound
   // ---------------------------------------------------------------------
@@ -25,8 +25,8 @@ public:
    * @param path Path to the sound asset.
    * @return Handle representing the sound, or an invalid handle on failure.
    */
-  static AssetHandle LoadSound(const char *path) {
-    const HostServices *host = Services::Get();
+  static AssetHandle LoadSound(const char* path) {
+    const HostServices* host = Services::Get();
 
     if (!host || !host->LoadSound || !path) {
       return {};
@@ -41,7 +41,7 @@ public:
    * @param handle Handle returned by LoadSound().
    */
   static void PlaySound(AssetHandle handle) {
-    const HostServices *host = Services::Get();
+    const HostServices* host = Services::Get();
 
     if (!host || !host->PlaySound)
       return;
@@ -55,7 +55,7 @@ public:
    * @param handle Sound handle to stop.
    */
   static void StopSound(AssetHandle handle) {
-    const HostServices *host = Services::Get();
+    const HostServices* host = Services::Get();
 
     if (!host || !host->StopSound)
       return;
@@ -70,7 +70,7 @@ public:
    * @param volume New playback volume.
    */
   static void SetSoundVolume(AssetHandle handle, float volume) {
-    const HostServices *host = Services::Get();
+    const HostServices* host = Services::Get();
 
     if (!host || !host->SetSoundVolume)
       return;
@@ -91,8 +91,8 @@ public:
    * @return Handle representing the music stream, or an invalid handle on
    * failure.
    */
-  static AssetHandle LoadMusic(const char *path) {
-    const HostServices *host = Services::Get();
+  static AssetHandle LoadMusic(const char* path) {
+    const HostServices* host = Services::Get();
 
     if (!host || !host->LoadMusic || !path) {
       return {};
@@ -107,7 +107,7 @@ public:
    * @param handle Music handle to play.
    */
   static void PlayMusic(AssetHandle handle) {
-    const HostServices *host = Services::Get();
+    const HostServices* host = Services::Get();
 
     if (!host || !host->PlayMusic)
       return;
@@ -121,7 +121,7 @@ public:
    * @param handle Music handle to pause.
    */
   static void PauseMusic(AssetHandle handle) {
-    const HostServices *host = Services::Get();
+    const HostServices* host = Services::Get();
 
     if (!host || !host->PauseMusic)
       return;
@@ -135,7 +135,7 @@ public:
    * @param handle Music handle to resume.
    */
   static void ResumeMusic(AssetHandle handle) {
-    const HostServices *host = Services::Get();
+    const HostServices* host = Services::Get();
 
     if (!host || !host->ResumeMusic)
       return;
@@ -149,7 +149,7 @@ public:
    * @param handle Music handle to stop.
    */
   static void StopMusic(AssetHandle handle) {
-    const HostServices *host = Services::Get();
+    const HostServices* host = Services::Get();
 
     if (!host || !host->StopMusic)
       return;
@@ -164,7 +164,7 @@ public:
    * @param volume New playback volume.
    */
   static void SetMusicVolume(AssetHandle handle, float volume) {
-    const HostServices *host = Services::Get();
+    const HostServices* host = Services::Get();
 
     if (!host || !host->SetMusicVolume)
       return;
@@ -173,4 +173,4 @@ public:
   }
 };
 
-} // namespace Levye
+}  // namespace Levye

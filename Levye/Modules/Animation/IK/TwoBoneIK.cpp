@@ -20,14 +20,16 @@ bool TwoBoneIK::SolveWeighted(EditablePose& pose, int root, int middle, int end,
   if (!SolveInternal(solved, root, middle, end, target, pole, tolerance, nullptr, nullptr))
     return false;
   EditablePose blended = pose;
-  if (!Blend(blended, solved, root, middle, weight)) return false;
+  if (!Blend(blended, solved, root, middle, weight))
+    return false;
   pose = std::move(blended);
   return true;
 }
 
 bool TwoBoneIK::Blend(EditablePose& pose, const EditablePose& solved, int root, int middle,
                       float weight) {
-  if (weight == 0.0f) return true;
+  if (weight == 0.0f)
+    return true;
   if (weight == 1.0f) {
     pose = solved;
     return true;
@@ -42,7 +44,8 @@ bool TwoBoneIK::Blend(EditablePose& pose, const EditablePose& solved, int root, 
     const Quaternion from = Rotation(original);
     const Quaternion to = Rotation(goal);
     SetRotation(original, QuaternionSlerp(from, to, weight));
-    if (!pose.Set(bone, AnimationBoneSpace::Local, original)) return false;
+    if (!pose.Set(bone, AnimationBoneSpace::Local, original))
+      return false;
   }
   return true;
 }
@@ -68,7 +71,8 @@ bool TwoBoneIK::SolveConstrained(EditablePose& pose, int root, int middle, int e
                      &solvedResult))
     return false;
   EditablePose blended = weight == 1.0f ? std::move(solved) : pose;
-  if (weight != 1.0f && !Blend(blended, solved, root, middle, weight)) return false;
+  if (weight != 1.0f && !Blend(blended, solved, root, middle, weight))
+    return false;
 
   AnimationBoneTransform a{}, b{}, c{};
   if (!blended.Get(root, AnimationBoneSpace::Model, a) ||
@@ -92,7 +96,8 @@ bool TwoBoneIK::SolveConstrained(EditablePose& pose, int root, int middle, int e
       solvedResult.bendDirection[2] = bend.z;
     }
   }
-  if (!std::isfinite(solvedResult.bendAngle) || !std::isfinite(solvedResult.endError)) return false;
+  if (!std::isfinite(solvedResult.bendAngle) || !std::isfinite(solvedResult.endError))
+    return false;
   pose = std::move(blended);
   result = solvedResult;
   return true;
@@ -100,7 +105,8 @@ bool TwoBoneIK::SolveConstrained(EditablePose& pose, int root, int middle, int e
 
 bool TwoBoneIK::Solve(EditablePose& pose, int root, int middle, int end, Vector3 target,
                       Vector3 pole, float tolerance) {
-  if (!std::isfinite(tolerance) || tolerance < 0.0f) return false;
+  if (!std::isfinite(tolerance) || tolerance < 0.0f)
+    return false;
 
   EditablePose candidate = pose;
 
@@ -147,9 +153,11 @@ bool TwoBoneIK::SolveInternal(EditablePose& pose, int root, int middle, int end,
   if (targetDistance <= epsilon) {
     direction = Vector3Subtract(c, a);
 
-    if (Vector3LengthSqr(direction) <= epsilon * epsilon) direction = Vector3Subtract(b, a);
+    if (Vector3LengthSqr(direction) <= epsilon * epsilon)
+      direction = Vector3Subtract(b, a);
 
-    if (Vector3LengthSqr(direction) <= epsilon * epsilon) return false;
+    if (Vector3LengthSqr(direction) <= epsilon * epsilon)
+      return false;
   }
 
   direction = Vector3Normalize(direction);
@@ -214,10 +222,12 @@ bool TwoBoneIK::SolveInternal(EditablePose& pose, int root, int middle, int end,
                                   ? Vector3{0.0f, 1.0f, 0.0f}
                                   : Vector3{0.0f, 0.0f, 1.0f};
     poleDirection = Vector3CrossProduct(direction, reference);
-    if (result) result->usedFallbackDirection = 1;
+    if (result)
+      result->usedFallbackDirection = 1;
   }
 
-  if (Vector3LengthSqr(poleDirection) <= epsilon * epsilon) return false;
+  if (Vector3LengthSqr(poleDirection) <= epsilon * epsilon)
+    return false;
 
   poleDirection = Vector3Normalize(poleDirection);
   if (result) {
@@ -245,7 +255,8 @@ bool TwoBoneIK::SolveInternal(EditablePose& pose, int root, int middle, int end,
 
   SetRotation(rootTransform, QuaternionMultiply(rootDelta, Rotation(rootTransform)));
 
-  if (!pose.Set(root, AnimationBoneSpace::Model, rootTransform)) return false;
+  if (!pose.Set(root, AnimationBoneSpace::Model, rootTransform))
+    return false;
 
   // Read updated positions after rotating the root.
   if (!pose.Get(middle, AnimationBoneSpace::Model, middleTransform) ||
@@ -261,17 +272,20 @@ bool TwoBoneIK::SolveInternal(EditablePose& pose, int root, int middle, int end,
 
   SetRotation(middleTransform, QuaternionMultiply(middleDelta, Rotation(middleTransform)));
 
-  if (!pose.Set(middle, AnimationBoneSpace::Model, middleTransform)) return false;
+  if (!pose.Set(middle, AnimationBoneSpace::Model, middleTransform))
+    return false;
 
   // Validate the final end-effector position.
   AnimationBoneTransform finalEnd{};
 
-  if (!pose.Get(end, AnimationBoneSpace::Model, finalEnd)) return false;
+  if (!pose.Get(end, AnimationBoneSpace::Model, finalEnd))
+    return false;
 
   const Vector3 actualEnd = Position(finalEnd);
   const float error = Vector3Distance(actualEnd, desiredEnd);
 
-  if (!std::isfinite(error)) return false;
+  if (!std::isfinite(error))
+    return false;
 
   if (error > tolerance + 1.0e-5f) {
     std::fprintf(stderr,
@@ -318,7 +332,8 @@ bool TwoBoneIK::RotationBetween(Vector3 from, Vector3 to, Quaternion& result) {
     axis = Vector3CrossProduct(from, reference);
   }
 
-  if (Vector3LengthSqr(axis) <= epsilon * epsilon) return false;
+  if (Vector3LengthSqr(axis) <= epsilon * epsilon)
+    return false;
 
   axis = Vector3Normalize(axis);
 

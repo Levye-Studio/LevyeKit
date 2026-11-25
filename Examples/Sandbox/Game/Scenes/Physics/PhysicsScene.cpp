@@ -20,7 +20,8 @@ constexpr std::uint16_t Character = 1u << 3;
 namespace Sandbox {
 
 bool PhysicsScene::Initialize() {
-  if (ready) return true;
+  if (ready)
+    return true;
 
   if (!Levye::Physics::IsAvailable()) {
     Levye::Log::Error("Physics: host module unavailable");
@@ -32,7 +33,8 @@ bool PhysicsScene::Initialize() {
   worldDesc.gravity = {0.0f, -9.81f, 0.0f};
 
   world = Levye::Physics::CreateWorld(worldDesc);
-  if (!world.IsValid()) return false;
+  if (!world.IsValid())
+    return false;
 
   Levye::PhysicsBodyDesc floorDesc{};
   floorDesc.motion = Levye::PhysicsMotionType::Static;
@@ -118,13 +120,17 @@ bool PhysicsScene::Initialize() {
 }
 
 void PhysicsScene::Update() {
-  if (!ready) return;
+  if (!ready)
+    return;
 
-  if (Levye::Input::IsPressed("PhysicsCharacterMode")) characterMode = !characterMode;
+  if (Levye::Input::IsPressed("PhysicsCharacterMode"))
+    characterMode = !characterMode;
   if (Levye::Input::IsPressed("PhysicsPause"))
     (void)Levye::Physics::SetWorldPaused(world, !diagnostics.paused);
-  if (Levye::Input::IsPressed("PhysicsStep")) (void)Levye::Physics::StepWorldOnce(world);
-  if (Levye::Input::IsPressed("PhysicsDebugDraw")) showDebugDraw = !showDebugDraw;
+  if (Levye::Input::IsPressed("PhysicsStep"))
+    (void)Levye::Physics::StepWorldOnce(world);
+  if (Levye::Input::IsPressed("PhysicsDebugDraw"))
+    showDebugDraw = !showDebugDraw;
 
   const float dt = GetFrameTime();
 
@@ -197,7 +203,8 @@ void PhysicsScene::Update() {
     const float speed = Levye::Input::IsDown("PhysicsCharacterSprint") ? 7.0f : 3.5f;
     Vector3 movement{Levye::Input::GetAxis("PhysicsCharacterX"), 0,
                      Levye::Input::GetAxis("PhysicsCharacterZ")};
-    if (Vector3LengthSqr(movement) > 1.0f) movement = Vector3Normalize(movement);
+    if (Vector3LengthSqr(movement) > 1.0f)
+      movement = Vector3Normalize(movement);
     movement = Vector3Scale(movement, speed);
     characterSpeed = Vector3Length(movement);
     (void)Levye::Physics::SetCharacterVelocity(world, character, movement);
@@ -352,8 +359,10 @@ void PhysicsScene::Draw() const {
     DrawSphere(ballPosition, 0.5f, ORANGE);
     DrawCubeWires(sensorPosition, 4.0f, 1.5f, 4.0f, sensorColor);
     DrawLine3D({-5, 2.5f, 0}, {5, 2.5f, 0}, YELLOW);
-    if (showCast) DrawSphere(lastCast.position, 0.12f, YELLOW);
-    if (showOverlap) DrawSphereWires({0, 2.5f, 0}, 1.0f, 12, 12, PURPLE);
+    if (showCast)
+      DrawSphere(lastCast.position, 0.12f, YELLOW);
+    if (showOverlap)
+      DrawSphereWires({0, 2.5f, 0}, 1.0f, 12, 12, PURPLE);
     if (characterMode) {
       DrawCube({20, -0.5f, 0}, 20, 1, 20, DARKGRAY);
       DrawCube({23, 1.5f, 0}, 0.6f, 3, 4, MAROON);
@@ -480,7 +489,8 @@ void PhysicsScene::Draw() const {
 
 void PhysicsScene::BeforeReload() {
   reloadSnapshotValid = false;
-  if (!ready) return;
+  if (!ready)
+    return;
 
   Transform transform{};
 
@@ -500,7 +510,8 @@ void PhysicsScene::BeforeReload() {
 bool PhysicsScene::AfterReload() {
   ++reloadCount;
 
-  if (!ready || !reloadSnapshotValid) return false;
+  if (!ready || !reloadSnapshotValid)
+    return false;
 
   Transform transform{};
   Vector3 velocity{};
@@ -509,7 +520,8 @@ bool PhysicsScene::AfterReload() {
 
   const bool velocityOK = Levye::Physics::GetLinearVelocity(world, ball, velocity);
 
-  if (!positionOK || !velocityOK) return false;
+  if (!positionOK || !velocityOK)
+    return false;
 
   // No physics step should run between the two reload callbacks.
   const float tolerance = 0.0001f;

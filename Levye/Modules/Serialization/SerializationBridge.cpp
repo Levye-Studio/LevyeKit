@@ -30,36 +30,31 @@ bool ContainsDocument(void* context, DocumentHandle handle) {
   return service && service->Contains(handle);
 }
 
-bool ContainsPathDocument(void* context, DocumentHandle handle,
-                          const char* path) {
+bool ContainsPathDocument(void* context, DocumentHandle handle, const char* path) {
   auto* service = GetService(context);
 
   return service && service->ContainsPath(handle, path);
 }
 
-bool WriteInt(void* context, DocumentHandle handle, const char* path,
-              std::int64_t value) {
+bool WriteInt(void* context, DocumentHandle handle, const char* path, std::int64_t value) {
   auto* service = GetService(context);
 
   return service && path && service->SetInt(handle, path, value);
 }
 
-bool WriteFloat(void* context, DocumentHandle handle, const char* path,
-                double value) {
+bool WriteFloat(void* context, DocumentHandle handle, const char* path, double value) {
   auto* service = GetService(context);
 
   return service && path && service->SetFloat(handle, path, value);
 }
 
-bool WriteBool(void* context, DocumentHandle handle, const char* path,
-               bool value) {
+bool WriteBool(void* context, DocumentHandle handle, const char* path, bool value) {
   auto* service = GetService(context);
 
   return service && path && service->SetBool(handle, path, value);
 }
 
-bool WriteString(void* context, DocumentHandle handle, const char* path,
-                 const char* value) {
+bool WriteString(void* context, DocumentHandle handle, const char* path, const char* value) {
   auto* service = GetService(context);
 
   return service && path && value && service->SetString(handle, path, value);
@@ -72,25 +67,24 @@ std::int64_t ReadInt(void* context, DocumentHandle handle, const char* path,
   return service && path ? service->GetInt(handle, path, fallback) : fallback;
 }
 
-double ReadFloat(void* context, DocumentHandle handle, const char* path,
-                 double fallback) {
+double ReadFloat(void* context, DocumentHandle handle, const char* path, double fallback) {
   auto* service = GetService(context);
 
   return service && path ? service->GetFloat(handle, path, fallback) : fallback;
 }
 
-bool ReadBool(void* context, DocumentHandle handle, const char* path,
-              bool fallback) {
+bool ReadBool(void* context, DocumentHandle handle, const char* path, bool fallback) {
   auto* service = GetService(context);
 
   return service && path ? service->GetBool(handle, path, fallback) : fallback;
 }
 
-std::uint64_t ReadString(void* context, DocumentHandle handle, const char* path,
-                         char* buffer, std::uint64_t bufferSize) {
+std::uint64_t ReadString(void* context, DocumentHandle handle, const char* path, char* buffer,
+                         std::uint64_t bufferSize) {
   auto* service = GetService(context);
 
-  if (!service || !path || !service->Contains(handle)) return 0;
+  if (!service || !path || !service->Contains(handle))
+    return 0;
 
   const std::string value = service->GetString(handle, path);
 
@@ -99,7 +93,8 @@ std::uint64_t ReadString(void* context, DocumentHandle handle, const char* path,
 
   // A null buffer or insufficient capacity is a size query.
   // Never partially write a string.
-  if (!buffer || bufferSize < required) return required;
+  if (!buffer || bufferSize < required)
+    return required;
 
   std::memcpy(buffer, value.c_str(), required);
 
@@ -121,8 +116,7 @@ DocumentHandle LoadDocument(void* context, const char* path) {
 /**
  * @brief Forwards array creation to the host-owned service.
  */
-bool BridgeCreateArray(void* context, DocumentHandle document,
-                       const char* path) {
+bool BridgeCreateArray(void* context, DocumentHandle document, const char* path) {
   if (context == nullptr || path == nullptr) {
     return false;
   }
@@ -135,8 +129,7 @@ bool BridgeCreateArray(void* context, DocumentHandle document,
 /**
  * @brief Forwards an array-size query to the host-owned service.
  */
-std::uint64_t BridgeGetArraySize(void* context, DocumentHandle document,
-                                 const char* path) {
+std::uint64_t BridgeGetArraySize(void* context, DocumentHandle document, const char* path) {
   if (context == nullptr || path == nullptr) {
     return 0;
   }
@@ -149,8 +142,7 @@ std::uint64_t BridgeGetArraySize(void* context, DocumentHandle document,
 /**
  * @brief Forwards object appending to the host-owned service.
  */
-bool BridgeAppendObject(void* context, DocumentHandle document,
-                        const char* path) {
+bool BridgeAppendObject(void* context, DocumentHandle document, const char* path) {
   if (context == nullptr || path == nullptr) {
     return false;
   }
@@ -163,8 +155,7 @@ bool BridgeAppendObject(void* context, DocumentHandle document,
 /**
  * @brief Forwards object appending to the host-owned service.
  */
-bool BridgeAppendArray(void* context, DocumentHandle document,
-                       const char* path) {
+bool BridgeAppendArray(void* context, DocumentHandle document, const char* path) {
   if (context == nullptr || path == nullptr) {
     return false;
   }
@@ -177,8 +168,7 @@ bool BridgeAppendArray(void* context, DocumentHandle document,
 /**
  * @brief Forwards integer appending to the host service.
  */
-bool BridgeAppendInt(void* context, DocumentHandle document, const char* path,
-                     std::int64_t value) {
+bool BridgeAppendInt(void* context, DocumentHandle document, const char* path, std::int64_t value) {
   if (context == nullptr || path == nullptr) {
     return false;
   }
@@ -191,8 +181,7 @@ bool BridgeAppendInt(void* context, DocumentHandle document, const char* path,
 /**
  * @brief Forwards floating-point appending to the host service.
  */
-bool BridgeAppendFloat(void* context, DocumentHandle document, const char* path,
-                       double value) {
+bool BridgeAppendFloat(void* context, DocumentHandle document, const char* path, double value) {
   if (context == nullptr || path == nullptr) {
     return false;
   }
@@ -205,8 +194,7 @@ bool BridgeAppendFloat(void* context, DocumentHandle document, const char* path,
 /**
  * @brief Forwards boolean appending to the host service.
  */
-bool BridgeAppendBool(void* context, DocumentHandle document, const char* path,
-                      bool value) {
+bool BridgeAppendBool(void* context, DocumentHandle document, const char* path, bool value) {
   if (context == nullptr || path == nullptr) {
     return false;
   }
@@ -219,8 +207,8 @@ bool BridgeAppendBool(void* context, DocumentHandle document, const char* path,
 /**
  * @brief Forwards string appending to the host service.
  */
-bool BridgeAppendString(void* context, DocumentHandle document,
-                        const char* path, const char* value) {
+bool BridgeAppendString(void* context, DocumentHandle document, const char* path,
+                        const char* value) {
   if (context == nullptr || path == nullptr || value == nullptr) {
     return false;
   }

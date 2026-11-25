@@ -70,11 +70,16 @@ bool IsOneShot(const char* name) {
 }
 
 int StatePriority(const char* name) {
-  if (std::strcmp(name, "Robot_Death") == 0) return 10;
-  if (std::strcmp(name, "Robot_Punch") == 0) return 5;
-  if (std::strcmp(name, "Robot_Jump") == 0) return 4;
-  if (std::strcmp(name, "Robot_Wave") == 0) return 3;
-  if (std::strcmp(name, "Robot_Idle") == 0) return 1;
+  if (std::strcmp(name, "Robot_Death") == 0)
+    return 10;
+  if (std::strcmp(name, "Robot_Punch") == 0)
+    return 5;
+  if (std::strcmp(name, "Robot_Jump") == 0)
+    return 4;
+  if (std::strcmp(name, "Robot_Wave") == 0)
+    return 3;
+  if (std::strcmp(name, "Robot_Idle") == 0)
+    return 1;
   return 1;
 }
 
@@ -85,7 +90,8 @@ void SetPreferredBend(const Vector3 joints[3], Levye::AnimationIKConstraint& con
     axis = Vector3Normalize(axis);
     bend = Vector3Subtract(bend, Vector3Scale(axis, Vector3DotProduct(bend, axis)));
   }
-  if (Vector3LengthSqr(bend) > 1.0e-10f) bend = Vector3Normalize(bend);
+  if (Vector3LengthSqr(bend) > 1.0e-10f)
+    bend = Vector3Normalize(bend);
   constraint.preferredDirection[0] = bend.x;
   constraint.preferredDirection[1] = bend.y;
   constraint.preferredDirection[2] = bend.z;
@@ -164,9 +170,11 @@ bool AnimationScene::SceneReady(int index) const noexcept {
 }
 
 int AnimationScene::FindClip(const char* name) const {
-  if (!name) return -1;
+  if (!name)
+    return -1;
   for (int i = 0; i < m_AnimationCount; ++i) {
-    if (std::strcmp(m_Names[static_cast<std::size_t>(i)].data(), name) == 0) return i;
+    if (std::strcmp(m_Names[static_cast<std::size_t>(i)].data(), name) == 0)
+      return i;
   }
   return -1;
 }
@@ -204,7 +212,8 @@ bool AnimationScene::ConfigureConditional(Levye::AnimationControllerHandle contr
 bool AnimationScene::ConfigureController(int scene) {
   auto& view = m_Scenes[static_cast<std::size_t>(scene)];
   view.controller = Levye::Animation::CreateController();
-  if (!Levye::Animation::IsControllerValid(view.controller)) return false;
+  if (!Levye::Animation::IsControllerValid(view.controller))
+    return false;
 
   for (int i = 0; i < m_AnimationCount; ++i) {
     const char* name = m_Names[static_cast<std::size_t>(i)].data();
@@ -215,10 +224,12 @@ bool AnimationScene::ConfigureController(int scene) {
       return false;
   }
 
-  if ((scene == 3 || scene == 5) && !ConfigureConditional(view.controller)) return false;
+  if ((scene == 3 || scene == 5) && !ConfigureConditional(view.controller))
+    return false;
 
   const int idle = FindClip("Robot_Idle");
-  if (idle < 0) return false;
+  if (idle < 0)
+    return false;
   view.selectedClip = idle;
   if (scene == 0 || scene == 1) {
     return Levye::Animation::BindAnimation(view.controller,
@@ -229,8 +240,10 @@ bool AnimationScene::ConfigureController(int scene) {
 }
 
 bool AnimationScene::Initialize(const char* modelPath) {
-  if (m_Ready || !modelPath || !Levye::Animation::IsAvailable()) return false;
-  if (std::strlen(modelPath) >= m_ModelPath.size()) return false;
+  if (m_Ready || !modelPath || !Levye::Animation::IsAvailable())
+    return false;
+  if (std::strlen(modelPath) >= m_ModelPath.size())
+    return false;
   std::memcpy(m_ModelPath.data(), modelPath, std::strlen(modelPath) + 1);
   m_Model = LoadModel(modelPath);
   if (!IsModelValid(m_Model)) {
@@ -307,7 +320,8 @@ bool AnimationScene::Initialize(const char* modelPath) {
 
 bool AnimationScene::ReadIKJoints() {
   m_IKReadback = false;
-  if (m_IKRoot < 0 || m_IKMiddle < 0 || m_IKEnd < 0) return false;
+  if (m_IKRoot < 0 || m_IKMiddle < 0 || m_IKEnd < 0)
+    return false;
   const int indices[3] = {m_IKRoot, m_IKMiddle, m_IKEnd};
   for (int i = 0; i < 3; ++i) {
     Levye::AnimationBoneTransform bone{};
@@ -382,26 +396,35 @@ bool AnimationScene::DiscoverIKChain() {
   }
   Record(7, true, "IK chain discovered");
   m_IKSmoothedTarget = m_IKTarget;
-  if (!ReadIKJoints()) return false;
+  if (!ReadIKJoints())
+    return false;
   SetPreferredBend(m_IKJointPositions, m_IKConstraint);
-  if (m_IK2Root >= 0) SetPreferredBend(m_IK2JointPositions, m_IK2Constraint);
+  if (m_IK2Root >= 0)
+    SetPreferredBend(m_IK2JointPositions, m_IK2Constraint);
   return true;
 }
 
 void AnimationScene::UpdateContacts(float deltaTime) {
-  if (Levye::Input::IsPressed("ContactSelect")) m_ContactSelected = 1 - m_ContactSelected;
-  if (Levye::Input::IsPressed("ContactToggle")) m_ContactsEnabled = !m_ContactsEnabled;
+  if (Levye::Input::IsPressed("ContactSelect"))
+    m_ContactSelected = 1 - m_ContactSelected;
+  if (Levye::Input::IsPressed("ContactToggle"))
+    m_ContactsEnabled = !m_ContactsEnabled;
   if (Levye::Input::IsPressed("ContactSurfacePrevious"))
     m_ContactSurface = (m_ContactSurface + 2) % 3;
-  if (Levye::Input::IsPressed("ContactSurfaceNext")) m_ContactSurface = (m_ContactSurface + 1) % 3;
-  if (Levye::Input::IsPressed("ContactRelease")) m_Contacts[m_ContactSelected].Release();
+  if (Levye::Input::IsPressed("ContactSurfaceNext"))
+    m_ContactSurface = (m_ContactSurface + 1) % 3;
+  if (Levye::Input::IsPressed("ContactRelease"))
+    m_Contacts[m_ContactSelected].Release();
   if (Levye::Input::IsPressed("AnimationRestart")) {
-    for (auto& contact : m_Contacts) contact.Reset();
+    for (auto& contact : m_Contacts)
+      contact.Reset();
     m_ContactRootPosition = {};
     m_ContactInitialized = false;
   }
-  if (Levye::Input::IsDown("AnimationLeft")) m_ContactRootPosition.x -= deltaTime;
-  if (Levye::Input::IsDown("AnimationRight")) m_ContactRootPosition.x += deltaTime;
+  if (Levye::Input::IsDown("AnimationLeft"))
+    m_ContactRootPosition.x -= deltaTime;
+  if (Levye::Input::IsDown("AnimationRight"))
+    m_ContactRootPosition.x += deltaTime;
   if (!Levye::Animation::SamplePose(m_ContactPose)) {
     Record(8, false, "Sample contact pose");
     return;
@@ -427,7 +450,8 @@ void AnimationScene::UpdateContacts(float deltaTime) {
     }
     m_ContactBaseWorld[i] =
         toWorld({bone.translation[0], bone.translation[1], bone.translation[2]});
-    if (!m_ContactInitialized) m_ContactOrigins[i] = m_ContactBaseWorld[i];
+    if (!m_ContactInitialized)
+      m_ContactOrigins[i] = m_ContactBaseWorld[i];
   }
   m_ContactInitialized = true;
   m_ContactConfig.maxDistance = 2.5f;
@@ -464,7 +488,8 @@ void AnimationScene::UpdateContacts(float deltaTime) {
   }
   if (!Levye::Animation::SolveIKChains(m_ContactPose, requests, 2, m_ContactResults))
     Record(8, false, "Solve contact batch");
-  if (!Levye::Animation::ApplyPose(m_ContactPose, &m_Model)) Record(8, false, "Apply contact pose");
+  if (!Levye::Animation::ApplyPose(m_ContactPose, &m_Model))
+    Record(8, false, "Apply contact pose");
   for (int i = 0; i < 2; ++i) {
     Levye::AnimationBoneTransform bone{};
     if (Levye::Animation::GetPoseBoneTransform(m_ContactPose, ends[i],
@@ -479,9 +504,12 @@ void AnimationScene::UpdateContacts(float deltaTime) {
 void AnimationScene::UpdateIK(float deltaTime) {
   if (Levye::Input::IsPressed("IKSelectChain") && m_IK2Root >= 0)
     m_IKSelectedChain = 1 - m_IKSelectedChain;
-  if (Levye::Input::IsPressed("IKToggle")) m_IKEnabled = !m_IKEnabled;
-  if (Levye::Input::IsPressed("IKWeightDown")) m_IKWeight = std::max(0.0f, m_IKWeight - 0.1f);
-  if (Levye::Input::IsPressed("IKWeightUp")) m_IKWeight = std::min(1.0f, m_IKWeight + 0.1f);
+  if (Levye::Input::IsPressed("IKToggle"))
+    m_IKEnabled = !m_IKEnabled;
+  if (Levye::Input::IsPressed("IKWeightDown"))
+    m_IKWeight = std::max(0.0f, m_IKWeight - 0.1f);
+  if (Levye::Input::IsPressed("IKWeightUp"))
+    m_IKWeight = std::min(1.0f, m_IKWeight + 0.1f);
   if (Levye::Input::IsPressed("IKResponseDown"))
     m_IKSmoothingResponse = std::max(0.0f, m_IKSmoothingResponse - 1.0f);
   if (Levye::Input::IsPressed("IKResponseUp"))
@@ -489,14 +517,16 @@ void AnimationScene::UpdateIK(float deltaTime) {
   constexpr float bendStep = 0.0872664626f;
   constexpr float pi = 3.14159265358979323846f;
   auto& limits = m_IKSelectedChain ? m_IK2Constraint : m_IKConstraint;
-  if (Levye::Input::IsPressed("IKConstraintToggle")) m_IKConstraintEnabled = !m_IKConstraintEnabled;
+  if (Levye::Input::IsPressed("IKConstraintToggle"))
+    m_IKConstraintEnabled = !m_IKConstraintEnabled;
   if (Levye::Input::IsPressed("IKMinDown"))
     limits.minBend = std::max(0.0f, limits.minBend - bendStep);
   if (Levye::Input::IsPressed("IKMinUp"))
     limits.minBend = std::min(limits.maxBend, limits.minBend + bendStep);
   if (Levye::Input::IsPressed("IKMaxDown"))
     limits.maxBend = std::max(limits.minBend, limits.maxBend - bendStep);
-  if (Levye::Input::IsPressed("IKMaxUp")) limits.maxBend = std::min(pi, limits.maxBend + bendStep);
+  if (Levye::Input::IsPressed("IKMaxUp"))
+    limits.maxBend = std::min(pi, limits.maxBend + bendStep);
   Vector3& target = m_IKSelectedChain ? m_IK2Target : m_IKTarget;
   Vector3& pole = m_IKSelectedChain ? m_IK2Pole : m_IKPole;
   Vector3& smoothed = m_IKSelectedChain ? m_IK2SmoothedTarget : m_IKSmoothedTarget;
@@ -571,7 +601,8 @@ void AnimationScene::UpdateIK(float deltaTime) {
     if (m_IKSolved) {
       m_IKResult = results[0].ik;
       m_IKReachable = m_IKResult.reachable != 0;
-      for (int i = 0; i < 3; ++i) m_IKConstraint.previousDirection[i] = m_IKResult.bendDirection[i];
+      for (int i = 0; i < 3; ++i)
+        m_IKConstraint.previousDirection[i] = m_IKResult.bendDirection[i];
       m_IKConstraint.hasPreviousDirection = 1;
     }
     if (m_IK2Status == Levye::AnimationIKChainStatus::Solved) {
@@ -584,15 +615,18 @@ void AnimationScene::UpdateIK(float deltaTime) {
         (!m_IKSolved || (m_IK2Root >= 0 && m_IK2Status != Levye::AnimationIKChainStatus::Solved)))
       Record(7, false, "Solve IK batch");
   }
-  if (!Levye::Animation::ApplyPose(m_IKPose, &m_Model)) Record(7, false, "Apply IK pose");
+  if (!Levye::Animation::ApplyPose(m_IKPose, &m_Model))
+    Record(7, false, "Apply IK pose");
   const bool readback = m_IKRoot >= 0 && ReadIKJoints();
-  if (readback) m_IKEndError = IKSceneLogic::Distance(m_IKJointPositions[2], m_IKSmoothedTarget);
+  if (readback)
+    m_IKEndError = IKSceneLogic::Distance(m_IKJointPositions[2], m_IKSmoothedTarget);
   if (readback && m_IK2Root >= 0)
     m_IK2EndError = IKSceneLogic::Distance(m_IK2JointPositions[2], m_IK2SmoothedTarget);
 }
 
 bool AnimationScene::SelectScene(int index) {
-  if (!SceneReady(index)) return false;
+  if (!SceneReady(index))
+    return false;
   if (index == 7 && m_IKEndError < 0.0f && m_IKRoot >= 0 &&
       Levye::Animation::SamplePose(m_IKPose) && ReadIKJoints()) {
     if (IKSceneLogic::ResetTarget({"", -1, m_IKJointPositions[0]}, {"", -1, m_IKJointPositions[1]},
@@ -659,7 +693,8 @@ void AnimationScene::UpdateParameters(int scene, float deltaTime) {
     success = Levye::Animation::SetTrigger(view.controller, "Punch") && success;
   if (Levye::Input::IsPressed("AnimationJump"))
     success = Levye::Animation::SetTrigger(view.controller, "Jump") && success;
-  if (!success) Record(scene, false, "Set conditions");
+  if (!success)
+    Record(scene, false, "Set conditions");
   if (scene == 5) {
     const float direction = static_cast<float>(right) - static_cast<float>(left);
     view.position = std::clamp(view.position + direction * speed * deltaTime * 3.0f, -6.0f, 6.0f);
@@ -678,7 +713,8 @@ bool AnimationScene::RecreateLifecycleController() {
 }
 
 void AnimationScene::Update(float deltaTime) {
-  if (!SceneReady(m_CurrentScene)) return;
+  if (!SceneReady(m_CurrentScene))
+    return;
   const int scene = m_CurrentScene;
   auto& view = m_Scenes[static_cast<std::size_t>(scene)];
   const auto controller = view.controller;
@@ -686,8 +722,10 @@ void AnimationScene::Update(float deltaTime) {
   if (scene == 0) {
     if (Levye::Input::IsPressed("AnimationPrevious"))
       (void)SelectClip(scene, view.selectedClip - 1);
-    if (Levye::Input::IsPressed("AnimationNext")) (void)SelectClip(scene, view.selectedClip + 1);
-    if (Levye::Input::IsPressed("AnimationRestart")) (void)SelectClip(scene, view.selectedClip);
+    if (Levye::Input::IsPressed("AnimationNext"))
+      (void)SelectClip(scene, view.selectedClip + 1);
+    if (Levye::Input::IsPressed("AnimationRestart"))
+      (void)SelectClip(scene, view.selectedClip);
     const int boneCount = Levye::Animation::GetPoseBoneCount(m_EditablePose);
     if (boneCount > 0 && Levye::Input::IsPressed("AnimationBoneNext")) {
       m_SelectedBone = (m_SelectedBone + 1) % boneCount;
@@ -697,13 +735,17 @@ void AnimationScene::Update(float deltaTime) {
       m_SelectedBone = (m_SelectedBone + boneCount - 1) % boneCount;
       m_BoneAngle = 0.0f;
     }
-    if (Levye::Input::IsDown("AnimationBonePositive")) m_BoneAngle += deltaTime;
-    if (Levye::Input::IsDown("AnimationBoneNegative")) m_BoneAngle -= deltaTime;
-    if (Levye::Input::IsPressed("AnimationBoneReset")) m_BoneAngle = 0.0f;
+    if (Levye::Input::IsDown("AnimationBonePositive"))
+      m_BoneAngle += deltaTime;
+    if (Levye::Input::IsDown("AnimationBoneNegative"))
+      m_BoneAngle -= deltaTime;
+    if (Levye::Input::IsPressed("AnimationBoneReset"))
+      m_BoneAngle = 0.0f;
   } else if (scene == 1) {
     if (Levye::Input::IsPressed("AnimationPrevious"))
       (void)SelectClip(scene, view.selectedClip - 1);
-    if (Levye::Input::IsPressed("AnimationNext")) (void)SelectClip(scene, view.selectedClip + 1);
+    if (Levye::Input::IsPressed("AnimationNext"))
+      (void)SelectClip(scene, view.selectedClip + 1);
     if (Levye::Input::IsPressed("AnimationFaster"))
       view.crossfadeDuration = std::min(view.crossfadeDuration + 0.25f, 3.0f);
     if (Levye::Input::IsPressed("AnimationSlower"))
@@ -734,7 +776,8 @@ void AnimationScene::Update(float deltaTime) {
   } else if (scene == 2) {
     if (Levye::Input::IsPressed("AnimationPrevious"))
       (void)SelectClip(scene, view.selectedClip - 1);
-    if (Levye::Input::IsPressed("AnimationNext")) (void)SelectClip(scene, view.selectedClip + 1);
+    if (Levye::Input::IsPressed("AnimationNext"))
+      (void)SelectClip(scene, view.selectedClip + 1);
     if (Levye::Input::IsPressed("AnimationConfirm"))
       (void)SetNamedState(scene, m_Names[static_cast<std::size_t>(view.selectedClip)].data(),
                           false);
@@ -748,7 +791,8 @@ void AnimationScene::Update(float deltaTime) {
     }
   } else if (scene == 3 || scene == 5) {
     UpdateParameters(scene, deltaTime);
-    if (Levye::Input::IsPressed("AnimationForce")) (void)SetNamedState(scene, "Robot_Idle", true);
+    if (Levye::Input::IsPressed("AnimationForce"))
+      (void)SetNamedState(scene, "Robot_Idle", true);
     if (Levye::Input::IsPressed("AnimationRestart")) {
       char name[48]{};
       const bool success = Levye::Animation::GetCurrentState(controller, name, sizeof(name)) &&
@@ -756,13 +800,18 @@ void AnimationScene::Update(float deltaTime) {
       Record(scene, success, "Restart current state");
     }
   } else if (scene == 4) {
-    if (Levye::Input::IsPressed("AnimationJump")) (void)SetNamedState(scene, "Robot_Jump", false);
-    if (Levye::Input::IsPressed("AnimationPunch")) (void)SetNamedState(scene, "Robot_Punch", false);
-    if (Levye::Input::IsPressed("AnimationDeath")) (void)SetNamedState(scene, "Robot_Death", false);
-    if (Levye::Input::IsPressed("AnimationWave")) (void)SetNamedState(scene, "Robot_Wave", false);
+    if (Levye::Input::IsPressed("AnimationJump"))
+      (void)SetNamedState(scene, "Robot_Jump", false);
+    if (Levye::Input::IsPressed("AnimationPunch"))
+      (void)SetNamedState(scene, "Robot_Punch", false);
+    if (Levye::Input::IsPressed("AnimationDeath"))
+      (void)SetNamedState(scene, "Robot_Death", false);
+    if (Levye::Input::IsPressed("AnimationWave"))
+      (void)SetNamedState(scene, "Robot_Wave", false);
     if (Levye::Input::IsPressed("AnimationConfirm"))
       (void)SetNamedState(scene, "Robot_Idle", false);
-    if (Levye::Input::IsPressed("AnimationForce")) (void)SetNamedState(scene, "Robot_Idle", true);
+    if (Levye::Input::IsPressed("AnimationForce"))
+      (void)SetNamedState(scene, "Robot_Idle", true);
     if (Levye::Input::IsPressed("AnimationRestart")) {
       char name[48]{};
       const bool success = Levye::Animation::GetCurrentState(controller, name, sizeof(name)) &&
@@ -770,7 +819,8 @@ void AnimationScene::Update(float deltaTime) {
       Record(scene, success, "Restart one-shot");
     }
   } else if (scene == 6) {
-    if (Levye::Input::IsPressed("AnimationRestart")) (void)RecreateLifecycleController();
+    if (Levye::Input::IsPressed("AnimationRestart"))
+      (void)RecreateLifecycleController();
     if (Levye::Input::IsPressed("AnimationUnload")) {
       const int count = Levye::Animation::GetAnimationCount(m_ModelPath.data());
       std::vector<Levye::AnimationResourceHandle> temporary(
@@ -840,14 +890,16 @@ void AnimationScene::Update(float deltaTime) {
                                                        Levye::AnimationBoneSpace::Local, bone) &&
                 Levye::Animation::ApplyPose(m_EditablePose, &m_Model);
     }
-    if (!success) Record(scene, false, "Apply edited pose");
+    if (!success)
+      Record(scene, false, "Apply edited pose");
   } else if (!Levye::Animation::ApplyBoundAnimation(view.controller, &m_Model)) {
     Record(scene, false, "Apply pose");
   }
 }
 
 Camera3D AnimationScene::IKCamera() const {
-  if (!m_IKReadback) return m_Camera;
+  if (!m_IKReadback)
+    return m_Camera;
   std::array<Vector3, 12> points{IKSceneLogic::ToWorld(m_IKJointPositions[0], m_Model.transform),
                                  IKSceneLogic::ToWorld(m_IKJointPositions[1], m_Model.transform),
                                  IKSceneLogic::ToWorld(m_IKJointPositions[2], m_Model.transform),
@@ -991,7 +1043,8 @@ void AnimationScene::DrawIKHUD() const {
 }
 
 void AnimationScene::DrawContacts() const {
-  if (!m_ContactInitialized) return;
+  if (!m_ContactInitialized)
+    return;
   for (int i = 0; i < 2; ++i) {
     const Vector3 origin = m_ContactOrigins[i];
     const Vector3 flat = ContactSurfacePoint(origin, 0);
@@ -1012,12 +1065,14 @@ void AnimationScene::DrawContacts() const {
     DrawLine3D(m_ContactEndWorld[i], contact.targetWorld, color);
     DrawLine3D(contact.targetWorld,
                Vector3Add(contact.targetWorld, Vector3Scale(contact.normalWorld, 0.35f)), GREEN);
-    if (i == m_ContactSelected) DrawSphereWires(contact.targetWorld, 0.18f, 10, 12, WHITE);
+    if (i == m_ContactSelected)
+      DrawSphereWires(contact.targetWorld, 0.18f, 10, 12, WHITE);
   }
 }
 
 void AnimationScene::Draw() const {
-  if (!SceneReady(m_CurrentScene)) return;
+  if (!SceneReady(m_CurrentScene))
+    return;
   if (m_CurrentScene == 9) {
     m_Locomotion.Draw();
     return;
@@ -1034,13 +1089,15 @@ void AnimationScene::Draw() const {
   BeginMode3D(m_CurrentScene == 7 ? IKCamera() : m_Camera);
   DrawGrid(20, 1.0f);
   DrawModel(m_Model, {x, 0.0f, 0.0f}, 1.0f, WHITE);
-  if (m_CurrentScene == 8) DrawContacts();
+  if (m_CurrentScene == 8)
+    DrawContacts();
   if (m_CurrentScene == 7) {
     const Vector3 target = IKSceneLogic::ToWorld(m_IKTarget, m_Model.transform);
     const Vector3 smoothed = IKSceneLogic::ToWorld(m_IKSmoothedTarget, m_Model.transform);
     const Vector3 pole = IKSceneLogic::ToWorld(m_IKPole, m_Model.transform);
     DrawSphereWires(target, 0.17f, 10, 14, SKYBLUE);
-    if (m_IKSelectedChain == 0) DrawSphereWires(target, 0.24f, 10, 14, WHITE);
+    if (m_IKSelectedChain == 0)
+      DrawSphereWires(target, 0.24f, 10, 14, WHITE);
     DrawSphere(smoothed, 0.11f, GOLD);
     DrawLine3D(target, smoothed, SKYBLUE);
     DrawCube(pole, 0.22f, 0.22f, 0.22f, VIOLET);
@@ -1072,7 +1129,8 @@ void AnimationScene::Draw() const {
       const Vector3 middle = IKSceneLogic::ToWorld(m_IK2JointPositions[1], m_Model.transform);
       const Vector3 end = IKSceneLogic::ToWorld(m_IK2JointPositions[2], m_Model.transform);
       DrawSphereWires(secondTarget, 0.17f, 10, 14, LIME);
-      if (m_IKSelectedChain == 1) DrawSphereWires(secondTarget, 0.24f, 10, 14, WHITE);
+      if (m_IKSelectedChain == 1)
+        DrawSphereWires(secondTarget, 0.24f, 10, 14, WHITE);
       DrawSphere(secondSmoothed, 0.11f, GREEN);
       DrawCube(secondPole, 0.20f, 0.20f, 0.20f, DARKGREEN);
       DrawCylinderEx(root, middle, 0.035f, 0.035f, 8, DARKGREEN);
@@ -1262,9 +1320,11 @@ void AnimationScene::Shutdown() {
   if (m_EditablePose != Levye::INVALID_ANIMATION_POSE)
     Levye::Animation::DestroyPose(m_EditablePose);
   m_EditablePose = Levye::INVALID_ANIMATION_POSE;
-  if (m_IKPose != Levye::INVALID_ANIMATION_POSE) Levye::Animation::DestroyPose(m_IKPose);
+  if (m_IKPose != Levye::INVALID_ANIMATION_POSE)
+    Levye::Animation::DestroyPose(m_IKPose);
   m_IKPose = Levye::INVALID_ANIMATION_POSE;
-  if (m_ContactPose != Levye::INVALID_ANIMATION_POSE) Levye::Animation::DestroyPose(m_ContactPose);
+  if (m_ContactPose != Levye::INVALID_ANIMATION_POSE)
+    Levye::Animation::DestroyPose(m_ContactPose);
   m_ContactPose = Levye::INVALID_ANIMATION_POSE;
   m_Locomotion = {};
   m_Orientation = {};
@@ -1275,7 +1335,8 @@ void AnimationScene::Shutdown() {
   }
   for (int i = 0; i < m_AnimationCount; ++i)
     (void)Levye::Animation::UnloadAnimation(m_Animations[static_cast<std::size_t>(i)]);
-  if (IsModelValid(m_Model)) UnloadModel(m_Model);
+  if (IsModelValid(m_Model))
+    UnloadModel(m_Model);
   m_Model = {};
   m_Animations.fill(Levye::INVALID_ANIMATION_RESOURCE);
   m_AnimationCount = 0;

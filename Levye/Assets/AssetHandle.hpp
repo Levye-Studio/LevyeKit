@@ -35,7 +35,9 @@ struct AssetHandle {
   /**
    * @brief Returns whether this handle refers to an asset.
    */
-  bool IsValid() const { return id != 0 && type != AssetType::Invalid; }
+  bool IsValid() const {
+    return id != 0 && type != AssetType::Invalid;
+  }
 
   /**
    * @brief Returns whether this handle belongs to a specific asset type.
@@ -49,6 +51,6 @@ struct AssetHandle {
   /**
    * @brief Allows direct comparison between asset handles.
    */
-  bool operator==(const AssetHandle &) const = default;
+  bool operator==(const AssetHandle&) const = default;
 };
-} // namespace Levye
+}  // namespace Levye

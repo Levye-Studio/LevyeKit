@@ -14,12 +14,14 @@ std::unique_ptr<Levye::Application> app;
 }  // namespace
 
 extern "C" void ios_ready() {
-  if (app) return;
+  if (app)
+    return;
 
   const auto root = Levye::ExecutablePath::GetDirectory();
   const auto project = Levye::ProjectLoader::Load(root / "levye.project");
 
-  if (!project) return;
+  if (!project)
+    return;
 
   game = std::make_unique<Levye::GameModule>();
   game->SetAssetRoot((root / project->assetDirectory).string());
@@ -46,11 +48,13 @@ extern "C" void ios_ready() {
 
 extern "C" void ios_update(bool viewSizeChanged) {
   (void)viewSizeChanged;
-  if (app) app->Tick();
+  if (app)
+    app->Tick();
 }
 
 extern "C" void ios_destroy() {
-  if (app) app->Finish();
+  if (app)
+    app->Finish();
   app.reset();
   game.reset();
 }

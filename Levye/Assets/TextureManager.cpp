@@ -4,9 +4,11 @@
 
 
 namespace Levye {
-TextureManager::~TextureManager() { Clear(); }
+TextureManager::~TextureManager() {
+  Clear();
+}
 
-AssetHandle TextureManager::Load(const std::string &path) {
+AssetHandle TextureManager::Load(const std::string& path) {
   const std::string normalizedPath = AssetPath::Normalize(path);
 
   if (normalizedPath.empty())
@@ -31,11 +33,10 @@ AssetHandle TextureManager::Load(const std::string &path) {
 
   const AssetHandle handle{.id = m_NextHandle++, .type = AssetType::Texture};
 
-  m_Textures.emplace(handle.id,
-                     TextureAsset{.texture = texture,
-                                  .path = normalizedPath,
+  m_Textures.emplace(handle.id, TextureAsset{.texture = texture,
+                                             .path = normalizedPath,
 
-                                  .watcher = FileWatcher(normalizedPath)});
+                                             .watcher = FileWatcher(normalizedPath)});
 
   m_PathLookup.emplace(normalizedPath, handle);
 
@@ -44,7 +45,7 @@ AssetHandle TextureManager::Load(const std::string &path) {
   return handle;
 }
 
-const Texture2D *TextureManager::Get(AssetHandle handle) const {
+const Texture2D* TextureManager::Get(AssetHandle handle) const {
   if (!handle.IsType(AssetType::Texture)) {
     return nullptr;
   }
@@ -73,7 +74,7 @@ void TextureManager::Unload(AssetHandle handle) {
   m_Textures.erase(iterator);
 }
 
-bool TextureManager::Reload(TextureAsset &asset) {
+bool TextureManager::Reload(TextureAsset& asset) {
   /*
    * Load the replacement first. The currently active GPU texture remains
    * untouched until we know the new resource is valid.
@@ -102,14 +103,13 @@ bool TextureManager::Reload(TextureAsset &asset) {
 std::size_t TextureManager::CheckForChanges() {
   std::size_t reloadCount = 0;
 
-  for (auto &[id, asset] : m_Textures) {
+  for (auto& [id, asset] : m_Textures) {
     (void)id;
 
     if (!asset.watcher.Poll())
       continue;
 
-    Logger::Info("Texture change detected: " + asset.path +
-                 " | handle=" + std::to_string(id));
+    Logger::Info("Texture change detected: " + asset.path + " | handle=" + std::to_string(id));
 
     if (Reload(asset))
       ++reloadCount;
@@ -119,7 +119,7 @@ std::size_t TextureManager::CheckForChanges() {
 }
 
 void TextureManager::Clear() {
-  for (auto &[id, asset] : m_Textures) {
+  for (auto& [id, asset] : m_Textures) {
     (void)id;
 
     UnloadTexture(asset.texture);
@@ -128,4 +128,4 @@ void TextureManager::Clear() {
   m_Textures.clear();
   m_PathLookup.clear();
 }
-} // namespace Levye
+}  // namespace Levye

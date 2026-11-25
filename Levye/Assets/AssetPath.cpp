@@ -3,7 +3,7 @@
 #include <filesystem>
 
 namespace Levye {
-std::string AssetPath::Normalize(const std::string &path) {
+std::string AssetPath::Normalize(const std::string& path) {
   if (path.empty())
     return {};
 
@@ -20,8 +20,7 @@ std::string AssetPath::Normalize(const std::string &path) {
   return assetPath.lexically_normal().generic_string();
 }
 
-std::string AssetPath::Resolve(const std::string &root,
-                               const std::string &path) {
+std::string AssetPath::Resolve(const std::string& root, const std::string& path) {
   if (path.empty())
     return {};
 
@@ -43,4 +42,4 @@ std::string AssetPath::Resolve(const std::string &root,
 
   return (rootPath / assetPath).lexically_normal().generic_string();
 }
-} // namespace Levye
+}  // namespace Levye

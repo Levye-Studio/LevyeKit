@@ -24,31 +24,51 @@ void TimeSystem::Update(float deltaTime) {
   m_Time += static_cast<double>(m_DeltaTime);
 }
 
-float TimeSystem::GetDeltaTime() const { return m_DeltaTime; }
+float TimeSystem::GetDeltaTime() const {
+  return m_DeltaTime;
+}
 
-float TimeSystem::GetUnscaledDeltaTime() const { return m_UnscaledDeltaTime; }
+float TimeSystem::GetUnscaledDeltaTime() const {
+  return m_UnscaledDeltaTime;
+}
 
-double TimeSystem::GetTimeSystem() const { return m_Time; }
+double TimeSystem::GetTimeSystem() const {
+  return m_Time;
+}
 
-double TimeSystem::GetUnscaledTime() const { return m_UnscaledTime; }
+double TimeSystem::GetUnscaledTime() const {
+  return m_UnscaledTime;
+}
 
 void TimeSystem::SetTimeScale(float scale) {
-  if (!std::isfinite(scale)) return;
+  if (!std::isfinite(scale))
+    return;
   m_TimeScale = std::max(scale, 0.0f);
 }
 
-float TimeSystem::GetTimeScale() const { return m_TimeScale; }
+float TimeSystem::GetTimeScale() const {
+  return m_TimeScale;
+}
 
-void TimeSystem::SetPaused(bool paused) { m_Paused = paused; }
+void TimeSystem::SetPaused(bool paused) {
+  m_Paused = paused;
+}
 
-bool TimeSystem::IsPaused() const { return m_Paused; }
+bool TimeSystem::IsPaused() const {
+  return m_Paused;
+}
 
-float TimeSystem::GetFixedDeltaTime() const { return m_UnscaledFixedDeltaTime; }
+float TimeSystem::GetFixedDeltaTime() const {
+  return m_UnscaledFixedDeltaTime;
+}
 
-float TimeSystem::GetUnscaledFixedDeltaTime() const { return m_UnscaledFixedDeltaTime; }
+float TimeSystem::GetUnscaledFixedDeltaTime() const {
+  return m_UnscaledFixedDeltaTime;
+}
 
 void TimeSystem::SetFixedUpdateRate(float updatesPerSecond) {
-  if (!std::isfinite(updatesPerSecond) || updatesPerSecond <= 0.0f) return;
+  if (!std::isfinite(updatesPerSecond) || updatesPerSecond <= 0.0f)
+    return;
 
   m_FixedUpdateRate = updatesPerSecond;
 
@@ -61,10 +81,13 @@ void TimeSystem::SetFixedUpdateRate(float updatesPerSecond) {
   m_FixedAccumulator = 0.0;
 }
 
-float TimeSystem::GetFixedUpdateRate() const { return m_FixedUpdateRate; }
+float TimeSystem::GetFixedUpdateRate() const {
+  return m_FixedUpdateRate;
+}
 
 int TimeSystem::ConsumeFixedSteps() {
-  if (m_Paused) return 0;
+  if (m_Paused)
+    return 0;
 
   /*
    * Accumulate scaled game time so slow motion and fast-forward affect the
@@ -74,7 +97,8 @@ int TimeSystem::ConsumeFixedSteps() {
 
   const double fixedStep = static_cast<double>(GetFixedDeltaTime());
 
-  if (fixedStep <= 0.0) return 0;
+  if (fixedStep <= 0.0)
+    return 0;
 
   int steps = 0;
 
@@ -97,7 +121,8 @@ int TimeSystem::ConsumeFixedSteps() {
 float TimeSystem::GetInterpolationAlpha() const {
   const double fixedStep = static_cast<double>(GetFixedDeltaTime());
 
-  if (fixedStep <= 0.0) return 0.0f;
+  if (fixedStep <= 0.0)
+    return 0.0f;
 
   return static_cast<float>(m_FixedAccumulator / fixedStep);
 }

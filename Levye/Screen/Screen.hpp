@@ -11,14 +11,14 @@ namespace Levye {
  * screen without directly accessing the host's ScreenManager.
  */
 class Screen {
-public:
+ public:
   /**
    * @brief Changes the active logical screen.
    *
    * @param name Name of the screen to activate.
    */
-  static void Set(const char *name) {
-    const HostServices *host = Services::Get();
+  static void Set(const char* name) {
+    const HostServices* host = Services::Get();
 
     if (!host || !host->SetScreen || !name) {
       return;
@@ -33,8 +33,8 @@ public:
    * @param name Name of the screen to test.
    * @return true when the specified screen is active.
    */
-  static bool Is(const char *name) {
-    const HostServices *host = Services::Get();
+  static bool Is(const char* name) {
+    const HostServices* host = Services::Get();
 
     if (!host || !host->IsScreen || !name) {
       return false;
@@ -44,4 +44,4 @@ public:
   }
 };
 
-} // namespace Levye
+}  // namespace Levye

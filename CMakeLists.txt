@@ -857,6 +857,7 @@ add_executable(
     Tools/LevyeCLI/UpgradeCommand.cpp
     Tools/LevyeCLI/ProjectModuleMigration.cpp
     Tools/LevyeCLI/ConvertCommand.cpp
+    Tools/LevyeCLI/ConversionBackup.cpp
     Tools/LevyeCLI/ProjectAnalyzer.cpp
 
     Levye/Project/ProjectConfig.cpp

@@ -56,7 +56,8 @@ class GaitScheduler {
           !std::isfinite(limb.stepHeight) || limb.stepHeight < 0)
         return false;
       for (std::size_t j = 0; j < i; ++j)
-        if (limbs[j].id == limb.id || limbs[j].chainId == limb.chainId) return false;
+        if (limbs[j].id == limb.id || limbs[j].chainId == limb.chainId)
+          return false;
     }
     m_Limbs = limbs;
     m_States.resize(limbs.size());
@@ -70,13 +71,21 @@ class GaitScheduler {
     Refresh(0, 0);
   }
 
-  void SetPaused(bool paused) noexcept { m_Paused = paused; }
-  [[nodiscard]] bool IsPaused() const noexcept { return m_Paused; }
+  void SetPaused(bool paused) noexcept {
+    m_Paused = paused;
+  }
+  [[nodiscard]] bool IsPaused() const noexcept {
+    return m_Paused;
+  }
   [[nodiscard]] float GlobalPhase() const noexcept {
     return static_cast<float>(m_Cycles - std::floor(m_Cycles));
   }
-  [[nodiscard]] const std::vector<GaitLimb>& Limbs() const noexcept { return m_Limbs; }
-  [[nodiscard]] const std::vector<GaitLimbState>& States() const noexcept { return m_States; }
+  [[nodiscard]] const std::vector<GaitLimb>& Limbs() const noexcept {
+    return m_Limbs;
+  }
+  [[nodiscard]] const std::vector<GaitLimbState>& States() const noexcept {
+    return m_States;
+  }
 
   /** @brief Advances phase; event counts include every boundary crossed by a large delta. */
   [[nodiscard]] bool Advance(float deltaTime, float frequency) noexcept {
@@ -84,7 +93,8 @@ class GaitScheduler {
       return false;
     const double before = m_Cycles;
     const double step = m_Paused ? 0 : static_cast<double>(deltaTime) * frequency;
-    if (!std::isfinite(step) || before + step > 1.0e12) return false;
+    if (!std::isfinite(step) || before + step > 1.0e12)
+      return false;
     m_Cycles += step;
     Refresh(before, m_Cycles);
     return true;
@@ -122,7 +132,8 @@ class GaitScheduler {
 
 /** @brief Example offsets; callers may change every duty factor, offset, or limb setting. */
 [[nodiscard]] inline std::vector<GaitLimb> GaitPreset(int limbCount) {
-  if (limbCount != 2 && limbCount != 4 && limbCount != 6) return {};
+  if (limbCount != 2 && limbCount != 4 && limbCount != 6)
+    return {};
   std::vector<GaitLimb> limbs;
   limbs.reserve(static_cast<std::size_t>(limbCount));
   for (int i = 0; i < limbCount; ++i) {
@@ -181,7 +192,8 @@ struct SwingSample {
                                Vector3Scale(normalizedUp, height * lift));
   sample.tangent =
       Vector3Add(Vector3Scale(direction, slope), Vector3Scale(normalizedUp, height * liftSlope));
-  if (!finite(sample.position) || !finite(sample.tangent)) return false;
+  if (!finite(sample.position) || !finite(sample.tangent))
+    return false;
   output = sample;
   return true;
 }
@@ -240,10 +252,12 @@ struct LimbReach {
     return false;
   const float minimum = std::abs(upperLength - lowerLength) + margin;
   const float maximum = upperLength + lowerLength - margin;
-  if (minimum > maximum) return false;
+  if (minimum > maximum)
+    return false;
   Vector3 direction = Vector3Subtract(target, root);
   const float distance = Vector3Length(direction);
-  if (!std::isfinite(distance)) return false;
+  if (!std::isfinite(distance))
+    return false;
   direction = distance > 1.0e-6f ? Vector3Scale(direction, 1.0f / distance)
                                  : Vector3Normalize(fallbackDirection);
   LimbReach result{};
@@ -277,14 +291,16 @@ struct LimbReach {
   const Vector3 candidate = validSurface ? hit.position : predicted;
   Vector3 displacement = Vector3Subtract(candidate, nominal);
   const float distance = Vector3Length(displacement);
-  if (!finite(candidate) || !std::isfinite(distance)) return false;
+  if (!finite(candidate) || !std::isfinite(distance))
+    return false;
   LandingPlan plan{};
   plan.status = invalidSurface ? LandingStatus::Invalid
                 : validSurface ? LandingStatus::Accepted
                                : LandingStatus::NoSurface;
   if (distance > maxReach) {
     displacement = Vector3Scale(displacement, maxReach / distance);
-    if (validSurface) plan.status = LandingStatus::Clamped;
+    if (validSurface)
+      plan.status = LandingStatus::Clamped;
   }
   plan.world = Vector3Add(nominal, displacement);
   plan.normal = validSurface ? Vector3Normalize(hit.normal) : Vector3Normalize(up);
@@ -302,7 +318,9 @@ struct LocomotionTarget {
   SwingEasing swingEasing{};
   bool initialized = false;
 
-  void Reset() noexcept { *this = {}; }
+  void Reset() noexcept {
+    *this = {};
+  }
 
   [[nodiscard]] bool Update(const GaitLimb& limb, const GaitLimbState& phase,
                             Vector3 animationEndWorld, const LandingPlan& planned,
@@ -347,14 +365,16 @@ struct LocomotionTarget {
     if (phase.state == GaitPhase::Swing) {
       ContactSurfaceHit miss{};
       config.releaseOnMiss = true;
-      if (!next.contact.Update(animationEndWorld, miss, config, deltaTime)) return false;
+      if (!next.contact.Update(animationEndWorld, miss, config, deltaTime))
+        return false;
       SwingSample sample{};
       if (!SampleSwing(next.swingStart, next.landing.world, up, phase.progress, next.swingHeight,
                        next.swingEasing, sample))
         return false;
       next.targetWorld = sample.position;
     } else {
-      if (phase.stepEnds) next.contact.Reset();
+      if (phase.stepEnds)
+        next.contact.Reset();
       ContactSurfaceHit hit = terrainHit;
       const LandingPlan& selected = phase.stepEnds ? next.landing : planned;
       hit.valid = hit.valid && (selected.status == LandingStatus::Accepted ||
@@ -364,7 +384,8 @@ struct LocomotionTarget {
         hit.normal = selected.normal;
       }
       const Vector3 base = phase.stepEnds ? next.targetWorld : animationEndWorld;
-      if (!next.contact.Update(base, hit, config, deltaTime)) return false;
+      if (!next.contact.Update(base, hit, config, deltaTime))
+        return false;
       if (next.contact.state != ContactState::Inactive)
         next.targetWorld = next.contact.targetWorld;
       else

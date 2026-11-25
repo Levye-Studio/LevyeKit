@@ -28,7 +28,8 @@ bool Serialize(Archive& archive, PlayerSave& player) {
 void SerializationScene::SavePlayerExample() {
   using namespace Levye;
 
-  if (!Serialization::Available()) return;
+  if (!Serialization::Available())
+    return;
 
   PlayerSave player;
   player.name = "Nesmy";

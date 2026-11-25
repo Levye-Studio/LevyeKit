@@ -7,4 +7,4 @@ namespace Levye {
  */
 enum class LogLevel { Trace, Debug, Info, Warning, Error };
 
-} // namespace Levye
+}  // namespace Levye

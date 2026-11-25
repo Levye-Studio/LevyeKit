@@ -63,7 +63,8 @@ bool ProjectGenerator::Generate(const std::string& name,
                                 const std::filesystem::path& outputDirectory,
                                 const std::filesystem::path& templateDirectory,
                                 const std::filesystem::path& frameworkDirectory,
-                                const std::vector<std::string>& modules, bool android, bool ios) {
+                                const std::vector<std::string>& modules, bool android, bool ios,
+                                bool web) {
   if (name.empty()) {
     std::cerr << "[Levye] Project name cannot be empty.\n";
 
@@ -136,7 +137,7 @@ bool ProjectGenerator::Generate(const std::string& name,
 
   for (const auto& path : filesToProcess) {
     if (!ProcessTemplateFile(path, name, target, frameworkDirectory,
-                             android ? "android" : (ios ? "ios" : "desktop"))) {
+                             android ? "android" : (ios ? "ios" : (web ? "web" : "desktop")))) {
       std::cerr << "[Levye] Failed to process template file: " << path << '\n';
 
       std::filesystem::remove_all(projectDirectory);
@@ -224,7 +225,8 @@ bool ProjectGenerator::Generate(const std::string& name,
         break;
       }
 
-      if (lineEnd == std::string::npos) break;
+      if (lineEnd == std::string::npos)
+        break;
       lineStart = lineEnd + 1;
     }
 
@@ -394,7 +396,8 @@ bool ProjectGenerator::ProcessTemplateFile(const std::filesystem::path& path,
                                            std::string_view defaultPlatform) {
   std::ifstream input(path);
 
-  if (!input) return false;
+  if (!input)
+    return false;
 
   std::string content{std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
 
@@ -414,7 +417,8 @@ bool ProjectGenerator::ProcessTemplateFile(const std::filesystem::path& path,
 
   std::ofstream output(path, std::ios::trunc);
 
-  if (!output) return false;
+  if (!output)
+    return false;
 
   output << content;
 

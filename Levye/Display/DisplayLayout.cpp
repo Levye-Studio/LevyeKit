@@ -5,7 +5,9 @@
 
 namespace Levye {
 
-void DisplayLayout::Configure(DisplayConfig config) { config_ = config; }
+void DisplayLayout::Configure(DisplayConfig config) {
+  config_ = config;
+}
 
 void DisplayLayout::Resize(int windowWidth, int windowHeight, int framebufferWidth,
                            int framebufferHeight) {
@@ -13,9 +15,13 @@ void DisplayLayout::Resize(int windowWidth, int windowHeight, int framebufferWid
   framebuffer_ = {framebufferWidth, framebufferHeight};
 }
 
-void DisplayLayout::Resize(int width, int height) { Resize(width, height, width, height); }
+void DisplayLayout::Resize(int width, int height) {
+  Resize(width, height, width, height);
+}
 
-void DisplayLayout::SetSafeInsets(DisplayInsets insets) { insets_ = insets; }
+void DisplayLayout::SetSafeInsets(DisplayInsets insets) {
+  insets_ = insets;
+}
 
 bool DisplayLayout::IsValid() const {
   const bool scalingValid =
@@ -41,15 +47,18 @@ DisplaySize DisplayLayout::GetLogicalSize() const {
 }
 
 DisplayOrientation DisplayLayout::GetOrientation() const {
-  if (window_.width > window_.height) return DisplayOrientation::Landscape;
+  if (window_.width > window_.height)
+    return DisplayOrientation::Landscape;
 
-  if (window_.width < window_.height) return DisplayOrientation::Portrait;
+  if (window_.width < window_.height)
+    return DisplayOrientation::Portrait;
 
   return DisplayOrientation::Square;
 }
 
 DisplayRect DisplayLayout::GetViewport() const {
-  if (!IsValid()) return {};
+  if (!IsValid())
+    return {};
 
   const float fw = static_cast<float>(framebuffer_.width);
   const float fh = static_cast<float>(framebuffer_.height);
@@ -59,9 +68,11 @@ DisplayRect DisplayLayout::GetViewport() const {
   const float lw = static_cast<float>(logical.width);
   const float lh = static_cast<float>(logical.height);
 
-  if (config_.scaling == DisplayScaling::Expand) return {0.0f, 0.0f, fw, fh};
+  if (config_.scaling == DisplayScaling::Expand)
+    return {0.0f, 0.0f, fw, fh};
 
-  if (config_.scaling == DisplayScaling::Stretch) return {0.0f, 0.0f, fw, fh};
+  if (config_.scaling == DisplayScaling::Stretch)
+    return {0.0f, 0.0f, fw, fh};
 
   const float sx = fw / lw;
   const float sy = fh / lh;
@@ -69,7 +80,8 @@ DisplayRect DisplayLayout::GetViewport() const {
   float scale = (config_.scaling == DisplayScaling::Fill) ? std::max(sx, sy) : std::min(sx, sy);
 
   // Small screens use fractional Fit scaling so the full frame remains visible.
-  if (config_.scaling == DisplayScaling::Integer && scale >= 1.0f) scale = std::floor(scale);
+  if (config_.scaling == DisplayScaling::Integer && scale >= 1.0f)
+    scale = std::floor(scale);
 
   const float width = lw * scale;
   const float height = lh * scale;
@@ -78,7 +90,8 @@ DisplayRect DisplayLayout::GetViewport() const {
 }
 
 DisplayRect DisplayLayout::GetWindowViewport() const {
-  if (!IsValid()) return {};
+  if (!IsValid())
+    return {};
 
   const auto viewport = GetViewport();
   const auto topLeft = FramebufferToWindow({viewport.x, viewport.y});
@@ -89,7 +102,8 @@ DisplayRect DisplayLayout::GetWindowViewport() const {
 }
 
 DisplayPoint DisplayLayout::GetScale() const {
-  if (!IsValid()) return {};
+  if (!IsValid())
+    return {};
 
   const auto viewport = GetViewport();
   const auto logical = GetLogicalSize();
@@ -98,7 +112,8 @@ DisplayPoint DisplayLayout::GetScale() const {
 }
 
 DisplayRect DisplayLayout::GetVisibleLogicalArea() const {
-  if (!IsValid()) return {};
+  if (!IsValid())
+    return {};
 
   const auto a = ScreenToLogical({0.0f, 0.0f}).point;
   const auto b =
@@ -114,7 +129,8 @@ DisplayRect DisplayLayout::GetVisibleLogicalArea() const {
 }
 
 DisplayPoint DisplayLayout::WindowToFramebuffer(DisplayPoint p) const {
-  if (!IsValid() || !std::isfinite(p.x) || !std::isfinite(p.y)) return {};
+  if (!IsValid() || !std::isfinite(p.x) || !std::isfinite(p.y))
+    return {};
 
   const DisplayPoint converted{
       p.x * static_cast<float>(framebuffer_.width) / static_cast<float>(window_.width),
@@ -124,7 +140,8 @@ DisplayPoint DisplayLayout::WindowToFramebuffer(DisplayPoint p) const {
 }
 
 DisplayPoint DisplayLayout::FramebufferToWindow(DisplayPoint p) const {
-  if (!IsValid() || !std::isfinite(p.x) || !std::isfinite(p.y)) return {};
+  if (!IsValid() || !std::isfinite(p.x) || !std::isfinite(p.y))
+    return {};
 
   const DisplayPoint converted{
       p.x * static_cast<float>(window_.width) / static_cast<float>(framebuffer_.width),
@@ -134,7 +151,8 @@ DisplayPoint DisplayLayout::FramebufferToWindow(DisplayPoint p) const {
 }
 
 DisplayPosition DisplayLayout::ScreenToLogical(DisplayPoint windowPosition) const {
-  if (!IsValid() || !std::isfinite(windowPosition.x) || !std::isfinite(windowPosition.y)) return {};
+  if (!IsValid() || !std::isfinite(windowPosition.x) || !std::isfinite(windowPosition.y))
+    return {};
 
   const auto physical = WindowToFramebuffer(windowPosition);
   const auto viewport = GetViewport();
@@ -158,7 +176,8 @@ DisplayPosition DisplayLayout::ScreenToLogical(DisplayPoint windowPosition) cons
 }
 
 DisplayPoint DisplayLayout::LogicalToScreen(DisplayPoint logical) const {
-  if (!IsValid() || !std::isfinite(logical.x) || !std::isfinite(logical.y)) return {};
+  if (!IsValid() || !std::isfinite(logical.x) || !std::isfinite(logical.y))
+    return {};
 
   const auto viewport = GetViewport();
   const auto size = GetLogicalSize();
@@ -169,11 +188,13 @@ DisplayPoint DisplayLayout::LogicalToScreen(DisplayPoint logical) const {
 }
 
 DisplayRect DisplayLayout::GetSafeArea() const {
-  if (!IsValid()) return {};
+  if (!IsValid())
+    return {};
 
   const auto logical = GetLogicalSize();
 
-  if (config_.safeArea == DisplaySafeArea::EdgeToEdge) return GetVisibleLogicalArea();
+  if (config_.safeArea == DisplaySafeArea::EdgeToEdge)
+    return GetVisibleLogicalArea();
 
   const float fw = static_cast<float>(framebuffer_.width);
   const float fh = static_cast<float>(framebuffer_.height);

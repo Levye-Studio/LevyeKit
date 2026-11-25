@@ -20,7 +20,7 @@ namespace Levye {
  * Game code refers to shaders through AssetHandle.
  */
 class ShaderManager {
-public:
+ public:
   ShaderManager() = default;
 
   /**
@@ -28,8 +28,8 @@ public:
    */
   ~ShaderManager();
 
-  ShaderManager(const ShaderManager &) = delete;
-  ShaderManager &operator=(const ShaderManager &) = delete;
+  ShaderManager(const ShaderManager&) = delete;
+  ShaderManager& operator=(const ShaderManager&) = delete;
 
   /**
    * @brief Loads a shader from source files.
@@ -40,8 +40,7 @@ public:
    * @param fragmentPath Path to the fragment shader, or empty for default.
    * @return Handle to the shader, or an invalid handle on failure.
    */
-  AssetHandle Load(const std::string &vertexPath,
-                   const std::string &fragmentPath);
+  AssetHandle Load(const std::string& vertexPath, const std::string& fragmentPath);
 
   /**
    * @brief Retrieves a host-owned shader.
@@ -52,7 +51,7 @@ public:
    * @warning The returned pointer must not be stored persistently or
    * unloaded by game code.
    */
-  const Shader *Get(AssetHandle handle) const;
+  const Shader* Get(AssetHandle handle) const;
 
   /**
    * @brief Checks shader source files and reloads changed programs.
@@ -73,7 +72,7 @@ public:
    */
   void Clear();
 
-private:
+ private:
   /**
    * @brief Creates the cache key for a shader configuration.
    *
@@ -81,10 +80,9 @@ private:
    * @param fragmentPath Normalized fragment shader path.
    * @return Stable lookup key for the shader pair.
    */
-  static std::string CreateKey(const std::string &vertexPath,
-                               const std::string &fragmentPath);
+  static std::string CreateKey(const std::string& vertexPath, const std::string& fragmentPath);
 
-private:
+ private:
   struct ShaderAsset {
     Shader shader{};
 
@@ -101,11 +99,11 @@ private:
    * The previous shader remains active if the replacement cannot be
    * created.
    */
-  bool Reload(ShaderAsset &asset);
+  bool Reload(ShaderAsset& asset);
 
   std::unordered_map<std::uint64_t, ShaderAsset> m_Shaders;
   std::unordered_map<std::string, AssetHandle> m_PathLookup;
 
   std::uint64_t m_NextHandle = 1;
 };
-} // namespace Levye
+}  // namespace Levye

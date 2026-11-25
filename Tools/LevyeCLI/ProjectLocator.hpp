@@ -13,7 +13,7 @@ namespace Levye {
  * its parent directories until a project is found.
  */
 class ProjectLocator {
-public:
+ public:
   /**
    * @brief Searches for the nearest LevyeKit project.
    *
@@ -25,8 +25,7 @@ public:
    * @return Path to the directory containing levye.project, or std::nullopt
    *         when no project could be found.
    */
-  static std::optional<std::filesystem::path>
-  Find(const std::filesystem::path &startDirectory);
+  static std::optional<std::filesystem::path> Find(const std::filesystem::path& startDirectory);
 };
 
-} // namespace Levye
+}  // namespace Levye

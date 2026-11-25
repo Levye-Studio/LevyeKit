@@ -15,9 +15,11 @@ enum class ProjectPlatform { ProjectDefault, Desktop, Android, IOS, Web };
 /** @brief Resolves a one-command override against the manifest default. */
 inline constexpr ProjectPlatform ResolveProjectPlatform(ProjectPlatform requested,
                                                         std::string_view storedDefault) {
-  if (requested != ProjectPlatform::ProjectDefault) return requested;
+  if (requested != ProjectPlatform::ProjectDefault)
+    return requested;
   return storedDefault == "android" ? ProjectPlatform::Android
          : storedDefault == "ios"   ? ProjectPlatform::IOS
+         : storedDefault == "web"   ? ProjectPlatform::Web
                                     : ProjectPlatform::Desktop;
 }
 

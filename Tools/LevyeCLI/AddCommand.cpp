@@ -35,6 +35,12 @@ bool AddCommand::Execute(const std::filesystem::path& projectDirectory, std::str
       return false;
     }
 
+    if (config["platform"]["default"].value<std::string>().value_or("desktop") == "web") {
+      std::cerr << "[Levye] Web does not yet support optional modules. "
+                   "Select Desktop before adding a module.\n";
+      return false;
+    }
+
     if (const auto* modules = config["modules"].as_table()) {
       if (const auto* setting = modules->get(module)) {
         if (!setting->is_boolean()) {
@@ -77,7 +83,8 @@ bool AddCommand::Execute(const std::filesystem::path& projectDirectory, std::str
   std::smatch section;
 
   if (!std::regex_search(content, section, sectionPattern)) {
-    if (!content.empty() && content.back() != '\n') content += '\n';
+    if (!content.empty() && content.back() != '\n')
+      content += '\n';
 
     content += "\n[modules]\n";
     content += std::string(module) + " = true\n";
@@ -95,12 +102,14 @@ bool AddCommand::Execute(const std::filesystem::path& projectDirectory, std::str
         end = lineStart;
         break;
       }
-      if (lineEnd == std::string::npos) break;
+      if (lineEnd == std::string::npos)
+        break;
       lineStart = lineEnd + 1;
     }
 
     std::string body = content.substr(sectionEnd, end - sectionEnd);
-    if (sectionEnd > 0 && content[sectionEnd - 1] != '\n') body.insert(body.begin(), '\n');
+    if (sectionEnd > 0 && content[sectionEnd - 1] != '\n')
+      body.insert(body.begin(), '\n');
 
     const std::regex settingPattern("(^|\\n)[ \\t]*\\\"?" + std::string(module) +
                                     R"("?[ \t]*=[ \t]*(true|false)[ \t]*(?:#.*)?(?=\r?\n|$))");
@@ -109,7 +118,8 @@ bool AddCommand::Execute(const std::filesystem::path& projectDirectory, std::str
     if (std::regex_search(body, setting, settingPattern)) {
       body.replace(static_cast<std::size_t>(setting.position(2)), setting.length(2), "true");
     } else {
-      if (!body.empty() && body.back() != '\n') body += '\n';
+      if (!body.empty() && body.back() != '\n')
+        body += '\n';
 
       body += std::string(module) + " = true\n";
     }

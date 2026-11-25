@@ -49,11 +49,17 @@ class AnimationStateMachine {
   /** @brief Retrieves a registered state while the machine remains unchanged. */
   [[nodiscard]] const AnimationStateDefinition* FindState(const std::string& name) const;
   /** @brief Returns the active state's name. */
-  [[nodiscard]] const std::string& GetCurrentState() const noexcept { return m_CurrentState; }
+  [[nodiscard]] const std::string& GetCurrentState() const noexcept {
+    return m_CurrentState;
+  }
   /** @brief Returns the controller owned by this machine. */
-  [[nodiscard]] AnimationControllerHandle GetController() const noexcept { return m_Controller; }
+  [[nodiscard]] AnimationControllerHandle GetController() const noexcept {
+    return m_Controller;
+  }
   /** @brief Records a successfully activated state. */
-  void SetCurrentState(const std::string& name) { m_CurrentState = name; }
+  void SetCurrentState(const std::string& name) {
+    m_CurrentState = name;
+  }
   /** @brief Removes states referencing an unloaded animation. */
   void RemoveStatesUsing(AnimationResourceHandle animation);
   /** @brief Returns a one-shot state's configured return target, if any. */
@@ -62,7 +68,9 @@ class AnimationStateMachine {
   /** @brief Adds an ordered conditional transition from ABI-safe input. */
   [[nodiscard]] bool AddTransition(const AnimationTransitionRule& rule);
   /** @brief Removes all conditional transitions. */
-  void ClearTransitions() { m_Transitions.clear(); }
+  void ClearTransitions() {
+    m_Transitions.clear();
+  }
   /** @brief Chooses the highest-priority matching rule, resolving ties by insertion order. */
   [[nodiscard]] const AnimationTransitionDefinition* FindTransition(bool allowLowerPriority) const;
   /** @brief Consumes trigger conditions after a transition succeeds. */

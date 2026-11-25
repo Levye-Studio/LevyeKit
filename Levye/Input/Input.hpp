@@ -196,7 +196,8 @@ class Input {
   static void BindKey(const char* action, int key) {
     const HostServices* host = Services::Get();
 
-    if (!host || !host->BindKey || !action) return;
+    if (!host || !host->BindKey || !action)
+      return;
 
     host->BindKey(host->context, action, key);
   }
@@ -230,7 +231,8 @@ class Input {
   static void BindKeyAxis(const char* axis, int negativeKey, int positiveKey) {
     const HostServices* host = Services::Get();
 
-    if (!host || !host->BindKeyAxis || !axis) return;
+    if (!host || !host->BindKeyAxis || !axis)
+      return;
 
     host->BindKeyAxis(host->context, axis, negativeKey, positiveKey);
   }
@@ -243,7 +245,8 @@ class Input {
    */
   static void BindGamepadButton(const char* action, int gamepad, int button) {
     const HostServices* host = Services::Get();
-    if (!host || !host->BindGamepadButton || !action) return;
+    if (!host || !host->BindGamepadButton || !action)
+      return;
     host->BindGamepadButton(host->context, action, gamepad, button);
   }
 
@@ -258,7 +261,8 @@ class Input {
   static void BindGamepadAxis(const char* axis, int gamepad, int gamepadAxis,
                               float deadzone = 0.15f) {
     const HostServices* host = Services::Get();
-    if (!host || !host->BindGamepadAxis || !axis) return;
+    if (!host || !host->BindGamepadAxis || !axis)
+      return;
     host->BindGamepadAxis(host->context, axis, gamepad, gamepadAxis, deadzone);
   }
 
@@ -269,7 +273,8 @@ class Input {
    */
   static void ClearAction(const char* action) {
     const HostServices* host = Services::Get();
-    if (!host || !host->ClearAction || !action) return;
+    if (!host || !host->ClearAction || !action)
+      return;
     host->ClearAction(host->context, action);
   }
 
@@ -281,7 +286,8 @@ class Input {
    */
   static void Clear() {
     const HostServices* host = Services::Get();
-    if (!host || !host->ClearInput) return;
+    if (!host || !host->ClearInput)
+      return;
     host->ClearInput(host->context);
   }
 };

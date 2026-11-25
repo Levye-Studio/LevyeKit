@@ -15,8 +15,7 @@ class AddCommand {
    *
    * @return true on success, including when already enabled.
    */
-  static bool Execute(const std::filesystem::path& projectDirectory,
-                      std::string_view module);
+  static bool Execute(const std::filesystem::path& projectDirectory, std::string_view module);
 };
 
 }  // namespace Levye

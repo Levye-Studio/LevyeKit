@@ -43,6 +43,9 @@ int main() {
 
   Levye::Application application{applicationConfig, gameModule};
 
+  if (!application.Initialize())
+    return 1;
+
   application.Run();
 
   return 0;

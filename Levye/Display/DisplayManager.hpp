@@ -41,9 +41,13 @@ class DisplayManager {
   void Present();
 
   /** @brief Reports whether the render texture is valid. */
-  [[nodiscard]] bool IsReady() const { return ready_; }
+  [[nodiscard]] bool IsReady() const {
+    return ready_;
+  }
   /** @brief Returns host-owned layout state for host-side use only. */
-  [[nodiscard]] const DisplayLayout& GetLayout() const { return layout_; }
+  [[nodiscard]] const DisplayLayout& GetLayout() const {
+    return layout_;
+  }
 
   /**
    * @brief Converts a raylib window-coordinate point to logical game space.

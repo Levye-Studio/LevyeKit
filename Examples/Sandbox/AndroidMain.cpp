@@ -21,7 +21,8 @@ int main() {
   Levye::GameModule game;
   game.SetAssetRoot(LEVYE_ANDROID_ASSET_ROOT);
   game.GetScreenManager().SetScreen("Menu");
-  if (!game.LoadStatic(GetGameAPI())) return 1;
+  if (!game.LoadStatic(GetGameAPI()))
+    return 1;
 
   Levye::ApplicationConfig config;
   config.title = LEVYE_ANDROID_TITLE;

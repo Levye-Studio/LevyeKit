@@ -251,7 +251,7 @@ which visibly stretches the frame. `inset`
 reports Android display-cutout safe insets for UI while game rendering uses
 the drawable area. `edge_to_edge` exposes the entire visible area for UI.
 
-The repository Sandbox remains a separate regression example:
+The repository Sandbox remains a separate interactive example:
 
 ```sh
 bash Platforms/Android/package-sandbox.sh Debug

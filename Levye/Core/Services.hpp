@@ -24,24 +24,32 @@ class Services {
    * @warning The supplied HostServices object must remain valid for the
    * lifetime of the loaded game module.
    */
-  static void Bind(const HostServices* services) { s_Host = services; }
+  static void Bind(const HostServices* services) {
+    s_Host = services;
+  }
 
   /**
    * @brief Removes the current host-service binding.
    */
-  static void Unbind() { s_Host = nullptr; }
+  static void Unbind() {
+    s_Host = nullptr;
+  }
 
   /**
    * @brief Returns the currently bound host services.
    *
    * @return Pointer to HostServices, or nullptr when no host is bound.
    */
-  static const HostServices* Get() { return s_Host; }
+  static const HostServices* Get() {
+    return s_Host;
+  }
 
   /**
    * @brief Returns whether host services are currently available.
    */
-  static bool IsBound() { return s_Host != nullptr; }
+  static bool IsBound() {
+    return s_Host != nullptr;
+  }
 
   /** @brief Requests an orderly shutdown through the bound host, if available. */
   static void RequestQuit() {

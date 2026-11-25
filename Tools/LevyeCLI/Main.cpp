@@ -1,5 +1,6 @@
 #include <Levye/Core/Version.hpp>
 #include <Levye/Platform/ExecutablePath.hpp>
+#include <Levye/Project/ProjectLoader.hpp>
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
@@ -55,7 +56,9 @@ void PrintHelp() {
 /**
  * @brief Prints the current LevyeKit version.
  */
-void PrintVersion() { std::cout << "LevyeKit " << Levye::VERSION << '\n'; }
+void PrintVersion() {
+  std::cout << "LevyeKit " << Levye::VERSION << '\n';
+}
 
 /**
  * @brief Prints help for the new command.
@@ -73,6 +76,7 @@ void PrintNewHelp() {
             << "  --desktop         Make Desktop the default\n"
             << "  --ios             Make iOS the default and generate its "
                "configuration\n"
+            << "  --html            Make Web the default\n"
             << "\n"
             << "Options:\n"
             << "  --git             Initialize a Git repository\n"
@@ -139,6 +143,7 @@ void PrintCleanHelp() {
             << "  --desktop         Clean Desktop output\n"
             << "  --android         Clean Android output\n"
             << "  --ios             Clean iOS output\n"
+            << "  --html            Clean Web output\n"
             << "  --all             Clean all configurations\n"
             << "  -h, --help        Show this help message\n"
             << "\n"
@@ -152,7 +157,7 @@ void PrintProjectHelp() {
   std::cout << "Show information about the current LevyeKit project.\n"
             << "\n"
             << "Usage:\n"
-            << "  levye project [--set-default desktop|android|ios]\n"
+            << "  levye project [--set-default desktop|android|ios|web]\n"
             << "\n"
             << "Options:\n"
             << "  --set-default     Persist a configured default platform\n"
@@ -226,12 +231,14 @@ void PrintConvertHelp() {
   std::cout << "Convert a supported CMake C++ project to LevyeKit.\n"
             << "\n"
             << "Usage:\n"
-            << "  levye convert [path] [--dry-run|--check]\n"
+            << "  levye convert [path] [--dry-run|--check|--rollback] [--assets path]\n"
             << "\n"
             << "Options:\n"
             << "  --dry-run         Show the complete plan without modifying files\n"
             << "  --check           Return 2 if conversion is applicable and "
                "pending\n"
+            << "  --rollback        Restore unchanged converted files from the backup\n"
+            << "  --assets <path>   Select an existing project-relative asset directory\n"
             << "  -h, --help        Show this help message\n";
 }
 
@@ -265,7 +272,9 @@ void PrintExportHelp() {
  * @param argument Command-line argument to inspect.
  * @return true when the argument is -h or --help.
  */
-bool IsHelpArgument(std::string_view argument) { return argument == "-h" || argument == "--help"; }
+bool IsHelpArgument(std::string_view argument) {
+  return argument == "-h" || argument == "--help";
+}
 
 /**
  * @brief Checks whether a command-line argument matches a specific option.
@@ -274,7 +283,9 @@ bool IsHelpArgument(std::string_view argument) { return argument == "-h" || argu
  * @param option Expected option.
  * @return true when the argument matches the option.
  */
-bool IsOption(std::string_view argument, std::string_view option) { return argument == option; }
+bool IsOption(std::string_view argument, std::string_view option) {
+  return argument == option;
+}
 
 /**
  * @brief Initializes a Git repository inside a generated project.
@@ -360,6 +371,7 @@ int main(int argc, char** argv) {
     bool android = false;
     bool desktop = false;
     bool ios = false;
+    bool web = false;
 
     std::vector<std::string> modules;
 
@@ -369,23 +381,29 @@ int main(int argc, char** argv) {
       if (argument == "--git") {
         initializeGit = true;
       } else if (argument == "--android") {
-        if (desktop || ios) {
+        if (desktop || ios || web) {
           std::cerr << "[Levye] Choose one project platform.\n";
           return 1;
         }
         android = true;
       } else if (argument == "--desktop") {
-        if (android || ios) {
+        if (android || ios || web) {
           std::cerr << "[Levye] Choose one project platform.\n";
           return 1;
         }
         desktop = true;
       } else if (argument == "--ios") {
-        if (android || desktop) {
+        if (android || desktop || web) {
           std::cerr << "[Levye] Choose one project platform.\n";
           return 1;
         }
         ios = true;
+      } else if (argument == "--html") {
+        if (android || desktop || ios) {
+          std::cerr << "[Levye] Choose one project platform.\n";
+          return 1;
+        }
+        web = true;
       } else if (argument == "--commit") {
         createInitialCommit = true;
         initializeGit = true;
@@ -421,14 +439,14 @@ int main(int argc, char** argv) {
 
     const std::filesystem::path templateDirectory = frameworkRoot / "Templates/Default";
 
-    if ((android || ios) && !modules.empty()) {
-      std::cerr << "[Levye] Mobile platforms do not yet support optional modules. "
+    if ((android || ios || web) && !modules.empty()) {
+      std::cerr << "[Levye] Android, iOS, and Web do not yet support optional modules. "
                    "Create a desktop project or omit --with.\n";
       return 1;
     }
 
     if (!Levye::ProjectGenerator::Generate(projectName, outputDirectory, templateDirectory,
-                                           frameworkRoot, modules, android, ios)) {
+                                           frameworkRoot, modules, android, ios, web)) {
       return 1;
     }
 
@@ -466,7 +484,7 @@ int main(int argc, char** argv) {
 
     if (argc != 2 && (argc != 4 || std::string_view(argv[2]) != "--set-default")) {
       std::cerr << "[Levye] Usage: levye project [--set-default "
-                   "desktop|android|ios].\n\n";
+                   "desktop|android|ios|web].\n\n";
 
       PrintProjectHelp();
       return 1;
@@ -491,7 +509,8 @@ int main(int argc, char** argv) {
 
     const auto projectDirectory = FindCurrentProject();
 
-    if (!projectDirectory) return 1;
+    if (!projectDirectory)
+      return 1;
 
     Levye::BuildConfiguration configuration = Levye::BuildConfiguration::Debug;
     Levye::ProjectPlatform platform = Levye::ProjectPlatform::ProjectDefault;
@@ -590,7 +609,8 @@ int main(int argc, char** argv) {
 
     const auto projectDirectory = FindCurrentProject();
 
-    if (!projectDirectory) return 1;
+    if (!projectDirectory)
+      return 1;
 
     return Levye::ExportCommand::Execute(*projectDirectory, options) ? 0 : 1;
   }
@@ -616,7 +636,8 @@ int main(int argc, char** argv) {
 
     const auto projectDirectory = FindCurrentProject();
 
-    if (!projectDirectory) return 1;
+    if (!projectDirectory)
+      return 1;
 
     return Levye::AddCommand::Execute(*projectDirectory, argv[2]) ? 0 : 1;
   }
@@ -629,7 +650,8 @@ int main(int argc, char** argv) {
 
     const auto projectDirectory = FindCurrentProject();
 
-    if (!projectDirectory) return 1;
+    if (!projectDirectory)
+      return 1;
 
     Levye::BuildConfiguration configuration = Levye::BuildConfiguration::Debug;
     Levye::ProjectPlatform platform = Levye::ProjectPlatform::ProjectDefault;
@@ -682,7 +704,8 @@ int main(int argc, char** argv) {
         }
         try {
           const auto parsed = std::stoul(value);
-          if (parsed == 0 || parsed > 65535) throw std::out_of_range("port");
+          if (parsed == 0 || parsed > 65535)
+            throw std::out_of_range("port");
           port = static_cast<unsigned short>(parsed);
         } catch (const std::exception&) {
           std::cerr << "[Levye] Invalid port. Expected 1-65535.\n";
@@ -697,8 +720,12 @@ int main(int argc, char** argv) {
     }
 
     if (portSpecified && platform != Levye::ProjectPlatform::Web) {
-      std::cerr << "[Levye] --port requires --html.\n";
-      return 1;
+      const auto project = Levye::ProjectLoader::Load(*projectDirectory / "levye.project");
+      if (!project || Levye::ResolveProjectPlatform(platform, project->defaultPlatform) !=
+                          Levye::ProjectPlatform::Web) {
+        std::cerr << "[Levye] --port requires a Web project or --html.\n";
+        return 1;
+      }
     }
     if (!Levye::RunCommand::Execute(*projectDirectory, configuration, platform, port)) {
       return 1;
@@ -758,7 +785,8 @@ int main(int argc, char** argv) {
     const bool check = argc == 3 && std::string_view(argv[2]) == "--check";
 
     const auto projectDirectory = FindCurrentProject();
-    if (!projectDirectory) return 1;
+    if (!projectDirectory)
+      return 1;
 
     const auto executableDirectory = Levye::ExecutablePath::GetDirectory();
 
@@ -779,6 +807,8 @@ int main(int argc, char** argv) {
 
     bool dryRun = false;
     bool check = false;
+    bool rollback = false;
+    std::filesystem::path assetOverride;
     bool pathProvided = false;
 
     for (int i = 2; i < argc; ++i) {
@@ -797,6 +827,22 @@ int main(int argc, char** argv) {
           return 1;
         }
         check = true;
+      } else if (argument == "--rollback") {
+        if (rollback) {
+          std::cerr << "[Levye] Duplicate --rollback option.\n";
+          return 1;
+        }
+        rollback = true;
+      } else if (argument == "--assets") {
+        if (!assetOverride.empty() || i + 1 >= argc) {
+          std::cerr << "[Levye] --assets requires one directory path.\n";
+          return 1;
+        }
+        assetOverride = argv[++i];
+        if (assetOverride.empty() || assetOverride.string().front() == '-') {
+          std::cerr << "[Levye] --assets requires one directory path.\n";
+          return 1;
+        }
       } else if (!argument.empty() && argument.front() == '-') {
         std::cerr << "[Levye] Unknown option: " << argument << '\n';
         return 1;
@@ -811,13 +857,20 @@ int main(int argc, char** argv) {
       }
     }
 
-    if (dryRun && check) {
-      std::cerr << "[Levye] Choose either --dry-run or --check.\n";
+    if (static_cast<int>(dryRun) + static_cast<int>(check) + static_cast<int>(rollback) > 1) {
+      std::cerr << "[Levye] Choose one of --dry-run, --check, or --rollback.\n";
       return 1;
     }
+    if (rollback && !assetOverride.empty()) {
+      std::cerr << "[Levye] --assets cannot be used with --rollback.\n";
+      return 1;
+    }
+    if (rollback)
+      return Levye::ConvertCommand::Rollback(projectDirectory);
     const auto frameworkRoot =
         Levye::ExecutablePath::GetDirectory().parent_path().parent_path().parent_path();
-    return Levye::ConvertCommand::Execute(projectDirectory, frameworkRoot, dryRun, check);
+    return Levye::ConvertCommand::Execute(projectDirectory, frameworkRoot, dryRun, check,
+                                          assetOverride);
   }
 
   else if (command == "clean") {
@@ -828,7 +881,8 @@ int main(int argc, char** argv) {
 
     const auto projectDirectory = FindCurrentProject();
 
-    if (!projectDirectory) return 1;
+    if (!projectDirectory)
+      return 1;
     Levye::BuildConfiguration configuration = Levye::BuildConfiguration::Debug;
     Levye::ProjectPlatform platform = Levye::ProjectPlatform::ProjectDefault;
     bool all = false;
@@ -838,10 +892,12 @@ int main(int argc, char** argv) {
         configuration = Levye::BuildConfiguration::Release;
       else if (option == "--all")
         all = true;
-      else if (option == "--desktop" || option == "--android" || option == "--ios") {
+      else if (option == "--desktop" || option == "--android" || option == "--ios" ||
+               option == "--html") {
         const auto selected = option == "--desktop"   ? Levye::ProjectPlatform::Desktop
                               : option == "--android" ? Levye::ProjectPlatform::Android
-                                                      : Levye::ProjectPlatform::IOS;
+                              : option == "--ios"     ? Levye::ProjectPlatform::IOS
+                                                      : Levye::ProjectPlatform::Web;
         if (platform != Levye::ProjectPlatform::ProjectDefault && platform != selected) {
           std::cerr << "[Levye] Conflicting clean platform flags.\n";
           return 1;

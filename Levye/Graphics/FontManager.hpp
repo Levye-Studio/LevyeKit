@@ -22,7 +22,7 @@ namespace Levye {
  * application is running without changing their AssetHandle.
  */
 class FontManager {
-public:
+ public:
   FontManager() = default;
 
   /**
@@ -30,8 +30,8 @@ public:
    */
   ~FontManager();
 
-  FontManager(const FontManager &) = delete;
-  FontManager &operator=(const FontManager &) = delete;
+  FontManager(const FontManager&) = delete;
+  FontManager& operator=(const FontManager&) = delete;
 
   /**
    * @brief Loads a font from disk.
@@ -42,7 +42,7 @@ public:
    * @param fontSize Base size used when rasterizing the font.
    * @return Handle to the loaded font, or an invalid handle on failure.
    */
-  AssetHandle Load(const std::string &path, int fontSize);
+  AssetHandle Load(const std::string& path, int fontSize);
 
   /**
    * @brief Returns the raylib font referenced by a handle.
@@ -53,7 +53,7 @@ public:
    * @warning The returned pointer must not be stored persistently.
    * Font hot reload may replace the underlying Font object.
    */
-  const Font *Get(AssetHandle handle) const;
+  const Font* Get(AssetHandle handle) const;
 
   /**
    * @brief Checks loaded font files for external changes.
@@ -76,13 +76,13 @@ public:
    */
   void Clear();
 
-private:
+ private:
   /**
    * @brief Creates the lookup key used to identify a loaded font configuration.
    */
-  static std::string CreateKey(const std::string &path, int fontSize);
+  static std::string CreateKey(const std::string& path, int fontSize);
 
-private:
+ private:
   struct FontAsset {
     Font font{};
 
@@ -101,7 +101,7 @@ private:
    * @param asset Font asset to reload.
    * @return true if the replacement was installed successfully.
    */
-  bool Reload(FontAsset &asset);
+  bool Reload(FontAsset& asset);
 
   std::unordered_map<std::uint64_t, FontAsset> m_Fonts;
 
@@ -109,4 +109,4 @@ private:
 
   std::uint64_t m_NextHandle = 1;
 };
-} // namespace Levye
+}  // namespace Levye

@@ -99,7 +99,9 @@ class ContactPairRegistry {
   /** @brief Discards all active pairs without emitting events. */
   void Clear();
   /** @brief Number of currently active body pairs. */
-  [[nodiscard]] std::size_t ActivePairCount() const { return pairs_.size(); }
+  [[nodiscard]] std::size_t ActivePairCount() const {
+    return pairs_.size();
+  }
 
  private:
   using SubPair = std::pair<std::uint32_t, std::uint32_t>;

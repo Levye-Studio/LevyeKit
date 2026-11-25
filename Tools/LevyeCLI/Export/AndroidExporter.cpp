@@ -32,7 +32,9 @@ class ExportLock {
       fs::remove(path_, error);
     }
   }
-  [[nodiscard]] bool Acquired() const { return acquired_; }
+  [[nodiscard]] bool Acquired() const {
+    return acquired_;
+  }
 
  private:
   fs::path path_;
@@ -48,7 +50,8 @@ bool Publish(const fs::path& source, const fs::path& destination, std::error_cod
   }
 #else
   fs::rename(source, destination, error);
-  if (error) return false;
+  if (error)
+    return false;
 #endif
   return true;
 }
@@ -135,7 +138,8 @@ bool AndroidExporter::Execute(const std::filesystem::path& projectDirectory,
   };
   std::vector<Artifact> artifacts;
   for (const std::string extension : {"apk", "aab"}) {
-    if (format != "all" && format != extension) continue;
+    if (format != "all" && format != extension)
+      continue;
     const auto filename = project->target + "-v" + project->androidVersionName + "-" +
                           std::to_string(project->androidVersionCode) + "." + extension;
     artifacts.push_back(
@@ -158,7 +162,8 @@ bool AndroidExporter::Execute(const std::filesystem::path& projectDirectory,
       stageDirectory = candidate;
       break;
     }
-    if (error && error != std::errc::file_exists) break;
+    if (error && error != std::errc::file_exists)
+      break;
   }
 
   if (stageDirectory.empty()) {
@@ -214,7 +219,8 @@ bool AndroidExporter::Execute(const std::filesystem::path& projectDirectory,
       std::cerr << "[Levye] Cannot publish artifact: " << error.message() << '\n';
       bool restored = true;
       for (auto& previous : artifacts) {
-        if (!previous.published) continue;
+        if (!previous.published)
+          continue;
         std::error_code rollbackError;
         if (previous.backup.empty()) {
           fs::remove(previous.destination, rollbackError);

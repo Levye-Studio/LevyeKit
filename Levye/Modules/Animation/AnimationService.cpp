@@ -78,7 +78,8 @@ void AdvancePlayback(AnimationPlaybackState& state, float deltaTime) {
 }  // namespace
 
 bool AnimationService::Initialize() {
-  if (m_Initialized) return true;
+  if (m_Initialized)
+    return true;
 
   m_Initialized = true;
   return true;
@@ -87,7 +88,8 @@ bool AnimationService::Initialize() {
 void AnimationService::Shutdown() {
   m_Resources.Clear();
 
-  if (!m_Initialized) return;
+  if (!m_Initialized)
+    return;
 
   m_FreePoseSlots.clear();
   for (std::size_t i = 0; i < m_Poses.size(); ++i) {
@@ -96,7 +98,8 @@ void AnimationService::Shutdown() {
       pose.active = false;
       pose.controller = INVALID_ANIMATION_CONTROLLER;
       pose.pose = {};
-      if (pose.generation != std::numeric_limits<std::uint32_t>::max()) ++pose.generation;
+      if (pose.generation != std::numeric_limits<std::uint32_t>::max())
+        ++pose.generation;
     }
     if (pose.generation != std::numeric_limits<std::uint32_t>::max())
       m_FreePoseSlots.push_back(static_cast<std::uint32_t>(i));
@@ -179,7 +182,8 @@ AnimationControllerHandle AnimationService::CreateController() {
 }
 
 void AnimationService::DestroyController(AnimationControllerHandle handle) {
-  if (!IsControllerValid(handle)) return;
+  if (!IsControllerValid(handle))
+    return;
 
   for (std::uint32_t i = 0; i < m_Poses.size(); ++i)
     if (m_Poses[i].active && m_Poses[i].controller == handle)
@@ -212,7 +216,8 @@ bool AnimationService::IsControllerValid(AnimationControllerHandle handle) const
 
   const std::uint32_t index = HandleIndex(handle);
 
-  if (index >= m_Controllers.size()) return false;
+  if (index >= m_Controllers.size())
+    return false;
 
   const ControllerSlot& slot = m_Controllers[index];
 
@@ -278,13 +283,15 @@ bool AnimationService::BindAnimation(AnimationControllerHandle controller,
   slot.transitionSourcePose.clear();
   slot.useSourceSnapshot = false;
 
-  if (slot.stateMachine) slot.stateMachine->SetCurrentState("");
+  if (slot.stateMachine)
+    slot.stateMachine->SetCurrentState("");
 
   return true;
 }
 
 bool AnimationService::PlayBound(AnimationControllerHandle controller, bool looping) {
-  if (!IsControllerValid(controller)) return false;
+  if (!IsControllerValid(controller))
+    return false;
 
   const ControllerSlot& slot = m_Controllers[HandleIndex(controller)];
   const ModelAnimation* resource = m_Resources.Get(slot.animation);
@@ -303,10 +310,12 @@ bool AnimationService::PlayBound(AnimationControllerHandle controller, bool loop
 }
 
 bool AnimationService::UnloadAnimation(AnimationResourceHandle animation) {
-  if (!m_Resources.IsValid(animation)) return false;
+  if (!m_Resources.IsValid(animation))
+    return false;
 
   for (ControllerSlot& slot : m_Controllers) {
-    if (!slot.active) continue;
+    if (!slot.active)
+      continue;
 
     if (slot.stateMachine) {
       slot.stateMachine->RemoveStatesUsing(animation);
@@ -342,14 +351,18 @@ AnimationResourceHandle AnimationService::GetBoundAnimation(
 
 bool AnimationService::GetAnimationName(AnimationResourceHandle animation, char* output,
                                         int capacity) const noexcept {
-  if (!m_Initialized || !output || capacity <= 0) return false;
+  if (!m_Initialized || !output || capacity <= 0)
+    return false;
 
   const ModelAnimation* resource = m_Resources.Get(animation);
-  if (!resource) return false;
+  if (!resource)
+    return false;
 
   std::size_t length = 0;
-  while (length < sizeof(resource->name) && resource->name[length] != '\0') ++length;
-  if (length >= static_cast<std::size_t>(capacity)) return false;
+  while (length < sizeof(resource->name) && resource->name[length] != '\0')
+    ++length;
+  if (length >= static_cast<std::size_t>(capacity))
+    return false;
 
   std::memcpy(output, resource->name, length);
   output[length] = '\0';
@@ -358,13 +371,15 @@ bool AnimationService::GetAnimationName(AnimationResourceHandle animation, char*
 
 AnimationPoseHandle AnimationService::CreatePose(AnimationControllerHandle controller,
                                                  const Model* model) {
-  if (!model || !IsControllerValid(controller)) return INVALID_ANIMATION_POSE;
+  if (!model || !IsControllerValid(controller))
+    return INVALID_ANIMATION_POSE;
   const auto& slot = m_Controllers[HandleIndex(controller)];
   const ModelAnimation* animation = m_Resources.Get(slot.animation);
   if (!animation || animation->boneCount != model->skeleton.boneCount)
     return INVALID_ANIMATION_POSE;
   EditablePose candidate;
-  if (!candidate.Initialize(model->skeleton)) return INVALID_ANIMATION_POSE;
+  if (!candidate.Initialize(model->skeleton))
+    return INVALID_ANIMATION_POSE;
   const bool reuse = !m_FreePoseSlots.empty();
   if (!reuse && m_Poses.size() >= std::numeric_limits<std::uint32_t>::max())
     return INVALID_ANIMATION_POSE;
@@ -381,7 +396,8 @@ AnimationPoseHandle AnimationService::CreatePose(AnimationControllerHandle contr
 }
 
 void AnimationService::DestroyPose(AnimationPoseHandle handle) {
-  if (!IsPoseValid(handle)) return;
+  if (!IsPoseValid(handle))
+    return;
   const auto index = HandleIndex(handle);
   auto& pose = m_Poses[index];
   pose.active = false;
@@ -394,7 +410,8 @@ void AnimationService::DestroyPose(AnimationPoseHandle handle) {
 }
 
 bool AnimationService::IsPoseValid(AnimationPoseHandle handle) const noexcept {
-  if (!m_Initialized || handle == INVALID_ANIMATION_POSE) return false;
+  if (!m_Initialized || handle == INVALID_ANIMATION_POSE)
+    return false;
   const auto index = HandleIndex(handle);
   return index < m_Poses.size() && m_Poses[index].active &&
          m_Poses[index].generation == HandleGeneration(handle) &&
@@ -419,7 +436,8 @@ int AnimationService::GetPoseBoneParent(AnimationPoseHandle handle, int bone) co
 }
 
 bool AnimationService::SamplePose(AnimationPoseHandle handle) {
-  if (!IsPoseValid(handle)) return false;
+  if (!IsPoseValid(handle))
+    return false;
   auto& poseSlot = m_Poses[HandleIndex(handle)];
   const auto& controller = m_Controllers[HandleIndex(poseSlot.controller)];
   const ModelAnimation* source = m_Resources.Get(controller.animation);
@@ -466,18 +484,21 @@ bool AnimationService::SetPoseBoneTransform(AnimationPoseHandle handle, int bone
 }
 
 bool AnimationService::ApplyPose(AnimationPoseHandle handle, Model* model) {
-  if (!model || !IsPoseValid(handle)) return false;
+  if (!model || !IsPoseValid(handle))
+    return false;
   auto& slot = m_Poses[HandleIndex(handle)];
   if (!slot.pose.IsSampled() || !slot.pose.Matches(model->skeleton) || !IsModelValid(*model))
     return false;
   auto modelPose = slot.pose.ModelPose();
-  if (modelPose.size() != static_cast<std::size_t>(slot.pose.BoneCount())) return false;
+  if (modelPose.size() != static_cast<std::size_t>(slot.pose.BoneCount()))
+    return false;
   ModelAnimPose frames[] = {modelPose.data()};
   ModelAnimation animation{};
   animation.boneCount = static_cast<unsigned int>(modelPose.size());
   animation.keyframeCount = 1;
   animation.keyframePoses = frames;
-  if (!IsModelAnimationValid(*model, animation)) return false;
+  if (!IsModelAnimationValid(*model, animation))
+    return false;
   UpdateModelAnimation(*model, animation, 0.0f);
   m_Controllers[HandleIndex(slot.controller)].evaluatedPose = modelPose;
   return true;
@@ -485,11 +506,13 @@ bool AnimationService::ApplyPose(AnimationPoseHandle handle, Model* model) {
 
 bool AnimationService::SolveTwoBoneIK(AnimationPoseHandle handle, int root, int middle, int end,
                                       const float target[3], const float pole[3], float tolerance) {
-  if (!target || !pole || !IsPoseValid(handle)) return false;
+  if (!target || !pole || !IsPoseValid(handle))
+    return false;
 
   EditablePose& pose = m_Poses[HandleIndex(handle)].pose;
 
-  if (!pose.IsSampled()) return false;
+  if (!pose.IsSampled())
+    return false;
 
   const Vector3 targetPosition{target[0], target[1], target[2]};
 
@@ -501,7 +524,8 @@ bool AnimationService::SolveTwoBoneIK(AnimationPoseHandle handle, int root, int 
 bool AnimationService::SolveTwoBoneIKWeighted(AnimationPoseHandle handle, int root, int middle,
                                               int end, const float target[3], const float pole[3],
                                               float weight, float tolerance) {
-  if (!target || !pole || !IsPoseValid(handle)) return false;
+  if (!target || !pole || !IsPoseValid(handle))
+    return false;
   EditablePose& pose = m_Poses[HandleIndex(handle)].pose;
   return TwoBoneIK::SolveWeighted(pose, root, middle, end, {target[0], target[1], target[2]},
                                   {pole[0], pole[1], pole[2]}, weight, tolerance);
@@ -513,7 +537,8 @@ bool AnimationService::SolveTwoBoneIKConstrained(AnimationPoseHandle handle, int
                                                  const AnimationIKConstraint& constraint,
                                                  float weight, float tolerance,
                                                  AnimationIKResult& result) {
-  if (!target || !pole || !IsPoseValid(handle)) return false;
+  if (!target || !pole || !IsPoseValid(handle))
+    return false;
   return TwoBoneIK::SolveConstrained(m_Poses[HandleIndex(handle)].pose, root, middle, end,
                                      {target[0], target[1], target[2]}, {pole[0], pole[1], pole[2]},
                                      constraint, weight, tolerance, result);
@@ -640,13 +665,15 @@ bool AnimationService::Play(AnimationControllerHandle handle, float duration, bo
   slot.evaluatedPose.clear();
   slot.transitionSourcePose.clear();
   slot.useSourceSnapshot = false;
-  if (slot.stateMachine) slot.stateMachine->SetCurrentState("");
+  if (slot.stateMachine)
+    slot.stateMachine->SetCurrentState("");
 
   return true;
 }
 
 bool AnimationService::Stop(AnimationControllerHandle handle) {
-  if (!IsControllerValid(handle)) return false;
+  if (!IsControllerValid(handle))
+    return false;
 
   ControllerSlot& slot = m_Controllers[HandleIndex(handle)];
 
@@ -660,18 +687,21 @@ bool AnimationService::Stop(AnimationControllerHandle handle) {
   slot.evaluatedPose.clear();
   slot.transitionSourcePose.clear();
   slot.useSourceSnapshot = false;
-  if (slot.stateMachine) slot.stateMachine->SetCurrentState("");
+  if (slot.stateMachine)
+    slot.stateMachine->SetCurrentState("");
 
   return true;
 }
 
 bool AnimationService::Pause(AnimationControllerHandle handle) {
-  if (!IsControllerValid(handle)) return false;
+  if (!IsControllerValid(handle))
+    return false;
 
   ControllerSlot& slot = m_Controllers[HandleIndex(handle)];
   AnimationPlaybackState& state = slot.playback;
 
-  if (!state.playing && !slot.transition.active) return false;
+  if (!state.playing && !slot.transition.active)
+    return false;
 
   state.paused = true;
 
@@ -683,12 +713,14 @@ bool AnimationService::Pause(AnimationControllerHandle handle) {
 }
 
 bool AnimationService::Resume(AnimationControllerHandle handle) {
-  if (!IsControllerValid(handle)) return false;
+  if (!IsControllerValid(handle))
+    return false;
 
   ControllerSlot& slot = m_Controllers[HandleIndex(handle)];
   AnimationPlaybackState& state = slot.playback;
 
-  if (!state.playing && !slot.transition.active) return false;
+  if (!state.playing && !slot.transition.active)
+    return false;
 
   state.paused = false;
 
@@ -717,7 +749,8 @@ bool AnimationService::SetSpeed(AnimationControllerHandle handle, float speed) {
 
 bool AnimationService::GetPlaybackState(AnimationControllerHandle handle,
                                         AnimationPlaybackState& output) const {
-  if (!IsControllerValid(handle)) return false;
+  if (!IsControllerValid(handle))
+    return false;
 
   output = m_Controllers[HandleIndex(handle)].playback;
   return true;
@@ -811,7 +844,8 @@ bool AnimationService::CrossFade(AnimationControllerHandle controller,
     slot.transitionSourcePose.clear();
     slot.useSourceSnapshot = false;
 
-    if (slot.stateMachine) slot.stateMachine->SetCurrentState("");
+    if (slot.stateMachine)
+      slot.stateMachine->SetCurrentState("");
     return true;
   }
 
@@ -821,7 +855,8 @@ bool AnimationService::CrossFade(AnimationControllerHandle controller,
   slot.transition.duration = duration;
   slot.transition.active = true;
 
-  if (slot.stateMachine) slot.stateMachine->SetCurrentState("");
+  if (slot.stateMachine)
+    slot.stateMachine->SetCurrentState("");
 
   return true;
 }
@@ -845,71 +880,84 @@ bool AnimationService::AddState(AnimationControllerHandle controller, const char
   }
 
   ControllerSlot& slot = m_Controllers[HandleIndex(controller)];
-  if (!slot.stateMachine) return false;
+  if (!slot.stateMachine)
+    return false;
   const auto* previous = slot.stateMachine->FindState(name);
   const bool restart =
       previous && slot.stateMachine->GetCurrentState() == name &&
       (previous->animation != definition.animation || previous->speed != definition.speed ||
        previous->looping != definition.looping);
-  if (!slot.stateMachine->AddState(name, definition)) return false;
+  if (!slot.stateMachine->AddState(name, definition))
+    return false;
   return !restart || RestartState(controller, name);
 }
 
 bool AnimationService::GetCurrentState(AnimationControllerHandle controller, char* output,
                                        int capacity) const noexcept {
-  if (!output || capacity <= 0 || !IsControllerValid(controller)) return false;
+  if (!output || capacity <= 0 || !IsControllerValid(controller))
+    return false;
   const auto& machine = m_Controllers[HandleIndex(controller)].stateMachine;
-  if (!machine) return false;
+  if (!machine)
+    return false;
   const std::string& name = machine->GetCurrentState();
-  if (name.size() >= static_cast<std::size_t>(capacity)) return false;
+  if (name.size() >= static_cast<std::size_t>(capacity))
+    return false;
   std::memcpy(output, name.c_str(), name.size() + 1);
   return true;
 }
 
 bool AnimationService::AddTransition(AnimationControllerHandle controller,
                                      const AnimationTransitionRule& rule) {
-  if (!IsControllerValid(controller)) return false;
+  if (!IsControllerValid(controller))
+    return false;
   auto& machine = m_Controllers[HandleIndex(controller)].stateMachine;
   return machine && machine->AddTransition(rule);
 }
 
 bool AnimationService::ClearTransitions(AnimationControllerHandle controller) {
-  if (!IsControllerValid(controller)) return false;
+  if (!IsControllerValid(controller))
+    return false;
   auto& machine = m_Controllers[HandleIndex(controller)].stateMachine;
-  if (!machine) return false;
+  if (!machine)
+    return false;
   machine->ClearTransitions();
   return true;
 }
 
 bool AnimationService::SetBoolParameter(AnimationControllerHandle controller, const char* name,
                                         bool value) {
-  if (!IsControllerValid(controller) || !name) return false;
+  if (!IsControllerValid(controller) || !name)
+    return false;
   auto& machine = m_Controllers[HandleIndex(controller)].stateMachine;
   return machine && machine->SetBoolParameter(name, value);
 }
 
 bool AnimationService::SetFloatParameter(AnimationControllerHandle controller, const char* name,
                                          float value) {
-  if (!IsControllerValid(controller) || !name) return false;
+  if (!IsControllerValid(controller) || !name)
+    return false;
   auto& machine = m_Controllers[HandleIndex(controller)].stateMachine;
   return machine && machine->SetFloatParameter(name, value);
 }
 
 bool AnimationService::SetIntParameter(AnimationControllerHandle controller, const char* name,
                                        int value) {
-  if (!IsControllerValid(controller) || !name) return false;
+  if (!IsControllerValid(controller) || !name)
+    return false;
   auto& machine = m_Controllers[HandleIndex(controller)].stateMachine;
   return machine && machine->SetIntParameter(name, value);
 }
 
 bool AnimationService::SetTrigger(AnimationControllerHandle controller, const char* name) {
-  if (!IsControllerValid(controller) || !name) return false;
+  if (!IsControllerValid(controller) || !name)
+    return false;
   auto& machine = m_Controllers[HandleIndex(controller)].stateMachine;
   return machine && machine->SetTrigger(name);
 }
 
 bool AnimationService::ResetTrigger(AnimationControllerHandle controller, const char* name) {
-  if (!IsControllerValid(controller) || !name) return false;
+  if (!IsControllerValid(controller) || !name)
+    return false;
   auto& machine = m_Controllers[HandleIndex(controller)].stateMachine;
   return machine && machine->ResetTrigger(name);
 }
@@ -920,7 +968,8 @@ bool AnimationService::RemoveState(AnimationControllerHandle controller, const c
   }
 
   ControllerSlot& slot = m_Controllers[HandleIndex(controller)];
-  if (!slot.stateMachine || !slot.stateMachine->FindState(name)) return false;
+  if (!slot.stateMachine || !slot.stateMachine->FindState(name))
+    return false;
   if (slot.transition.active && slot.stateMachine->GetCurrentState() == name) {
     slot.transition = {};
     slot.targetPlayback = {};
@@ -1059,16 +1108,19 @@ void AnimationService::Update(float deltaTime) {
   }
 
   for (ControllerSlot& slot : m_Controllers) {
-    if (!slot.active) continue;
+    if (!slot.active)
+      continue;
 
     AdvancePlayback(slot.playback, deltaTime);
 
-    if (!slot.transition.active) continue;
+    if (!slot.transition.active)
+      continue;
 
     AdvancePlayback(slot.targetPlayback, deltaTime);
 
     // A paused controller must also pause its transition.
-    if (slot.playback.paused) continue;
+    if (slot.playback.paused)
+      continue;
 
     slot.transition.elapsed =
         std::min(slot.transition.elapsed + deltaTime, slot.transition.duration);
@@ -1108,7 +1160,8 @@ void AnimationService::UpdateStateMachines() {
       }
     }
 
-    if (!finished) continue;
+    if (!finished)
+      continue;
 
     const std::string* returnState = slot.stateMachine->GetReturnState();
 
@@ -1129,7 +1182,8 @@ void AnimationService::UpdateStateMachines() {
 namespace {
 
 bool APIIsAvailable(void* context) {
-  if (!context) return false;
+  if (!context)
+    return false;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1137,7 +1191,8 @@ bool APIIsAvailable(void* context) {
 }
 
 AnimationControllerHandle APICreateController(void* context) {
-  if (!context) return INVALID_ANIMATION_CONTROLLER;
+  if (!context)
+    return INVALID_ANIMATION_CONTROLLER;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1145,7 +1200,8 @@ AnimationControllerHandle APICreateController(void* context) {
 }
 
 void APIDestroyController(void* context, AnimationControllerHandle handle) {
-  if (!context) return;
+  if (!context)
+    return;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1155,7 +1211,8 @@ void APIDestroyController(void* context, AnimationControllerHandle handle) {
 }
 
 bool APIIsControllerValid(void* context, AnimationControllerHandle handle) {
-  if (!context) return false;
+  if (!context)
+    return false;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1163,7 +1220,8 @@ bool APIIsControllerValid(void* context, AnimationControllerHandle handle) {
 }
 
 bool APIPlay(void* context, AnimationControllerHandle handle, float duration, bool looping) {
-  if (!context) return false;
+  if (!context)
+    return false;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1171,7 +1229,8 @@ bool APIPlay(void* context, AnimationControllerHandle handle, float duration, bo
 }
 
 bool APIStop(void* context, AnimationControllerHandle handle) {
-  if (!context) return false;
+  if (!context)
+    return false;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1179,7 +1238,8 @@ bool APIStop(void* context, AnimationControllerHandle handle) {
 }
 
 bool APIPause(void* context, AnimationControllerHandle handle) {
-  if (!context) return false;
+  if (!context)
+    return false;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1187,7 +1247,8 @@ bool APIPause(void* context, AnimationControllerHandle handle) {
 }
 
 bool APIResume(void* context, AnimationControllerHandle handle) {
-  if (!context) return false;
+  if (!context)
+    return false;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1195,7 +1256,8 @@ bool APIResume(void* context, AnimationControllerHandle handle) {
 }
 
 bool APISetSpeed(void* context, AnimationControllerHandle handle, float speed) {
-  if (!context) return false;
+  if (!context)
+    return false;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1204,7 +1266,8 @@ bool APISetSpeed(void* context, AnimationControllerHandle handle, float speed) {
 
 bool APIGetPlaybackState(void* context, AnimationControllerHandle handle,
                          AnimationPlaybackState* output) {
-  if (!context || !output) return false;
+  if (!context || !output)
+    return false;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1213,7 +1276,8 @@ bool APIGetPlaybackState(void* context, AnimationControllerHandle handle,
 
 int APILoadAnimations(void* context, const char* path, AnimationResourceHandle* output,
                       int capacity) {
-  if (!context) return 0;
+  if (!context)
+    return 0;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1221,7 +1285,8 @@ int APILoadAnimations(void* context, const char* path, AnimationResourceHandle* 
 }
 
 bool APIUnloadAnimation(void* context, AnimationResourceHandle animation) {
-  if (!context) return false;
+  if (!context)
+    return false;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1230,7 +1295,8 @@ bool APIUnloadAnimation(void* context, AnimationResourceHandle animation) {
 
 bool APIBindAnimation(void* context, AnimationControllerHandle controller,
                       AnimationResourceHandle animation, float framesPerSecond) {
-  if (!context) return false;
+  if (!context)
+    return false;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1238,7 +1304,8 @@ bool APIBindAnimation(void* context, AnimationControllerHandle controller,
 }
 
 bool APIPlayBound(void* context, AnimationControllerHandle controller, bool looping) {
-  if (!context) return false;
+  if (!context)
+    return false;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1246,7 +1313,8 @@ bool APIPlayBound(void* context, AnimationControllerHandle controller, bool loop
 }
 
 AnimationResourceHandle APIGetBoundAnimation(void* context, AnimationControllerHandle controller) {
-  if (!context) return INVALID_ANIMATION_RESOURCE;
+  if (!context)
+    return INVALID_ANIMATION_RESOURCE;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1256,20 +1324,23 @@ AnimationResourceHandle APIGetBoundAnimation(void* context, AnimationControllerH
 
 bool APIGetAnimationName(void* context, AnimationResourceHandle animation, char* output,
                          int capacity) {
-  if (!context || !output) return false;
+  if (!context || !output)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->GetAnimationName(animation, output, capacity);
 }
 
 bool APIApplyBoundAnimation(void* context, AnimationControllerHandle controller, Model* model) {
-  if (!context || !model) return false;
+  if (!context || !model)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->ApplyBoundAnimation(controller, model);
 }
 
 bool APICrossFade(void* context, AnimationControllerHandle controller,
                   AnimationResourceHandle target, float duration) {
-  if (!context) return false;
+  if (!context)
+    return false;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1278,7 +1349,8 @@ bool APICrossFade(void* context, AnimationControllerHandle controller,
 
 bool APIGetTransitionState(void* context, AnimationControllerHandle controller,
                            AnimationTransitionState* output) {
-  if (!context || !output) return false;
+  if (!context || !output)
+    return false;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1331,7 +1403,8 @@ bool APISetState(void* context, AnimationControllerHandle controller, const char
 }
 
 bool APIRestartState(void* context, AnimationControllerHandle controller, const char* name) {
-  if (!context || !name) return false;
+  if (!context || !name)
+    return false;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1339,7 +1412,8 @@ bool APIRestartState(void* context, AnimationControllerHandle controller, const 
 }
 
 bool APIIsStateFinished(void* context, AnimationControllerHandle controller) {
-  if (!context) return false;
+  if (!context)
+    return false;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1348,136 +1422,158 @@ bool APIIsStateFinished(void* context, AnimationControllerHandle controller) {
 
 bool APIGetCurrentState(void* context, AnimationControllerHandle controller, char* output,
                         int capacity) {
-  if (!context || !output) return false;
+  if (!context || !output)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->GetCurrentState(controller, output, capacity);
 }
 
 bool APIForceState(void* context, AnimationControllerHandle controller, const char* name) {
-  if (!context || !name) return false;
+  if (!context || !name)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->ForceState(controller, name);
 }
 
 bool APIAddTransition(void* context, AnimationControllerHandle controller,
                       const AnimationTransitionRule* rule) {
-  if (!context || !rule) return false;
+  if (!context || !rule)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->AddTransition(controller, *rule);
 }
 
 bool APIClearTransitions(void* context, AnimationControllerHandle controller) {
-  if (!context) return false;
+  if (!context)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->ClearTransitions(controller);
 }
 
 bool APISetBoolParameter(void* context, AnimationControllerHandle controller, const char* name,
                          bool value) {
-  if (!context || !name) return false;
+  if (!context || !name)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->SetBoolParameter(controller, name, value);
 }
 
 bool APISetFloatParameter(void* context, AnimationControllerHandle controller, const char* name,
                           float value) {
-  if (!context || !name) return false;
+  if (!context || !name)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->SetFloatParameter(controller, name, value);
 }
 
 bool APISetIntParameter(void* context, AnimationControllerHandle controller, const char* name,
                         int value) {
-  if (!context || !name) return false;
+  if (!context || !name)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->SetIntParameter(controller, name, value);
 }
 
 bool APISetTrigger(void* context, AnimationControllerHandle controller, const char* name) {
-  if (!context || !name) return false;
+  if (!context || !name)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->SetTrigger(controller, name);
 }
 
 bool APIResetTrigger(void* context, AnimationControllerHandle controller, const char* name) {
-  if (!context || !name) return false;
+  if (!context || !name)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->ResetTrigger(controller, name);
 }
 
 AnimationPoseHandle APICreatePose(void* context, AnimationControllerHandle controller,
                                   const Model* model) {
-  if (!context || !model) return INVALID_ANIMATION_POSE;
+  if (!context || !model)
+    return INVALID_ANIMATION_POSE;
   auto* host = static_cast<HostContext*>(context);
   return host->animation ? host->animation->CreatePose(controller, model) : INVALID_ANIMATION_POSE;
 }
 
 void APIDestroyPose(void* context, AnimationPoseHandle pose) {
-  if (!context) return;
+  if (!context)
+    return;
   auto* host = static_cast<HostContext*>(context);
-  if (host->animation) host->animation->DestroyPose(pose);
+  if (host->animation)
+    host->animation->DestroyPose(pose);
 }
 
 bool APIIsPoseValid(void* context, AnimationPoseHandle pose) {
-  if (!context) return false;
+  if (!context)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->IsPoseValid(pose);
 }
 
 int APIGetPoseBoneCount(void* context, AnimationPoseHandle pose) {
-  if (!context) return 0;
+  if (!context)
+    return 0;
   auto* host = static_cast<HostContext*>(context);
   return host->animation ? host->animation->GetPoseBoneCount(pose) : 0;
 }
 
 int APIFindPoseBone(void* context, AnimationPoseHandle pose, const char* name) {
-  if (!context || !name) return -1;
+  if (!context || !name)
+    return -1;
   auto* host = static_cast<HostContext*>(context);
   return host->animation ? host->animation->FindPoseBone(pose, name) : -1;
 }
 
 bool APIGetPoseBoneName(void* context, AnimationPoseHandle pose, int bone, char* output,
                         int capacity) {
-  if (!context || !output) return false;
+  if (!context || !output)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->GetPoseBoneName(pose, bone, output, capacity);
 }
 
 int APIGetPoseBoneParent(void* context, AnimationPoseHandle pose, int bone) {
-  if (!context) return -1;
+  if (!context)
+    return -1;
   auto* host = static_cast<HostContext*>(context);
   return host->animation ? host->animation->GetPoseBoneParent(pose, bone) : -1;
 }
 
 bool APISamplePose(void* context, AnimationPoseHandle pose) {
-  if (!context) return false;
+  if (!context)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->SamplePose(pose);
 }
 
 bool APIGetPoseBoneTransform(void* context, AnimationPoseHandle pose, int bone,
                              AnimationBoneSpace space, AnimationBoneTransform* output) {
-  if (!context || !output) return false;
+  if (!context || !output)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->GetPoseBoneTransform(pose, bone, space, *output);
 }
 
 bool APISetPoseBoneTransform(void* context, AnimationPoseHandle pose, int bone,
                              AnimationBoneSpace space, const AnimationBoneTransform* value) {
-  if (!context || !value) return false;
+  if (!context || !value)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->SetPoseBoneTransform(pose, bone, space, *value);
 }
 
 bool APIApplyPose(void* context, AnimationPoseHandle pose, Model* model) {
-  if (!context || !model) return false;
+  if (!context || !model)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->ApplyPose(pose, model);
 }
 
 bool APISolveTwoBoneIK(void* context, AnimationPoseHandle pose, int root, int middle, int end,
                        const float target[3], const float pole[3], float tolerance) {
-  if (!context || !target || !pole) return false;
+  if (!context || !target || !pole)
+    return false;
 
   auto* host = static_cast<HostContext*>(context);
 
@@ -1488,7 +1584,8 @@ bool APISolveTwoBoneIK(void* context, AnimationPoseHandle pose, int root, int mi
 bool APISolveTwoBoneIKWeighted(void* context, AnimationPoseHandle pose, int root, int middle,
                                int end, const float target[3], const float pole[3], float weight,
                                float tolerance) {
-  if (!context || !target || !pole) return false;
+  if (!context || !target || !pole)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->SolveTwoBoneIKWeighted(pose, root, middle, end, target,
                                                                     pole, weight, tolerance);
@@ -1498,7 +1595,8 @@ bool APISolveTwoBoneIKConstrained(void* context, AnimationPoseHandle pose, int r
                                   int end, const float target[3], const float pole[3],
                                   const AnimationIKConstraint* constraint, float weight,
                                   float tolerance, AnimationIKResult* result) {
-  if (!context || !target || !pole || !constraint || !result) return false;
+  if (!context || !target || !pole || !constraint || !result)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation &&
          host->animation->SolveTwoBoneIKConstrained(pose, root, middle, end, target, pole,
@@ -1508,7 +1606,8 @@ bool APISolveTwoBoneIKConstrained(void* context, AnimationPoseHandle pose, int r
 bool APISolveIKChains(void* context, AnimationPoseHandle pose,
                       const AnimationIKChainRequest* requests, int count,
                       AnimationIKChainResult* results) {
-  if (!context) return false;
+  if (!context)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->SolveIKChains(pose, requests, count, results);
 }
@@ -1516,7 +1615,8 @@ bool APISolveIKChains(void* context, AnimationPoseHandle pose,
 bool APISolveOrientations(void* context, AnimationPoseHandle pose,
                           const AnimationOrientationRequest* requests, int count,
                           AnimationOrientationResult* results) {
-  if (!context) return false;
+  if (!context)
+    return false;
   auto* host = static_cast<HostContext*>(context);
   return host->animation && host->animation->SolveOrientations(pose, requests, count, results);
 }
@@ -1524,9 +1624,11 @@ bool APISolveOrientations(void* context, AnimationPoseHandle pose,
 bool APISurfaceOrientation(void* context, const float normal[3], const float forward[3],
                            const float localUp[3], const float localForward[3],
                            const float previous[4], float output[4]) {
-  if (!context || !normal || !forward || !localUp || !localForward || !output) return false;
+  if (!context || !normal || !forward || !localUp || !localForward || !output)
+    return false;
   auto* host = static_cast<HostContext*>(context);
-  if (!host->animation || !host->animation->IsInitialized()) return false;
+  if (!host->animation || !host->animation->IsInitialized())
+    return false;
   Quaternion result{};
   const Quaternion prior = previous ? Quaternion{previous[0], previous[1], previous[2], previous[3]}
                                     : QuaternionIdentity();

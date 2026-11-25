@@ -67,8 +67,7 @@ struct SerializationAPI {
    * A path is considered present even when its value is null,
    * empty, false, or zero.
    */
-  bool (*ContainsPath)(void* context, DocumentHandle handle,
-                       const char* path) = nullptr;
+  bool (*ContainsPath)(void* context, DocumentHandle handle, const char* path) = nullptr;
 
   // -------------------------------------------------------------
   // Writing values
@@ -79,12 +78,10 @@ struct SerializationAPI {
                  std::int64_t value) = nullptr;
 
   /** @brief Writes a floating-point value at a document path. */
-  bool (*SetFloat)(void* context, DocumentHandle handle, const char* path,
-                   double value) = nullptr;
+  bool (*SetFloat)(void* context, DocumentHandle handle, const char* path, double value) = nullptr;
 
   /** @brief Writes a boolean at a document path. */
-  bool (*SetBool)(void* context, DocumentHandle handle, const char* path,
-                  bool value) = nullptr;
+  bool (*SetBool)(void* context, DocumentHandle handle, const char* path, bool value) = nullptr;
 
   /** @brief Copies a string into a host-owned document path. */
   bool (*SetString)(void* context, DocumentHandle handle, const char* path,
@@ -103,8 +100,7 @@ struct SerializationAPI {
                      double fallback) = nullptr;
 
   /** @brief Reads a boolean or returns the caller's fallback. */
-  bool (*GetBool)(void* context, DocumentHandle handle, const char* path,
-                  bool fallback) = nullptr;
+  bool (*GetBool)(void* context, DocumentHandle handle, const char* path, bool fallback) = nullptr;
 
   /**
    * @brief Reads a string into a caller-owned buffer.
@@ -120,8 +116,7 @@ struct SerializationAPI {
    *       the required size using buffer=nullptr and
    *       bufferSize=0.
    */
-  std::uint64_t (*GetString)(void* context, DocumentHandle handle,
-                             const char* path, char* buffer,
+  std::uint64_t (*GetString)(void* context, DocumentHandle handle, const char* path, char* buffer,
                              std::uint64_t bufferSize) = nullptr;
 
   // -------------------------------------------------------------
@@ -129,8 +124,7 @@ struct SerializationAPI {
   // -------------------------------------------------------------
 
   /** @brief Saves a host-owned document to the requested path. */
-  bool (*Save)(void* context, DocumentHandle handle,
-               const char* path) = nullptr;
+  bool (*Save)(void* context, DocumentHandle handle, const char* path) = nullptr;
 
   /** @brief Loads a document from disk into a new host-owned handle. */
   DocumentHandle (*Load)(void* context, const char* path) = nullptr;
@@ -144,28 +138,24 @@ struct SerializationAPI {
    *
    * @return True if the array was created.
    */
-  bool (*CreateArray)(void* context, DocumentHandle document,
-                      const char* path) = nullptr;
+  bool (*CreateArray)(void* context, DocumentHandle document, const char* path) = nullptr;
 
   /**
    * @brief Returns the number of elements in an array.
    *
    * Returns zero for an empty array or invalid path.
    */
-  std::uint64_t (*GetArraySize)(void* context, DocumentHandle document,
-                                const char* path) = nullptr;
+  std::uint64_t (*GetArraySize)(void* context, DocumentHandle document, const char* path) = nullptr;
 
   /**
    * @brief Appends an empty mapping to an existing array.
    *
    * @return True if an object was appended.
    */
-  bool (*AppendObject)(void* context, DocumentHandle document,
-                       const char* path) = nullptr;
+  bool (*AppendObject)(void* context, DocumentHandle document, const char* path) = nullptr;
 
   /** @brief Appends an empty nested array to an existing array. */
-  bool (*AppendArray)(void* context, DocumentHandle handle,
-                      const char* path) = nullptr;
+  bool (*AppendArray)(void* context, DocumentHandle handle, const char* path) = nullptr;
 
   /**
    * @brief Appends an integer to an existing array.
@@ -205,8 +195,7 @@ struct SerializationAPI {
    *
    * @return True if the destination is an array.
    */
-  bool (*IsArray)(void* context, DocumentHandle document,
-                  const char* path) = nullptr;
+  bool (*IsArray)(void* context, DocumentHandle document, const char* path) = nullptr;
 };
 
 }  // namespace Levye
