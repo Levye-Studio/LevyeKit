@@ -123,10 +123,54 @@ int main()
 
     return 0;
 })LEVYE";
-  if (current != legacy) {
-    error = "Custom Source/Main.cpp requires manual runtime migration; no files changed.";
-    return false;
+
+// Recognize the generated host used before explicit
+// application initialization was introduced.
+std::string previous = desired;
+
+constexpr std::string_view initialization =
+    "  if (!application.Initialize())\n"
+    "    return 1;\n\n";
+
+const auto initializationAt = previous.find(initialization);
+
+if (initializationAt != std::string::npos) {
+  previous.erase(initializationAt, initialization.size());
+}
+
+// Ignore trailing whitespace when comparing generated hosts.
+const auto normalize = [](std::string_view source) {
+  std::string result;
+
+  result.reserve(source.size());
+
+  for (const char c : source) {
+    if (c != '\r')
+      result += c;
   }
+
+  while (!result.empty() &&
+         std::isspace(static_cast<unsigned char>(result.back()))) {
+    result.pop_back();
+  }
+
+  return result;
+};
+
+const auto normalizedCurrent = normalize(current);
+
+const bool knownHost =
+    normalizedCurrent == normalize(desired) ||
+    normalizedCurrent == normalize(legacy) ||
+    normalizedCurrent == normalize(previous);
+
+if (!knownHost) {
+  error =
+      "Custom Source/Main.cpp requires manual runtime migration; "
+      "no files changed.";
+
+  return false;
+}
   changes.push_back({path, desired, true});
   return true;
 }
